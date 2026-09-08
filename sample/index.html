@@ -1,75 +1,67 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <title>Files on Arkiv · arkiv-chunking</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <main>
-      <header>
-        <p class="eyebrow">[ SAMPLE · ARKIV-CHUNKING <span id="version"></span> ]</p>
-        <h1>Store a file.<br />Retrieve every byte.</h1>
-        <p>Split a file into Arkiv entities, query its chunks and verify the reconstructed file.</p>
-      </header>
-
-      <section aria-labelledby="connection-heading">
-        <h2 id="connection-heading">Connect to Tiramisu</h2>
-        <label for="rpc">RPC URL</label>
-        <input id="rpc" type="url" spellcheck="false" autocomplete="off" aria-describedby="rpc-help" />
-        <p id="rpc-help" class="help">The URL is used only in this tab. If your provider requires an access key, use an authorized URL. Never share private keys.</p>
-        <p class="help">Uploading requires a wallet on Tiramisu with testnet GLM. Retrieval only requires the RPC. <a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Configure the network</a> · <a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds</a> · <a href="https://hub.arkiv.network/api-keys" target="_blank" rel="noopener noreferrer">Get an access key</a></p>
-      </section>
-
-      <section aria-labelledby="upload-heading">
-        <h2 id="upload-heading">1. Upload your file</h2>
-        <form id="upload-form">
-          <label for="file">File</label>
-          <input id="file" type="file" required aria-describedby="file-info" />
-          <p id="file-info" class="help">Select a file to see how many chunks it needs.</p>
-          <label for="expiration">Entity Expiration</label>
-          <select id="expiration" aria-describedby="expiration-help">
-            <option value="1800">1,800 blocks</option>
-            <option value="43200" selected>43,200 blocks</option>
-            <option value="302400">302,400 blocks</option>
-          </select>
-          <p id="expiration-help" class="help">Duration is measured in blocks from manifest creation. It does not represent a fixed number of hours or days.</p>
-          <label class="consent" for="consent">
-            <input id="consent" type="checkbox" required />
-            <span>I understand that the file and its name will be public. Expiration does not erase history. I will not upload sensitive information.</span>
-          </label>
-          <button type="submit" id="upload">Connect wallet and upload</button>
-        </form>
-        <p id="upload-status" role="status" aria-live="polite">You have not uploaded a file yet.</p>
-        <div id="upload-result" hidden>
-          <p>Keep this key to retrieve the file:</p>
-          <code id="uploaded-key"></code>
-          <p class="help" id="upload-summary"></p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Arkiv Files · Store & verify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="arkiv-mark">[ ARKIV ]</span><span class="brand-divider"></span><h1>Files</h1><span class="version" id="version"></span></div>
+    <div class="wallet-controls"><span class="network"><span class="network-dot"></span>Tiramisu testnet</span><button id="connect" class="wallet-button" type="button">Connect wallet</button></div>
+  </header>
+  <main>
+    <div class="page-intro"><h2>Store and retrieve files</h2></div>
+    <div class="workspace" id="workspace" aria-busy="false">
+      <section class="panel controls" aria-label="File controls">
+        <div class="tabs" role="tablist" aria-label="File action">
+          <button type="button" id="tab-upload" role="tab" aria-controls="upload-form" aria-selected="true">Upload</button>
+          <button type="button" id="tab-open" role="tab" aria-controls="open-form" aria-selected="false" tabindex="-1">Open existing</button>
         </div>
-      </section>
-
-      <section aria-labelledby="download-heading">
-        <h2 id="download-heading">2. Retrieve and verify</h2>
-        <form id="download-form">
+        <form id="upload-form" role="tabpanel" aria-labelledby="tab-upload">
+          <div class="field-heading"><label for="file">File</label><span class="eyebrow" id="file-kind">SAMPLE FILE</span></div>
+          <div class="selected-file">
+            <span class="file-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></span>
+            <div class="file-label"><strong id="selected-name">arkiv-demo.txt</strong><span id="selected-meta" class="help"></span></div>
+          </div>
+          <div class="file-actions"><button id="choose" class="secondary small" type="button">Choose a file</button><button id="demo" class="text-button" type="button" hidden>Use sample file</button></div>
+          <input id="file" type="file" hidden aria-label="Choose your file" />
+          <div class="expiration-field"><label for="expiration">Entity Expiration</label><input id="expiration" type="datetime-local" required aria-describedby="expiration-help" /><p id="expiration-help" class="help">Approximate date · <span id="timezone"></span></p></div>
+          <p class="public-note">Files stored here are public.</p>
+          <button id="upload" class="primary" type="submit">Store &amp; verify <span aria-hidden="true">↗</span></button>
+          <p id="approval-note" class="help approval-note"></p>
+          <div class="support-links"><a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds ↗</a><a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Wallet setup ↗</a></div>
+        </form>
+        <form id="open-form" role="tabpanel" aria-labelledby="tab-open" hidden>
+          <div class="open-intro"><p class="help">No wallet or testnet funds needed.</p></div>
           <label for="manifest">Manifest key</label>
-          <input id="manifest" type="text" spellcheck="false" autocomplete="off" placeholder="0x…" required aria-describedby="manifest-help" />
-          <p id="manifest-help" class="help">Filled in after upload. You can also paste an existing key.</p>
-          <button type="submit" id="retrieve">Retrieve file</button>
+          <input id="manifest" type="text" placeholder="0x…" spellcheck="false" autocomplete="off" required aria-describedby="manifest-help" />
+          <p id="manifest-help" class="help">The key returned when your file was stored.</p>
+          <button id="retrieve" class="primary" type="submit">Retrieve &amp; verify <span aria-hidden="true">↗</span></button>
         </form>
-        <p id="download-status" role="status" aria-live="polite">You have not retrieved a file yet.</p>
-        <div id="download-result" hidden>
-          <p id="download-summary"></p>
-          <dl><dt>Verified SHA-256</dt><dd><code id="download-hash"></code></dd></dl>
-          <a id="save" class="button" download>Download verified file</a>
-        </div>
       </section>
-
-      <footer><p>These packages are intended for testnet use.</p><p>Files are reconstructed in browser memory. Closing the tab does not reverse submitted transactions.</p></footer>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+      <section class="panel result" id="result-panel" aria-label="File result" data-state="idle">
+        <div class="result-top"><span class="eyebrow">[ RESULT ]</span><ol class="steps" aria-label="File progress"><li data-step="ready" data-state="active">Ready</li><li data-step="store">Store</li><li data-step="verify">Verify</li></ol></div>
+        <div id="result-empty" class="result-empty">
+          <div class="file-flow" aria-hidden="true"><span class="flow-file">FILE</span><span class="flow-connector"></span><span class="flow-chunks"><i></i><i></i></span><span class="flow-connector"></span><span class="flow-file final-file">✓</span></div>
+          <h3 id="result-empty-title">Your verified file lands here.</h3>
+        </div>
+        <div id="result-content" hidden>
+          <div class="result-heading"><span class="result-icon" aria-hidden="true">↗</span><h3 id="result-title">File verified</h3></div>
+          <p id="result-filename" class="result-filename"></p>
+          <dl class="result-stats"><div><dt>Size</dt><dd id="result-size">—</dd></div><div><dt>Chunks</dt><dd id="result-chunks">—</dd></div><div><dt>Approx. expiration</dt><dd id="result-expiration">—</dd></div></dl>
+          <div class="result-actions"><a id="save" class="primary" download hidden>Download file ↓</a><button id="retry" class="primary" type="button" hidden>Retry verification</button><a id="explorer" class="secondary" target="_blank" rel="noopener noreferrer">View entity in explorer ↗</a></div>
+          <details id="query-details"><summary>View query &amp; file details</summary><div class="query-meta"><span class="help">Manifest key</span><code id="result-key"></code><span class="help">SHA-256</span><code id="result-hash"></code></div><div class="query-heading"><span class="help">JavaScript · SDK 0.8.0</span><button id="copy-query" class="text-button" type="button">Copy query</button></div><pre><code id="query-code"></code></pre></details>
+        </div>
+        <p id="workflow-status" class="workflow-status" data-state="idle" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer><span>These packages are intended for testnet use.</span><a href="https://github.com/SantiagoDevRel/arkiv-chunking#readme" target="_blank" rel="noopener noreferrer">Package docs ↗</a></footer>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

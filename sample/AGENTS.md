@@ -1,32 +1,32 @@
-# Consumer guide: arkiv-chunking browser sample
+# Consumer guide: Arkiv Files sample
 
-This sample demonstrates one integration: upload a file to Arkiv, retrieve it, verify integrity, and offer an attachment download. Read [README.md](./README.md) for the exact setup, testnet prerequisites, limits and error recovery. Read the [package API and guide](../README.md) before changing the integration. This file adds agent-specific decisions rather than repeating those instructions.
+Integrates published `arkiv-chunking` with a browser wallet, automatic retrieval, verified downloads and an inspectable query. Read [README.md](README.md) for the single source of truth on setup, workflow, design and recovery; read the [package guide](../AGENTS.md) for API invariants. [CLAUDE.md](CLAUDE.md) points here.
 
 ## Ask the developer
 
-- Do they want retrieval only or wallet-backed upload? Retrieval requires no wallet.
-- Which Tiramisu RPC are they authorized to use, and does it require a browser-appropriate access key?
-- For upload, which test wallet should connect and does it have testnet funds? Let the developer connect it; never ask for or copy its private key.
-- Is the example file intentionally public, and what expiration does the use case need?
-- Does the application need a digest obtained independently of the manifest for authenticity? Do not infer trusted authorship from internal hash agreement.
+- Are they opening an existing manifest or storing public test data? Only storage needs an authorized signing wallet and test GLM.
+- Which test account should connect, and what approximate expiration date should the file use? Configure secrets in the wallet, never in chat or browser source.
+- Is the built-in synthetic file sufficient, or which approved public file should replace it?
+- Does retrieval require a trusted digest from outside the manifest? Internal integrity is not proof of author identity.
 
-Do not invent credentials, silently select a mainnet or add unrelated capabilities. If publication is blocked, report it; do not claim that a tarball is a registry release.
+The default Tiramisu public connection needs no RPC input or access key. Do not ask for credentials that this integration does not need. Faucet and setup links belong to README.
 
-## Integration invariants
+## Invariants
 
-- `src/main.ts` imports the published package name. Keep the exact package version in `package.json`; no parent-source aliases, vendored chunking code or hidden monorepo linkage.
-- Keep writes behind deliberate file selection, public-data acknowledgment and wallet approvals. Never automate wallet setup or sign with a bundled key.
-- Check wallet and RPC network IDs. Never bypass the package's manifest, chunk, digest or testnet validation.
-- Keep RPC values in the form's memory only. Provider exceptions may contain secrets: render safe errors, never raw exceptions or request payloads.
-- Treat all filenames, returned metadata and manifest keys as untrusted strings: assign text through `textContent`, not HTML. Downloads are attachments; never iframe or render uploaded content.
-- Expose a download only after complete verification. On new attempts, clear the previous download and revoke the old object URL.
-- Failed writes do not imply rollback. Show the incomplete manifest when known; do not auto-retry an ambiguous transaction.
-- All deliverable content and user-facing copy must be in English. Use the existing typography contract and canonical Arkiv tokens documented in the README.
+- Import the exact published npm dependency. Never copy its chunking/storage/validation code or use a parent-source alias.
+- Storage follows an explicit Store & verify action and wallet approvals. No consent checkbox is required by this sample. No write occurs on page load, file selection or connection alone.
+- Network switching is a wallet request triggered by a user action, targeting Tiramisu only. Check account and network before every signature and stop if they change during upload.
+- Dates are approximate. Use `expiration.ts` with fresh SDK network timing, preserve admission limits and reject invalid/stale inputs. Never pretend a selected date is a guaranteed deadline.
+- Separate confirmed storage from failed readback. Retry verification must call only the read path, never re-upload. Retain an uncertain upload's manifest for inspection.
+- Clear old results on new attempts and expose downloads only after full verification. Metadata is untrusted text; neutral attachments never render uploaded content.
+- Keep the fixed RPC configuration internal. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
+- Explorer URLs use the verified Tiramisu indexer origin and validated keys/hashes. Blocks use `/block?block=NUMBER`; entities use `/entity/KEY`.
+- Query examples must work with the documented package/SDK versions. Do not replace the complete file verifier with a bare manifest query.
+- All UI, documentation and guides are English. Reuse the documented Claude Design composition and Arkiv tokens; prototype simulations and injected runtime files do not belong in the app.
+- Keep each explanation in one place. Reserve the status area for actual feedback; show query details on demand. Essential actions and errors must remain visible, and disclosures must work with keyboard and touch.
 
-## Verify an integration
+## Verify
 
-Run the README from a clean checkout. Confirm the displayed package version and `npm ls arkiv-chunking @arkiv-network/sdk viem`. Exercise a non-sensitive file spanning at least two chunks and a zero-byte file; independently compare saved bytes with originals. Also retrieve by manifest key after page reload without a wallet.
+Follow README from a clean checkout and confirm `npm ls` plus the displayed package version. Exercise the built-in file, a custom multi-chunk file, an empty file, date limits, stale timing, no wallet, wrong network, wallet rejection/account change, missing/corrupt data and confirmed storage followed by failed readback. Retry must not increase the write count. Compare the actual saved download with the original bytes.
 
-Check no wallet, wallet rejection, wrong wallet network, wrong RPC network, malformed key, RPC failure, missing/expired parts, interrupted upload and hash mismatch. Use an isolated browser profile or controlled mocks for wallet failures; never alter the developer's real wallet to simulate them. Label mocks as mocks and record separate on-chain evidence.
-
-Run the build and the browser checklist in the README. Report exact runtime/dependency/network versions, transaction or manifest evidence safe to share, and every untested or blocked path. Do not claim tests listed here were performed without running them.
+Open a real manifest after reload without a wallet. Run the displayed query and inspect the explorer's content, not only its HTTP status. Inspect the complete screen and all states at the documented widths, with long text and zoom. Label simulated and real checks separately. Audit final changes with Claude and report evidence and unverified boundaries. Localhost review precedes any public deployment.

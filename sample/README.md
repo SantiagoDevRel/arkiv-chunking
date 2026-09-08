@@ -1,12 +1,12 @@
-# arkiv-chunking sample
+# Arkiv Files sample
 
-A browser sample that stores a file as Arkiv entities, retrieves its chunks, verifies their integrity and downloads the reconstructed file. It imports the public `arkiv-chunking@0.1.0` package; there is no copied chunking implementation or source alias to the parent directory.
+A compact file workspace built with Claude Design and the Arkiv Design System. It consumes the published **arkiv-chunking@0.1.0** package: choose a file, sign its storage transactions, and get the automatically retrieved and verified result.
 
 **These packages are intended for testnet use.**
 
 ## Run from a clean checkout
 
-Requires Node.js 22.12 or newer, npm and a current browser with Web Crypto. Serve over localhost or HTTPS:
+Use Node.js 22.12+ and npm. Tested: Node 22.22.3, npm 10.9.8, SDK 0.8.0, viem 2.56.3, Vite 8.2.2 and Chrome 152.
 
 ```sh
 git clone --branch feat/file-chunking https://github.com/SantiagoDevRel/arkiv-chunking.git
@@ -16,58 +16,69 @@ npm run build
 npm run dev
 ```
 
-Open <http://127.0.0.1:3076>. The port is fixed: if occupied, stop the process you own using that port or explicitly choose another port with `npm run dev -- --port 3077`. No `.env` file or build-time credentials are required.
+Open http://127.0.0.1:3076. If that port is occupied, choose another explicitly: `npm run dev -- --port 3077`. No environment file, API key or private key is needed. On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`.
 
-The manifest pins `arkiv-chunking` to `0.1.0`, Arkiv SDK to `0.8.0`, viem to `2.56.3`, TypeScript to `5.9.3` and Vite to `8.2.2`. The package version is displayed using its exported `VERSION`, so the visible version describes the actual import.
+The lockfile resolves the exact published package from npm, with no alias to parent source. Confirm with `npm ls arkiv-chunking @arkiv-network/sdk viem`. The header displays the imported package's `VERSION`.
 
-The sample resolves `arkiv-chunking@0.1.0` from the public npm registry. See the [verification report](../docs/verification.md) for registry installation and real-network evidence.
+## Try the complete flow
 
-## Perform the complete flow
+1. The **Upload** tab starts with `arkiv-demo.txt` selected: 120,001 bytes of synthetic public text, spanning two chunks. You do not need to create or find a file. **Choose a file** replaces it; **Use sample file** restores it. Zero-byte files are supported.
+2. Choose an **Entity Expiration** date and time in your device's timezone, shown beside the field. The default is tomorrow. It is an approximate network date, not an exact wall-clock deadline.
+3. Click **Store & verify**. An injected Ethereum-compatible wallet connects and, if necessary, asks to switch to Tiramisu (chain 7738577). The separate **Connect wallet** button lets you connect first. The sample never signs on page load.
+4. Approve each transaction. The built-in file needs **four approvals**: manifest, two chunks, and finalization. The result panel shows progress. All bytes and filenames are public; use synthetic or otherwise approved public files.
+5. After finalization, retrieval and integrity verification run **automatically**. Expected result: **File verified**, `120,001 bytes`, `2` chunks, and `Every byte matches your file.`
+6. **Download file** saves a neutral attachment. **View entity in explorer** opens the real Tiramisu manifest. **View query & file details** reveals its key, digest and a complete copyable JavaScript query/retrieval example. **Copy query** copies that example; use the package README's consumer installation before running it.
 
-1. Keep the supplied Tiramisu RPC or enter your own HTTPS RPC URL. It must return chain ID `7738577`. The URL stays in the current form; the sample does not store it in localStorage, analytics or logs. If the provider requires an access key, obtain a browser-appropriate key from that provider; Arkiv Hub provides [access keys](https://hub.arkiv.network/api-keys). A key embedded in a browser URL is visible to that browser and provider; never put an administrative credential here.
-2. For upload, use an injected EIP-1193 wallet connected to Tiramisu, with enough GLM **testnet** funds for the transaction fees and entity storage. Follow the [network setup](https://hub.arkiv.network/networks) and obtain funds from the [testnet faucet](https://hub.arkiv.network/faucet). The sample does not request private keys or automatically alter your wallet's network configuration. Retrieval does not need a wallet or funds.
-3. Select a small, non-sensitive file. For a reproducible example with two chunks, create `example.txt` containing 120,001 ASCII characters. The default chunk size is 100,000 bytes, so the preview will show two chunks. Empty files are supported as one empty chunk.
-4. Choose Entity Expiration, acknowledge that the bytes and filename will be public, then click **Connect wallet and upload**. Approve the wallet connection and each transaction. Upload uses one manifest transaction, one transaction per chunk, and one manifest finalization transaction. A file with two chunks therefore needs four transaction approvals.
-5. Copy the returned manifest key and click **Retrieve file**. Expected result: `Verified: the bytes exactly match the file you uploaded.`, with file size, chunk count, SHA-256 and a download link. The byte comparison uses the original in this tab; the package separately checks the complete file's SHA-256 digest and manifest structure.
-6. Click **Download verified file**. The sample serves an attachment as `application/octet-stream`; it never renders uploaded HTML or executes uploaded content.
+For a read-only flow, choose **Open existing**, paste a manifest key and click **Retrieve & verify**. No wallet or funds are needed. Reloading does not lose the on-chain file; keep its manifest key. In that case verification checks integrity against the manifest, not an independently trusted author. See the package's `expectedSha256` option for trusted digest pinning.
 
-Create the fixture with two chunks from the sample directory with:
+## Wallet, network and expiration
+
+The sample uses the SDK's public Tiramisu RPC internally. There is no RPC configuration form. Reads and these tested writes required no access key. If that public service changes access policy, update the integration deliberately; do not put administrative credentials in a browser bundle.
+
+Uploads require test GLM in a testnet wallet. Use the [faucet](https://hub.arkiv.network/faucet) and [network setup](https://hub.arkiv.network/networks). If Tiramisu is not installed in your wallet, follow the setup link, then reconnect. Account and network are checked before every signature; a change during upload stops subsequent writes.
+
+The date adapter in `src/expiration.ts` calls SDK `getBlockTiming()` immediately before upload, then converts the selected date into the published package's relative `expirationBlocks`. It validates the package's minimum/maximum budgets and rejects timing more than five minutes away from the device clock. It does not silently clamp dates. Network progress and wallet approval delays can shift actual expiration. The result estimates the date from the actual returned `expiresAt` and fresh network timing. A failed date estimate never removes a verified download. Entity Expiration affects current availability; it does not erase historical bytes.
+
+## Errors and recovery
+
+- **No wallet / unknown network:** enable an injected wallet and configure Tiramisu. Existing-file retrieval still works without a wallet.
+- **Rejected signature / changed account or network:** inspect wallet transactions. Confirmed entities remain. Keep any returned manifest key and use the explorer before starting a new upload.
+- **Stored, but verification not completed:** storage succeeded. **Retry verification** only reads; it sends no transactions and never repeats the upload.
+- **Invalid or past date / stale timing:** choose a later date, check your device clock or try again when network timing is available. No write is submitted for a rejected date.
+- **Missing or expired manifest:** check the key and network. No fallback network or partial file is returned.
+- **Missing/corrupt chunks or digest mismatch:** download stays disabled. Do not bypass verification. A retry may help a transient read outage, but cannot repair corrupt data.
+- **RPC failure / insufficient funds:** check connectivity and test GLM. Raw provider errors are not rendered because they may include sensitive request data.
+- **File too large:** the package buffers files in memory and limits them to 32 MiB. Start with the supplied small sample. Basenames must satisfy the package's validation rules.
+- **Clipboard unavailable:** select the displayed query text and copy it manually. Serve on localhost or HTTPS for browser Web Crypto and clipboard support.
+
+There is no resume, rollback, cleanup, encryption or file viewer. Downloads use `application/octet-stream`; uploaded HTML is never rendered. No private key enters the app.
+
+## Consumer agents and verification
+
+Give your agent [AGENTS.md](AGENTS.md), its [CLAUDE.md pointer](CLAUDE.md), and the [package guide](../AGENTS.md) explicitly. Do not assume it discovers files in `node_modules`. The package [README](../README.md) owns API contracts and limits; this README owns the sample workflow.
+
+From the repository root, run `npm test` and `npm run typecheck`. For the separate browser suite, keep the sample running and execute:
 
 ```sh
-node -e "require('node:fs').writeFileSync('example.txt', 'x'.repeat(120001), {flag:'wx'})"
+npx playwright install chromium
+npm run test:browser
 ```
 
-This intentionally fails if `example.txt` already exists, preserving your files.
+`SAMPLE_URL` selects a different local URL, `BROWSER_CHANNEL=chrome` uses an installed Chrome, and `ARTIFACTS_DIR` sets the screenshot/evidence directory. The browser suite uses the actual npm package and SDK with controlled RPC and a test wallet; it does not send real transactions. Real-network evidence and unverified boundaries are in [the verification report](../docs/verification.md).
 
-You can reload the page and paste a manifest key to retrieve an existing file without a wallet. That path verifies the file against the manifest, not against an independently trusted digest or author identity. For authenticity-sensitive applications, use the package's `expectedSha256` option with an independently obtained digest; see the [package README](../README.md).
+## Design provenance and contract
 
-## Limits and recovery
+The user-requested [Claude Design prototype](https://claude.ai/design/p/31e23730-6446-4adf-9b09-c9b8a2db0ad1) used **Arkiv Design System**. The implemented sample adapts its compact topbar, exclusive Upload/Open modes, file tile, date input and adjacent result panel. It replaces every prototype simulation with the published package and real SDK. No prototype runtime, signed preview URL, mock wallet or simulated success ships in the app.
 
-- Files are buffered in browser memory. The package limit is 32 MiB; this sample uses the default chunk size and displays the actual chunk count. Start small: every chunk adds a transaction and testnet storage cost.
-- Expiration is availability policy, not deletion from chain history. Do not upload personal, secret or copyrighted material without authorization.
-- No wallet: install or enable an injected Ethereum-compatible wallet. No account: grant access to a test account. Wallet rejection: approve only the action you intended and retry deliberately.
-- Wrong network: configure both the RPC and wallet for Tiramisu. The sample checks both before upload, and the package checks again.
-- RPC errors: verify endpoint reachability, access policy, rate limits and browser CORS. Detailed provider errors are intentionally not rendered because they may include credentials or request payloads.
-- Insufficient funds: obtain testnet GLM through the current Arkiv faucet resources. Do not use mainnet funds.
-- Interrupted upload: confirmed entities remain. When available, the UI exposes the incomplete manifest key. Inspect your wallet's transaction history before starting another upload; the sample has no automatic write retries, rollback, resume or cleanup.
-- Retrieval failure: check the full 32-byte manifest key, network and expiration. Missing, malformed, mismatched or incomplete entities fail closed: the sample provides no partial download.
-- A file named `.`/`..`, with control characters, or with a basename longer than 255 UTF-8 bytes is rejected by the package. Rename it before uploading.
-- Google Fonts unavailable: system fonts are usable fallbacks. No licensed font files ship in this source.
+Colors, spacing, wordmark and button treatments mirror `Arkiv-Network/arkiv-ui`: Ink `#111111`, Sand `#F6F4EF`, Stone `#E9E6DE`, Orange `#FE7446`, Blue `#181EA9`. The warm light workspace and dark header are intentional. It has no theme toggle. Space Grotesk is the design system's open fallback for Brutal Type; IBM Plex Mono is the body/control font. Google Fonts is the font provider; system fonts remain fallbacks. Licensed font files are not distributed.
 
-## Consumer agents and maintenance
+| Role | Family | Size / weight / line height |
+|---|---|---|
+| Wordmark | Space Grotesk | 22px /700 /1.5 |
+| App name and section/result headings | Space Grotesk | 24px /500 /1.2 |
+| Workspace heading | Space Grotesk | 32px desktop, 24px narrow /500 /1.2 |
+| Body and primary controls | IBM Plex Mono | 16px /400 /1.5 |
+| Help, secondary actions, field labels | IBM Plex Mono | 14px /400–500 /1.5 |
+| Code and metadata labels | IBM Plex Mono | 12px /400 /1.5–1.7 |
 
-Read [AGENTS.md](./AGENTS.md) for integration decisions and verification responsibilities; [CLAUDE.md](./CLAUDE.md) points to the same guide. Explicitly provide those files to an integration agent. For the npm API, also provide the package [AGENTS.md](../AGENTS.md); do not assume an agent discovers documentation in `node_modules`.
-
-### Typography and design provenance
-
-This small vanilla sample mirrors the tokens, section heading and outline button treatments of `Arkiv-Network/arkiv-ui` at commit `aeb2b272fe2d15c6ad3ca59a5e3af045356a2c14` (`registry/styles/arkiv-tokens.css`, `src/components/ui/button.tsx`, `src/components/ui/section-heading.tsx`). Space Grotesk is its documented open fallback for Brutal Type; IBM Plex Mono is its body/control family. The sample distributes no licensed font assets and invents no Arkiv logo.
-
-| Role | Family | Size / weight / line height / letter spacing |
-| --- | --- | --- |
-| Page heading | Space Grotesk, system sans fallback | 32px / 500 / 1.1 / 0 |
-| Section heading | Same heading family | 24px / 500 / 1.1 / 0 |
-| Body, labels, controls | IBM Plex Mono, system monospace fallback | 16px / 400 / 1.5 / normal |
-| Help, metadata, code | Same body family | 14px / 400 / 1.5 / normal |
-| Eyebrow | Same body family | 14px / 500 / 1.5 / 0 |
-
-Single-column layout at all widths; breakpoint `600px` changes outer padding and button width only. Long keys wrap. Dark is the only supported theme. Browser checks must include 390, 768 and 1440px, both sides of the 600px breakpoint, 200% zoom, computed typography and loaded fonts, plus empty/loading/error/success states. See the repository delivery report for checks actually run; this table is the design contract, not a test result.
+At widths above 700px, controls and result sit side by side; below that, the result appears when needed. The 960px breakpoint adjusts padding and result metadata wrapping. Inspect 390/768/1440, both sides of 700/960, empty/prepared/loading/error/success, long names, font loading, overflow and 200% reflow. Do not reduce essential control labels or truncate filenames to force a fit. The typography table is a contract, not evidence of a test run.

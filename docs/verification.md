@@ -1,6 +1,24 @@
-﻿# Verification — arkiv-chunking 0.1.0
+# Verification — arkiv-chunking 0.1.0
 
 Date: 2026-09-08. This bundled report is the snapshot taken before publishing the reviewed artifact. Post-publication registry and sample checks are tracked in the [current source report](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/docs/verification.md).
+
+## Current sample redesign — 2026-09-08
+
+The sample was redesigned after the original delivery below. The earlier dark UI, separate RPC form and manual retrieval descriptions are historical evidence, not the current interface. The npm package remains the published **0.1.0**; only its consumer sample and supporting checks changed.
+
+The requested [Claude Design project](https://claude.ai/design/p/31e23730-6446-4adf-9b09-c9b8a2db0ad1) used Arkiv Design System. Its rendered prototype was inspected and adapted into a compact workspace. Upload and Open existing are exclusive modes; a built-in 120,001-byte file is selected; Tiramisu access is internal; Entity Expiration uses a local date/time; storage automatically retrieves and verifies the original bytes. Query details are disclosed on demand, with a working explorer link. The acknowledgement checkbox was removed.
+
+**Real execution:** four additional Rabby / Arkiv Wallet transactions confirmed on Tiramisu, followed automatically by byte-exact retrieval. The saved attachment was independently downloaded without a wallet and matched the original. The exact displayed query ran in a clean consumer installed from npm and printed `arkiv-demo.txt 120001`. The explorer was rendered and checked for the actual manifest and creation block. See [redesign transaction and download evidence](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/docs/redesign-testnet-evidence.json). Together with the original delivery, **20 real transactions** succeeded; the redesigned flow accounts for four of these. Keys may expire.
+
+**Automated execution:** 34 tests passed (27 package tests plus seven date-adapter cases), typecheck and the sample production build passed. The browser suite uses the real npm package and SDK against controlled RPC, with 17 simulated transactions. It covers the built-in/custom/empty files, actual attachment bytes, corruption, no wallet, wrong wallet network, declined signature, account change, invalid/past dates, stale timing, and read failure after finalization. Retrying the last case performs zero additional writes. Keyboard tab navigation is also checked.
+
+**Rendered checks:** 390/699/701/768/959/961/1440px, including both sides of the 700/960px breakpoints, with prepared/loading/success/error and long filenames. No horizontal overflow; desktop primary controls fit at 1440×900. The warm light workspace and dark header are intentional. Computed fonts use Space Grotesk and IBM Plex Mono. A separate CSS 200% check exposed squeezed result metadata; a narrow-panel container rule corrected it. Native browser zoom remains unverified.
+
+**Independent Claude audit:** approved the redesign with no blocking findings. Claude independently ran all 34 tests, typecheck and browser checks, inspected responsive layout, queried live block timing, executed the query example, and rendered the real explorer entity. Its optional case-normalization and stale-clock wording suggestions were corrected, and UTF-8 BOMs were removed. Claude's audit did not sign transactions; the real Rabby evidence above is separate.
+
+**Copy review:** Claude and Grok Build inspected Upload, Open existing and a real retrieved file. Repeated verification explanations and idle slogans were removed, wallet-free retrieval is explained once, and funding links appear only for uploads. A functional page title works in both modes; success copy is shorter. Manifest-key help remains visible for first-time visitors. Query details use a keyboard/touch-accessible disclosure. Claude's focused follow-up approved the copy changes, keyboard tabs and evidence addendum with no blockers; its JSON encoding and packaged-link observations were corrected. Grok's Cursor lane hit its usage limit; the existing Grok Build lane completed the actual review. Neither reviewer submitted transactions.
+
+No public deployment or Hub card has been created. The current sample is served locally for review; the source report is newer than the immutable report bundled in npm 0.1.0.
 
 | Component | Tested version |
 |---|---|

@@ -1,0 +1,46 @@
+{
+    "date":  "2026-09-08T22:42:51.955Z",
+    "package":  "arkiv-chunking@0.1.0",
+    "sdk":  "0.8.0",
+    "chainId":  7738577,
+    "wallet":  "Rabby / Arkiv Wallet",
+    "account":  "0xa618a2736431f24c26f1c8dac9ca00ecc845a1c6",
+    "filename":  "arkiv-demo.txt",
+    "bytes":  120001,
+    "chunkCount":  2,
+    "selectedLocalDate":  "2026-09-09T17:39",
+    "displayedApproximateExpiration":  "Sep 9, 2026, 5:39 PM",
+    "manifestKey":  "0x5cf28ea4904db809f61ff8cf1c0079b159f82160e5e4e49eb857d58c65cae4ea",
+    "sha256":  "0xec51e2ead3f4c988ec27c006123bda936fec6eb2eb8f6bdc7dbe84071a9a3b76",
+    "byteExact":  true,
+    "automaticVerification":  true,
+    "transactions":  [
+                         {
+                             "hash":  "0xc24c2ca54216f18c3dc61fa74529f58fbcd9d0ab6377a54c0ad1dd94857a1880",
+                             "blockNumber":  "199412",
+                             "gasUsed":  "111152"
+                         },
+                         {
+                             "hash":  "0x831256532f87028409717e5e25d48914a54a55ad35cf7380e240ddbacbc83b19",
+                             "blockNumber":  "199447",
+                             "gasUsed":  "4039700"
+                         },
+                         {
+                             "hash":  "0xe1a4eae3ab78a274dac58aef31a1cc0936ffd42c7043482eff1c6059f80b3758",
+                             "blockNumber":  "199495",
+                             "gasUsed":  "839930"
+                         },
+                         {
+                             "hash":  "0xde4dfa310136151928c509981bbf7face6f04cf6767d773487f63ff3533510f7",
+                             "blockNumber":  "199503",
+                             "gasUsed":  "45016"
+                         }
+                     ],
+    "explorerUrl":  "https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/0x5cf28ea4904db809f61ff8cf1c0079b159f82160e5e4e49eb857d58c65cae4ea",
+    "savedDownloadByteExact":  true,
+    "walletFreeReadback":  true,
+    "downloadFilename":  "arkiv-demo.txt",
+    "explorerContentVerified":  true,
+    "copiedQueryExecuted":  true,
+    "copiedQueryOutput":  "arkiv-demo.txt 120001"
+}

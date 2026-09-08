@@ -32,6 +32,7 @@ export function rpcHarness() {
     if (method === 'eth_chainId') return toHex(7738577);
     if (method === 'eth_requestAccounts' || method === 'eth_accounts') return [TEST_ACCOUNT];
     if (method === 'eth_blockNumber') return toHex(block);
+    if (method === 'arkiv_getBlockTiming') return { current_block: toHex(block), current_block_time: Math.floor(Date.now() / 1000), duration: 2 };
     if (method === 'eth_getBalance') return toHex(10n ** 20n);
     if (method === 'eth_estimateGas') return toHex(15000000);
     if (method === 'eth_gasPrice' || method === 'eth_maxPriorityFeePerGas') return '0x1';
