@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-08T21:30:09.311Z",
+  "package": "0.1.0",
+  "registry": "https://registry.npmjs.org/arkiv-chunking/-/arkiv-chunking-0.1.0.tgz",
+  "integrity": "sha512-TG0k5wPzRkXcddOD6e/H/DKUGVz2qECXxwe2ya91ktqQynL9WFUlGPyMG0E3AJtxiba4EEcgUl7CVw5nbWNymw==",
+  "chainId": 7738577,
+  "wallet": "Rabby / Arkiv Wallet",
+  "account": "0xa618a2736431f24c26f1c8dac9ca00ecc845a1c6",
+  "bytes": 120001,
+  "chunks": 2,
+  "manifestKey": "0x4d0b4b07b24415a1c340d1580ff4a937597dc845ef2de047cf6eedf44141eb9b",
+  "sha256": "0x51b20349aa8054bb1112bce8c49282baed7cce35441bed37f8612cefb28e6dc6",
+  "byteExact": true,
+  "status": "Verified: the bytes exactly match the file you uploaded.",
+  "viewports": [
+    390,
+    768,
+    1440
+  ],
+  "transactions": [
+    {
+      "hash": "0x4395a50e0376575959b363ca04659183189a3e43778d2bb58b45c08cfd7f69ab",
+      "blockNumber": "197268",
+      "gasUsed": "111104"
+    },
+    {
+      "hash": "0xe58fc593ed7556931b54753ae6553461d04d7fcce6b52e7a8c7b12f40af05b34",
+      "blockNumber": "197276",
+      "gasUsed": "4039730"
+    },
+    {
+      "hash": "0xa85c66050522282ed576c0565f8047a42e64dd95b5a8d77e9ee739fecc5d1325",
+      "blockNumber": "197283",
+      "gasUsed": "839960"
+    },
+    {
+      "hash": "0x68ae940006453ed5d9549aeadcbe82eab54763d97aa7ae7a9156b56246de6849",
+      "blockNumber": "197288",
+      "gasUsed": "45016"
+    }
+  ],
+  "downloadFilename": "example.txt",
+  "downloadByteExact": true,
+  "walletFreeRetrieval": true
+}

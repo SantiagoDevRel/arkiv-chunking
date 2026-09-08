@@ -52,3 +52,15 @@ Follow [README](../README.md) for exact package checks and the [sample README](h
 The optional `scripts/live-smoke.mjs` uses a locally configured Node signing key. It was syntax-checked; **that signer mode was not executed**. The real cases above used the same public API and fixtures through an authorized Rabby EIP-1193 signer.
 
 Other SDK versions, runtimes and networks are unverified. No public sample deployment was created. The Hub `/tools` card is explicitly deferred. No skills, MCP integration or unrelated features were added.
+
+## Published release and sample
+
+`arkiv-chunking@0.1.0` was published to the public npm registry on 2026-09-08. Registry metadata was fetched after publication and matched the reviewed tarball exactly:
+
+```text
+sha512-TG0k5wPzRkXcddOD6e/H/DKUGVz2qECXxwe2ya91ktqQynL9WFUlGPyMG0E3AJtxiba4EEcgUl7CVw5nbWNymw==
+```
+
+The sample installed that exact registry version and generated a registry-backed lockfile. Its production build served `index-ago41XL-.js`. The real browser flow uploaded the README fixture (`example.txt`, 120,001 bytes), confirmed four Rabby transactions on Tiramisu, retrieved two chunks, and displayed `Verified: the bytes exactly match the file you uploaded.` The reconstructed Blob matched the original. A separate clean browser without a wallet retrieved the same real manifest and downloaded `example.txt`; the saved attachment also matched byte-for-byte. The shared Chrome download-artifact handoff failed in the automation harness, so the file-save assertion was completed in that isolated browser without sending another transaction.
+
+The real successful screen was inspected at 390/768/1440 pixels with no horizontal overflow. [Published-package sample evidence](registry-sample-evidence.json) records the manifest, hashes, registry integrity and receipt blocks. Across prepublication API cases and this registry sample, **16 real Tiramisu transactions succeeded**. No public demo has been deployed; localhost review precedes deployment.

@@ -11,7 +11,7 @@ Requires Node.js 22.12 or newer, npm and a current browser with Web Crypto. Serv
 ```sh
 git clone --branch feat/file-chunking https://github.com/SantiagoDevRel/arkiv-chunking.git
 cd arkiv-chunking/sample
-npm install
+npm ci
 npm run build
 npm run dev
 ```
