@@ -20,6 +20,10 @@ The requested [Claude Design project](https://claude.ai/design/p/31e23730-6446-4
 
 No public deployment or Hub card has been created. The current sample is served locally for review; the source report is newer than the immutable report bundled in npm 0.1.0.
 
+The final Claude delta review closed with **STATUS: OK**: evidence JSON parses, the absolute evidence link resolves packaging concerns, shorter copy preserves the identity distinction, and narrow result metadata no longer overlaps. It also verified no overflow at 320px CSS width. A fresh GitHub clone of code commit `4573518` followed `sample/README.md`: `npm ci`, production build and `npm ls` passed, resolving npm `arkiv-chunking@0.1.0`, SDK 0.8.0 and viem 2.56.3. Its JavaScript/CSS assets match the inspected localhost preview (`index-0dgpEjrT.js`, `index-DVtonyW0.css`).
+
+The clean checkout started with the documented explicit alternate-port option and passed all 12 browser checks against its own dev server, including the 17 controlled transactions and saved attachments. The independent Codex coverage follow-up marked all nine redesign/copy requests complete.
+
 | Component | Tested version |
 |---|---|
 | Node / npm | 22.22.3 / 10.9.8 on Windows |
