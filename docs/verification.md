@@ -2,7 +2,21 @@
 
 Date: 2026-09-08. This bundled report is the snapshot taken before publishing the reviewed artifact. Post-publication registry and sample checks are tracked in the [current source report](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/docs/verification.md).
 
-## Current sample redesign — 2026-09-08
+## Current dark/light theme and chunk inspection — 2026-09-08
+
+The latest sample starts dark, preserves an explicit light preference, explains the transaction count in an accessible disclosure, and removes the static Ready/Store/Verify labels. The result shows the individual chunk entities, full keys linking to each explorer page, actual 96-byte payload previews, complete payload downloads and expandable attributes. The file manifest has its own link and copy-key action. The query disclosure contains only the SDK query that fetches the displayed chunk entities and attributes; runnable client setup belongs to the sample README.
+
+The official white wordmark was downloaded from the actual Arkiv Brand Assets Drive folder and used unchanged on the dark header. [Provenance and exact hashes](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/public/brand/provenance.json) record both official SVG variants. The earlier text approximation is no longer used.
+
+**Real reads:** the user-provided manifest resolved to two chunk entities, of 100,000 and 20,001 bytes. The displayed query was copied verbatim into an existing clean npm consumer with the documented imports. It returned those same entity keys, attributes and payloads; independent SHA-256 over the ordered bytes matched the original 120,001-byte file. Both individual explorer pages were rendered and checked for their actual keys. [Chunk evidence](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/docs/chunk-inspection-evidence.json) records the result. This update sent no new live transactions.
+
+**Checks:** all 34 package/date tests, typecheck and production build passed. The expanded browser suite passed 15 checks using the published npm package and real SDK with 17 controlled transactions. It executes the displayed query, compares each downloaded payload with the original slice, verifies reassembly, checks theme persistence and keyboard disclosures, and confirms an inspection-only outage preserves the verified file and retries with zero writes. Both themes were rendered at 390/699/701/768/959/961/1440px for baseline, loading, success, long filename, expanded details and errors. A clipped small chunk collection found in review was corrected; up to four cards now remain fully visible rather than requiring a nested scroll. Native browser zoom remains unverified.
+
+Inspection is a separate read after the package verifies a download. It pins its own block snapshot and manifest owner/creator and verifies the inspected payloads again through published `reconstructFile`. It does not replace the package's download logic. No dependencies, package release, public deployment or Hub card were added.
+
+**Final Claude audit:** approved all six requests with no blocking findings. Claude independently executed the displayed query against Tiramisu, checked the two keys and payload sizes, retrieved the file through npm, verified both SVG hashes and header contrast, and passed 32 isolated-browser assertions. It confirmed theme persistence, keyboard disclosure, uncapped small chunk collections and inspection-error recovery with zero writes. Its two optional findings were addressed: unused stepper CSS was removed and the result explicitly states `1 manifest + 2 chunks = 3 entities.` The separate Codex coverage check marked all six requests complete. No reviewer signed transactions.
+
+## Workspace redesign — earlier on 2026-09-08
 
 The sample was redesigned after the original delivery below. The earlier dark UI, separate RPC form and manual retrieval descriptions are historical evidence, not the current interface. The npm package remains the published **0.1.0**; only its consumer sample and supporting checks changed.
 

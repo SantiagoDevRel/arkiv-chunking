@@ -25,11 +25,32 @@ The lockfile resolves the exact published package from npm, with no alias to par
 1. The **Upload** tab starts with `arkiv-demo.txt` selected: 120,001 bytes of synthetic public text, spanning two chunks. You do not need to create or find a file. **Choose a file** replaces it; **Use sample file** restores it. Zero-byte files are supported.
 2. Choose an **Entity Expiration** date and time in your device's timezone, shown beside the field. The default is tomorrow. It is an approximate network date, not an exact wall-clock deadline.
 3. Click **Store & verify**. An injected Ethereum-compatible wallet connects and, if necessary, asks to switch to Tiramisu (chain 7738577). The separate **Connect wallet** button lets you connect first. The sample never signs on page load.
-4. Approve each transaction. The built-in file needs **four approvals**: manifest, two chunks, and finalization. The result panel shows progress. All bytes and filenames are public; use synthetic or otherwise approved public files.
+4. Approve each transaction. Expand **4 wallet approvals** to see why: one manifest, two chunks, and finalization. Progress appears while the operation runs. All bytes and filenames are public; use synthetic or otherwise approved public files.
 5. After finalization, retrieval and integrity verification run **automatically**. Expected result: **File verified**, `120,001 bytes`, `2` chunks, and `Every byte matches your file.`
-6. **Download file** saves a neutral attachment. **View entity in explorer** opens the real Tiramisu manifest. **View query & file details** reveals its key, digest and a complete copyable JavaScript query/retrieval example. **Copy query** copies that example; use the package README's consumer installation before running it.
+6. **Download file** saves the reconstructed file. **Copy file key** keeps its manifest key for later; **File manifest** opens that entity in the explorer. The sample file has **three entities** (one manifest and two chunks), written with four approvals because finalization updates the manifest.
+7. Each chunk card shows its entity key, byte count and a preview of its actual payload. Click its key to inspect that chunk in the explorer, **Download payload** for all its bytes, or **Attributes** for its manifest reference and zero-based `seq`. The result shows `100,000 + 20,001 → 120,001 bytes restored.` Previews are limited to 96 bytes, rendered as text or hex; they never execute file content.
+8. **Query these chunks** shows only the query fetching those entities, with their attributes and payloads. It iterates all pages at the inspected block, restricted to the manifest's owner and creator. Results need ordering by `seq` before reassembly; the published package handles this and integrity checks. The inspection query is an additional read, not another upload. If it fails, **Reload chunk details** retries only that view; the verified file remains downloadable.
 
 For a read-only flow, choose **Open existing**, paste a manifest key and click **Retrieve & verify**. No wallet or funds are needed. Reloading does not lose the on-chain file; keep its manifest key. In that case verification checks integrity against the manifest, not an independently trusted author. See the package's `expectedSha256` option for trusted digest pinning.
+
+The sample starts in **dark mode**. **Light mode / Dark mode** toggles appearance; your choice is saved locally. No preference means dark, independent of the operating system setting.
+
+### Run the displayed query
+
+In a consumer installed using the package README, create `query.mjs` with this setup, paste the exact displayed query after it, then run `node query.mjs`:
+
+```js
+import { createPublicClient } from '@arkiv-network/sdk';
+import { tiramisu } from '@arkiv-network/sdk/chains';
+import { key, str } from '@arkiv-network/sdk/attr';
+import { eq } from '@arkiv-network/sdk/query';
+import { http } from 'viem';
+const client = createPublicClient({ chain: tiramisu, transport: http() });
+// Paste the displayed query here. It creates the chunks array.
+// Then inspect: console.log(chunks);
+```
+
+For the built-in file the query returns two entities, with `seq` values `0n` and `1n` and payload lengths 100,000 and 20,001. Keys and snapshot blocks depend on your upload. The displayed snapshot is not a promise of permanent historical availability. Use `downloadFile` from the package for a fully validated current download.
 
 ## Wallet, network and expiration
 
@@ -70,11 +91,11 @@ npm run test:browser
 
 The user-requested [Claude Design prototype](https://claude.ai/design/p/31e23730-6446-4adf-9b09-c9b8a2db0ad1) used **Arkiv Design System**. The implemented sample adapts its compact topbar, exclusive Upload/Open modes, file tile, date input and adjacent result panel. It replaces every prototype simulation with the published package and real SDK. No prototype runtime, signed preview URL, mock wallet or simulated success ships in the app.
 
-Colors, spacing, wordmark and button treatments mirror `Arkiv-Network/arkiv-ui`: Ink `#111111`, Sand `#F6F4EF`, Stone `#E9E6DE`, Orange `#FE7446`, Blue `#181EA9`. The warm light workspace and dark header are intentional. It has no theme toggle. Space Grotesk is the design system's open fallback for Brutal Type; IBM Plex Mono is the body/control font. Google Fonts is the font provider; system fonts remain fallbacks. Licensed font files are not distributed.
+Colors, spacing and button treatments mirror `Arkiv-Network/arkiv-ui`: Ink `#111111`, Sand `#F6F4EF`, Stone `#E9E6DE`, Orange `#FE7446`, Blue `#181EA9`. Dark and light surfaces share these brand tokens; the header stays Ink. The logo is the unmodified **official white SVG**, downloaded from the [official Drive file](https://drive.google.com/file/d/1pUqKsNvDxDf_JNFpQOZVI8u6a979Gd_c/view), not text in a substitute font. Source URLs and verified SHA-256 values are in [brand provenance](public/brand/provenance.json). Space Grotesk is the open fallback for headings; IBM Plex Mono is the body/control font. Google Fonts is the font provider; system fonts remain fallbacks. Licensed font files are not distributed.
 
 | Role | Family | Size / weight / line height |
 |---|---|---|
-| Wordmark | Space Grotesk | 22px /700 /1.5 |
+| Wordmark | Official SVG | 130px wide, native 1389:320 aspect ratio |
 | App name and section/result headings | Space Grotesk | 24px /500 /1.2 |
 | Workspace heading | Space Grotesk | 32px desktop, 24px narrow /500 /1.2 |
 | Body and primary controls | IBM Plex Mono | 16px /400 /1.5 |

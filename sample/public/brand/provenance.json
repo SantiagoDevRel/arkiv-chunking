@@ -1,0 +1,26 @@
+{
+  "verifiedAt": "2026-09-08T23:20:06.828Z",
+  "sourceFolder": "https://drive.google.com/drive/folders/1nfHtxq-QN71_uffQCp6x1OmPMg3BpL74",
+  "wordmarkSvgFolder": "https://drive.google.com/drive/folders/11n7RrF9Blsx5xAPGocFPjq4v66ZQvt2A",
+  "sourcePath": "Arkiv Brand Assets/Arkiv Logo pack/New Logo/[ ARKIV ]/SVG",
+  "method": "Inspected the official Drive folders in an authenticated browser, downloaded each SVG using the Drive Download action, and verified byte-for-byte hashes against the canonical local logo pack. Files are unmodified.",
+  "usage": "Use the white variant on dark backgrounds and the black variant on light backgrounds. Preserve aspect ratio and clear space. Do not recolor or apply filters.",
+  "files": [
+    {
+      "file": "arkiv-wordmark-white.svg",
+      "variant": "white",
+      "sourceName": "LOGO white.svg",
+      "sourceUrl": "https://drive.google.com/file/d/1pUqKsNvDxDf_JNFpQOZVI8u6a979Gd_c/view",
+      "sha256": "ef0040f22c08ea85fc66b065b2f01f36f1572219b63fe0564f0f277130f4cb5c",
+      "bytes": 1246
+    },
+    {
+      "file": "arkiv-wordmark-black.svg",
+      "variant": "black",
+      "sourceName": "LOGO black.svg",
+      "sourceUrl": "https://drive.google.com/file/d/1EJBn3DNmVthiflLc-HhEQ4lCHOyt5dAZ/view",
+      "sha256": "456d2931e350ffb8bfca1d13aa88de267a2742ce556687ddad45cdef8333c729",
+      "bytes": 1246
+    }
+  ]
+}

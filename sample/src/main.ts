@@ -1,8 +1,10 @@
 import { createPublicClient, createWalletClient } from '@arkiv-network/sdk';
 import { tiramisu } from '@arkiv-network/sdk/chains';
 import { custom, http, type EIP1193Provider, type Hex } from 'viem';
-import { uploadFile, downloadFile, ChunkingError, VERSION, DEFAULT_CHUNK_BYTES, MAX_FILE_BYTES } from 'arkiv-chunking';
+import { uploadFile, downloadFile, ChunkingError, VERSION, DEFAULT_CHUNK_BYTES, MAX_FILE_BYTES, type DownloadResult } from 'arkiv-chunking';
 import { dateToBlocks, estimateExpirationDate, toLocalDateTimeInput } from './expiration';
+import { inspectChunks } from './inspection';
+import { initTheme } from './theme';
 import './style.css';
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -21,6 +23,8 @@ let account: Hex | undefined;
 let downloadUrl: string | undefined;
 let currentKey: Hex | undefined;
 let uploaded: { key: Hex; bytes: Uint8Array; sha256: Hex } | undefined;
+let verifiedFile: DownloadResult | undefined;
+const payloadUrls: string[] = [];
 class UserError extends Error {}
 
 function provider(): EIP1193Provider {
@@ -51,7 +55,7 @@ function safeError(error: unknown): string {
 }
 function setBusy(value: boolean) {
   busy = value;
-  document.querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button').forEach(control => { control.disabled = value; });
+  document.querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button:not(#theme)').forEach(control => { control.disabled = value; });
   el('workspace').setAttribute('aria-busy', String(value));
 }
 function status(message: string, state: 'idle' | 'loading' | 'success' | 'error') {
@@ -59,9 +63,16 @@ function status(message: string, state: 'idle' | 'loading' | 'success' | 'error'
   el('workflow-status').dataset.state = state;
   el('result-panel').dataset.state = state;
 }
-function progress(stage: 'ready' | 'store' | 'verify' | 'done') {
-  const current = ['ready', 'store', 'verify', 'done'].indexOf(stage);
-  document.querySelectorAll<HTMLElement>('[data-step]').forEach((node, index) => { node.dataset.state = index < current ? 'done' : index === current ? 'active' : 'waiting'; });
+function clearInspection() {
+  payloadUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
+  el('chunk-list').replaceChildren(); el('query-code').textContent = '';
+  el('query-details').hidden = true; el<HTMLDetailsElement>('query-details').open = false;
+  el('reassembly').hidden = true; el('retry-inspection').hidden = true;
+  el('chunk-title').textContent = 'File chunks';
+  el('inspection-status').textContent = 'Verify the file to inspect its chunks.';
+  el('inspection-status').dataset.state = 'idle';
+  el('copy-key').textContent = 'Copy file key';
+  el('copy-query').textContent = 'Copy query';
 }
 function clearDownload() {
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -70,7 +81,7 @@ function clearDownload() {
   el('save').hidden = true;
 }
 function clearResult() {
-  clearDownload(); currentKey = undefined;
+  clearDownload(); clearInspection(); verifiedFile = undefined; currentKey = undefined;
   el('result-content').hidden = true;
   el('result-empty').hidden = false;
   el('retry').hidden = true;
@@ -83,6 +94,7 @@ function updateFile() {
   const chunks = Math.max(1, Math.ceil(selectedFile.size / DEFAULT_CHUNK_BYTES));
   el('selected-meta').textContent = `${formatBytes(selectedFile.size)} · ${chunks} ${chunks === 1 ? 'chunk' : 'chunks'}`;
   el('approval-note').textContent = `${chunks + 2} wallet approvals.`;
+  el('chunk-approvals').textContent = `Store ${chunks} ${chunks === 1 ? 'chunk' : 'chunks'} — one approval each.`;
   el('file-kind').textContent = selectedFile === demo ? 'SAMPLE FILE' : 'YOUR FILE';
   el('demo').hidden = selectedFile === demo;
 }
@@ -92,9 +104,7 @@ function showKey(key: Hex) {
   el<HTMLInputElement>('manifest').value = key;
   el('result-empty').hidden = true;
   el('result-content').hidden = false;
-  el('result-key').textContent = key;
   el<HTMLAnchorElement>('explorer').href = `${explorer}/entity/${key}`;
-  el('query-code').textContent = `import { createPublicClient } from '@arkiv-network/sdk';\nimport { tiramisu } from '@arkiv-network/sdk/chains';\nimport { key } from '@arkiv-network/sdk/attr';\nimport { eq } from '@arkiv-network/sdk/query';\nimport { http } from 'viem';\nimport { downloadFile } from 'arkiv-chunking';\n\nconst client = createPublicClient({\n  chain: tiramisu, transport: http(),\n});\nconst manifestKey = '${key}';\n\n// Query the file manifest.\nconst manifest = await client\n  .select({ key: true, attributes: true, expiresAt: true })\n  .where(eq('$key', key(manifestKey)))\n  .limit(1).fetch();\n\n// Retrieve every chunk and verify the complete file.\nconst file = await downloadFile({\n  publicClient: client, manifestKey,\n});\nconsole.log(file.filename, file.bytes.length);`;
 }
 function updateWallet() {
   el('connect').textContent = account ? `${account.slice(0,6)}…${account.slice(-4)}` : 'Connect wallet';
@@ -118,8 +128,7 @@ async function connectWallet(): Promise<{ walletProvider: EIP1193Provider; addre
 }
 
 async function verifyFile(key: Hex) {
-  clearDownload(); el('retry').hidden = true; showKey(key); progress('verify');
-  status('Retrieving chunks and checking every byte…', 'loading');
+  clearDownload(); clearInspection(); verifiedFile = undefined; el('retry').hidden = true; showKey(key); status('Retrieving chunks and checking every byte…', 'loading');
   if (mode === 'open' && matchMedia('(max-width: 700px)').matches) el('result-panel').scrollIntoView({behavior:'smooth',block:'start'});
   const original = uploaded?.key.toLowerCase() === key.toLowerCase() ? uploaded : undefined;
   el('result-title').textContent = original ? 'Stored. Verifying…' : 'Verifying file…';
@@ -128,23 +137,66 @@ async function verifyFile(key: Hex) {
     if (original && (result.bytes.length !== original.bytes.length || result.bytes.some((byte, index) => byte !== original.bytes[index]))) throw new UserError('The retrieved bytes do not match your original file.');
     downloadUrl = URL.createObjectURL(new Blob([new Uint8Array(result.bytes)], { type: 'application/octet-stream' }));
     const save = el<HTMLAnchorElement>('save'); save.href = downloadUrl; save.download = result.filename.replace(/[\\/\u0000-\u001f\u007f]/g, '_') || 'file'; save.hidden = false;
+    verifiedFile = result;
     el('result-title').textContent = 'File verified';
     el('result-filename').textContent = result.filename;
     el('result-size').textContent = formatBytes(result.bytes.length);
     el('result-chunks').textContent = String(result.chunkCount);
-    el('result-hash').textContent = result.sha256;
     el('result-expiration').textContent = 'Estimate unavailable';
-    progress('done');
     status(original ? 'Every byte matches your file.' : 'File integrity verified. Publisher identity is not verified.', 'success');
     // Optional presentation metadata must never turn a verified download into failure.
     try {
       const date = estimateExpirationDate(result.expiresAt, await client.getBlockTiming());
       el('result-expiration').textContent = date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
     } catch { /* Verified bytes remain downloadable if date estimation is unavailable. */ }
+    await loadInspection(key, result);
   } catch (error) {
     clearDownload(); el('retry').hidden = false;
     el('result-title').textContent = original ? 'Stored. Verification not completed.' : 'Verification not completed';
     status(`${original ? 'Your upload is confirmed. ' : ''}${safeError(error)} Use Retry verification; it sends no transactions.`, 'error');
+  }
+}
+
+async function loadInspection(key: Hex, verified: DownloadResult) {
+  clearInspection();
+  el('inspection-status').textContent = 'Loading chunk entities…';
+  el('inspection-status').dataset.state = 'loading';
+  try {
+    const { chunks, code } = await inspectChunks(client, key, verified);
+    el('chunk-title').textContent = `${chunks.length} ${chunks.length === 1 ? 'chunk entity' : 'chunk entities'}`;
+    const list = el('chunk-list'); list.dataset.count = String(chunks.length);
+    for (const chunk of chunks) {
+      const card = document.createElement('article'); card.className = 'chunk-card'; card.dataset.seq = String(chunk.seq);
+      const heading = document.createElement('h4'); heading.textContent = `Chunk ${chunk.seq + 1} · ${formatBytes(chunk.payload.length)}`;
+      const link = document.createElement('a'); link.className = 'chunk-key'; link.href = `${explorer}/entity/${chunk.key}`; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = chunk.key; link.setAttribute('aria-label', `Open chunk ${chunk.seq + 1} in explorer: ${chunk.key}`);
+      const label = document.createElement('p'); label.className = 'help';
+      const preview = document.createElement('pre'); preview.className = 'payload-preview';
+      const head = chunk.payload.slice(0, 96);
+      let text: string;
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(head);
+        if (/[\u0000-\u0008\u000b-\u001f]/.test(text)) throw new Error('Binary');
+        label.textContent = `Payload · ${head.length} of ${chunk.payload.length.toLocaleString('en-US')} bytes`;
+      } catch {
+        text = Array.from(head, byte => byte.toString(16).padStart(2, '0')).join(' ');
+        label.textContent = `Payload (hex) · ${head.length} of ${chunk.payload.length.toLocaleString('en-US')} bytes`;
+      }
+      preview.textContent = text || '(empty payload)';
+      const url = URL.createObjectURL(new Blob([new Uint8Array(chunk.payload)], { type: 'application/octet-stream' })); payloadUrls.push(url);
+      const download = document.createElement('a'); download.className = 'chunk-download'; download.href = url; download.download = `chunk-${chunk.seq + 1}.bin`; download.textContent = 'Download payload ↓';
+      const attrs = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Attributes';
+      const json = document.createElement('pre'); json.textContent = JSON.stringify(chunk.attributes, (_, value) => typeof value === 'bigint' ? value.toString() : value, 2);
+      attrs.append(summary, json); card.append(heading, link, label, preview, download, attrs); list.append(card);
+    }
+    el('query-code').textContent = code; el('query-details').hidden = false;
+    el('inspection-status').textContent = `1 manifest + ${chunks.length} ${chunks.length === 1 ? 'chunk' : 'chunks'} = ${chunks.length + 1} entities.`;
+    el('inspection-status').dataset.state = 'success';
+    el('reassembly').textContent = `${chunks.length <= 4 ? chunks.map(chunk => chunk.payload.length.toLocaleString('en-US')).join(' + ') : `${chunks.length} ordered chunks`} → ${formatBytes(verified.bytes.length)} restored.`;
+    el('reassembly').hidden = false;
+  } catch {
+    clearInspection();
+    el('inspection-status').textContent = 'Chunk details are unavailable. Your verified file is still downloadable.';
+    el('inspection-status').dataset.state = 'error'; el('retry-inspection').hidden = false;
   }
 }
 
@@ -158,13 +210,11 @@ el('choose').addEventListener('click', () => el<HTMLInputElement>('file').click(
 el<HTMLInputElement>('file').addEventListener('change', () => {
   const file = el<HTMLInputElement>('file').files?.[0]; if (!file) return;
   if (file.size > MAX_FILE_BYTES) { status('Choose a file no larger than 32 MiB.', 'error'); return; }
-  selectedFile = file; clearResult(); progress('ready'); updateFile(); status('Ready to store and verify.', 'idle');
+  selectedFile = file; clearResult(); updateFile(); status('Ready to store and verify.', 'idle');
 });
-el('demo').addEventListener('click', () => { selectedFile = demo; el<HTMLInputElement>('file').value = ''; clearResult(); progress('ready'); updateFile(); status('Sample file ready. No need to find a file.', 'idle'); });
+el('demo').addEventListener('click', () => { selectedFile = demo; el<HTMLInputElement>('file').value = ''; clearResult(); updateFile(); status('Sample file ready. No need to find a file.', 'idle'); });
 function setMode(next: 'upload' | 'open') {
-  if (busy) return; mode = next; clearResult(); progress('ready');
-  el('upload-form').hidden = next !== 'upload'; el('open-form').hidden = next !== 'open';
-  document.querySelector<HTMLElement>('[data-step=store]')!.hidden = next === 'open';
+  if (busy) return; mode = next; clearResult(); el('upload-form').hidden = next !== 'upload'; el('open-form').hidden = next !== 'open';
   for (const value of ['upload','open']) {
     el(`tab-${value}`).setAttribute('aria-selected', String(value === next));
     el(`tab-${value}`).tabIndex = value === next ? 0 : -1;
@@ -185,7 +235,7 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
   event.preventDefault(); if (busy || mode !== 'upload') return;
   setBusy(true); clearResult(); uploaded = undefined;
   el('result-filename').textContent = selectedFile.name;
-  el('result-size').textContent = formatBytes(selectedFile.size); el('result-chunks').textContent = '—'; el('result-hash').textContent = '—'; el('result-expiration').textContent = '—';
+  el('result-size').textContent = formatBytes(selectedFile.size); el('result-chunks').textContent = '—'; el('result-expiration').textContent = '—';
   let partialKey: Hex | undefined; let releaseGuard: (() => void) | undefined;
   try {
     const chunks = Math.max(1, Math.ceil(selectedFile.size / DEFAULT_CHUNK_BYTES));
@@ -209,7 +259,6 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
     const bytes = new Uint8Array(await selectedFile.arrayBuffer());
     let expirationBlocks: number;
     try { expirationBlocks = dateToBlocks(chosenDate, await client.getBlockTiming(), chunks); } catch(error) { throw new UserError(error instanceof Error ? error.message : 'Choose a future expiration date.'); }
-    progress('store');
     if (matchMedia('(max-width: 700px)').matches) el('result-panel').scrollIntoView({behavior:'smooth',block:'start'});
     const result = await uploadFile({publicClient:client,walletClient:wallet,bytes,filename:selectedFile.name,contentType:selectedFile.type || 'application/octet-stream',expirationBlocks,
       onProgress: p => { if(p.manifestKey) partialKey=p.manifestKey; const label=p.phase==='manifest'?'Creating file manifest':p.phase==='chunks'?`Storing chunk ${Math.min(p.completed+1,p.total)} of ${p.total}`:'Finalizing file'; status(`${label}. Confirm the pending request in your wallet.`, 'loading'); },
@@ -226,15 +275,26 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
 el<HTMLFormElement>('open-form').addEventListener('submit', async event => {
   event.preventDefault(); if(busy)return;
   const key = el<HTMLInputElement>('manifest').value.trim();
-  clearResult(); el('result-filename').textContent='—'; el('result-size').textContent='—'; el('result-chunks').textContent='—'; el('result-hash').textContent='—'; el('result-expiration').textContent='—';
+  clearResult(); el('result-filename').textContent='—'; el('result-size').textContent='—'; el('result-chunks').textContent='—'; el('result-expiration').textContent='—';
   if(!/^0x[0-9a-fA-F]{64}$/.test(key)){status('Enter a manifest key: 0x followed by 64 hexadecimal characters.','error');return;}
   setBusy(true); try {await verifyFile(key as Hex);} finally{setBusy(false);}
 });
 el('retry').addEventListener('click', async () => {if(busy || !currentKey)return;setBusy(true);try{await verifyFile(currentKey);}finally{setBusy(false);}});
 el('copy-query').addEventListener('click', async () => {try{await navigator.clipboard.writeText(el('query-code').textContent ?? '');el('copy-query').textContent='Copied';}catch{el('copy-query').textContent='Select code to copy';}});
+el('copy-key').addEventListener('click', async () => {
+  if (!currentKey) return;
+  try { await navigator.clipboard.writeText(currentKey); el('copy-key').textContent = 'Key copied'; }
+  catch { el('copy-key').textContent = 'Key in Open existing'; }
+});
+el('retry-inspection').addEventListener('click', async () => {
+  if (busy || !currentKey || !verifiedFile) return;
+  setBusy(true); try { await loadInspection(currentKey, verifiedFile); } finally { setBusy(false); }
+});
+initTheme(el<HTMLButtonElement>('theme'));
 el('version').textContent=`v${VERSION}`;
 el<HTMLInputElement>('expiration').value=toLocalDateTimeInput(new Date(Date.now()+86400000));
 el<HTMLInputElement>('expiration').min=toLocalDateTimeInput(new Date(Date.now()+120000));
 el('timezone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;
-updateFile();progress('ready');updateWallet();
+updateFile();updateWallet();
 window.addEventListener('pagehide',clearDownload);
+window.addEventListener('pagehide',clearInspection);

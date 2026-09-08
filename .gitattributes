@@ -1,0 +1,2 @@
+# Keep official asset bytes identical to their verified Drive sources on Windows.
+sample/public/brand/*.svg -text

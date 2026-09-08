@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light" />
+  <meta name="color-scheme" content="dark light" />
   <title>Arkiv Files · Store & verify</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,8 +11,8 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="arkiv-mark">[ ARKIV ]</span><span class="brand-divider"></span><h1>Files</h1><span class="version" id="version"></span></div>
-    <div class="wallet-controls"><span class="network"><span class="network-dot"></span>Tiramisu testnet</span><button id="connect" class="wallet-button" type="button">Connect wallet</button></div>
+    <div class="brand"><img class="arkiv-mark" src="/brand/arkiv-wordmark-white.svg" alt="Arkiv" width="130" height="30" /><span class="brand-divider"></span><h1>Files</h1><span class="version" id="version"></span></div>
+    <div class="wallet-controls"><button id="theme" class="wallet-button" type="button">Light mode</button><span class="network"><span class="network-dot"></span>Tiramisu testnet</span><button id="connect" class="wallet-button" type="button">Connect wallet</button></div>
   </header>
   <main>
     <div class="page-intro"><h2>Store and retrieve files</h2></div>
@@ -33,7 +33,7 @@
           <div class="expiration-field"><label for="expiration">Entity Expiration</label><input id="expiration" type="datetime-local" required aria-describedby="expiration-help" /><p id="expiration-help" class="help">Approximate date · <span id="timezone"></span></p></div>
           <p class="public-note">Files stored here are public.</p>
           <button id="upload" class="primary" type="submit">Store &amp; verify <span aria-hidden="true">↗</span></button>
-          <p id="approval-note" class="help approval-note"></p>
+          <details class="approvals"><summary id="approval-note"></summary><ol><li>Create the file manifest.</li><li id="chunk-approvals"></li><li>Mark the upload complete.</li></ol><p class="help">Retrieval needs no signatures.</p></details>
           <div class="support-links"><a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds ↗</a><a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Wallet setup ↗</a></div>
         </form>
         <form id="open-form" role="tabpanel" aria-labelledby="tab-open" hidden>
@@ -45,7 +45,7 @@
         </form>
       </section>
       <section class="panel result" id="result-panel" aria-label="File result" data-state="idle">
-        <div class="result-top"><span class="eyebrow">[ RESULT ]</span><ol class="steps" aria-label="File progress"><li data-step="ready" data-state="active">Ready</li><li data-step="store">Store</li><li data-step="verify">Verify</li></ol></div>
+        <div class="result-top"><span class="eyebrow">[ RESULT ]</span></div>
         <div id="result-empty" class="result-empty">
           <div class="file-flow" aria-hidden="true"><span class="flow-file">FILE</span><span class="flow-connector"></span><span class="flow-chunks"><i></i><i></i></span><span class="flow-connector"></span><span class="flow-file final-file">✓</span></div>
           <h3 id="result-empty-title">Your verified file lands here.</h3>
@@ -54,8 +54,15 @@
           <div class="result-heading"><span class="result-icon" aria-hidden="true">↗</span><h3 id="result-title">File verified</h3></div>
           <p id="result-filename" class="result-filename"></p>
           <dl class="result-stats"><div><dt>Size</dt><dd id="result-size">—</dd></div><div><dt>Chunks</dt><dd id="result-chunks">—</dd></div><div><dt>Approx. expiration</dt><dd id="result-expiration">—</dd></div></dl>
-          <div class="result-actions"><a id="save" class="primary" download hidden>Download file ↓</a><button id="retry" class="primary" type="button" hidden>Retry verification</button><a id="explorer" class="secondary" target="_blank" rel="noopener noreferrer">View entity in explorer ↗</a></div>
-          <details id="query-details"><summary>View query &amp; file details</summary><div class="query-meta"><span class="help">Manifest key</span><code id="result-key"></code><span class="help">SHA-256</span><code id="result-hash"></code></div><div class="query-heading"><span class="help">JavaScript · SDK 0.8.0</span><button id="copy-query" class="text-button" type="button">Copy query</button></div><pre><code id="query-code"></code></pre></details>
+          <div class="result-actions"><a id="save" class="primary" download hidden>Download file ↓</a><button id="retry" class="primary" type="button" hidden>Retry verification</button><button id="copy-key" class="secondary" type="button">Copy file key</button><a id="explorer" class="secondary" target="_blank" rel="noopener noreferrer">File manifest ↗</a></div>
+          <section id="chunk-inspection" aria-label="Chunking and retrieval">
+            <h3 id="chunk-title">File chunks</h3>
+            <p id="inspection-status" class="help" role="status">Verify the file to inspect its chunks.</p>
+            <button id="retry-inspection" class="text-button" type="button" hidden>Reload chunk details</button>
+            <div id="chunk-list" class="chunk-list"></div>
+            <p id="reassembly" class="help" hidden></p>
+            <details id="query-details" hidden><summary>Query these chunks</summary><div class="query-heading"><span class="help">Returns entity keys, attributes and payloads</span><button id="copy-query" class="text-button" type="button">Copy query</button></div><pre><code id="query-code"></code></pre></details>
+          </section>
         </div>
         <p id="workflow-status" class="workflow-status" data-state="idle" role="status" aria-live="polite"></p>
       </section>

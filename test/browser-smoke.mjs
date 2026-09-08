@@ -5,6 +5,11 @@ import { join } from 'node:path';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { createPublicClient } from '@arkiv-network/sdk';
+import { tiramisu } from '@arkiv-network/sdk/chains';
+import { key, str } from '@arkiv-network/sdk/attr';
+import { eq } from '@arkiv-network/sdk/query';
+import { custom } from 'viem';
 
 const out = process.env.ARTIFACTS_DIR ?? join(tmpdir(), 'arkiv-chunking-browser');
 await fs.mkdir(out, { recursive: true });
@@ -17,7 +22,7 @@ try {
   page = await context.newPage();
   const rpc = rpcHarness();
   let rejectSend = false, changeAfterSend = false, walletChain = '0x7614d1', readFailure = false;
-  let staleTiming = false, failAfterFinalize = false, heldSend;
+  let staleTiming = false, failAfterFinalize = false, inspectionFailure = false, heldSend;
   let releaseSend;
   page.on('pageerror', error => errors.push(error.message));
   await page.exposeBinding('fixtureWallet', async (_, args) => {
@@ -55,6 +60,7 @@ try {
     const request = route.request().postDataJSON();
     try {
       if (request.method === 'arkiv_query' && readFailure) throw Error('Controlled post-confirmation read failure');
+      if (request.method === 'arkiv_query' && inspectionFailure && await page.locator('#workflow-status').getAttribute('data-state') === 'success') throw Error('Controlled inspection-only failure');
       const result = await rpc.request(request);
       if (request.method === 'arkiv_getBlockTiming' && staleTiming) result.current_block_time -= 301;
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) });
@@ -67,10 +73,14 @@ try {
   async function reset() { await page.goto(process.env.SAMPLE_URL ?? 'http://127.0.0.1:3076'); await page.locator('#selected-meta').filter({ hasText: '120,001 bytes' }).waitFor(); }
   async function capture(stateName) {
     await page.evaluate(() => document.fonts.ready);
+    for (const theme of ['dark', 'light']) {
+      // Switch through the real control; it remains available while file operations run.
+      if (await page.locator('html').getAttribute('data-theme') !== theme) await page.locator('#theme').click();
     for (const width of [390, 699, 701, 768, 959, 961, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       const probe = await page.evaluate(() => ({
         width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth,
+        theme: document.documentElement.dataset.theme, background: getComputedStyle(document.body).backgroundColor,
         columns: getComputedStyle(document.getElementById('workspace')).gridTemplateColumns,
         primary: ['connect', 'choose', 'expiration', 'upload'].map(id => {
           const node = document.getElementById(id), r = node.getBoundingClientRect();
@@ -86,35 +96,95 @@ try {
         }
       }
       geometry.push({ state: stateName, ...probe });
-      await page.screenshot({ path: join(out, `sample-${stateName}-${width}.png`), fullPage: true });
+      await page.screenshot({ path: join(out, `sample-${stateName}-${theme}-${width}.png`), fullPage: true });
     }
+    }
+    if (await page.locator('html').getAttribute('data-theme') !== 'dark') await page.locator('#theme').click();
     await page.setViewportSize({ width: 1440, height: 900 });
   }
   async function assertDownload(bytes, filename) {
     assert.equal(await page.locator('#result-title').innerText(), 'File verified');
     assert.match(await page.locator('#workflow-status').innerText(), /Every byte matches|integrity verified/);
-    assert.equal(await page.locator('#result-hash').textContent(), '0x' + createHash('sha256').update(bytes).digest('hex'));
     const pending = page.waitForEvent('download');
     await page.locator('#save').click();
     const download = await pending;
     assert.equal(download.suggestedFilename(), filename);
-    assert.deepEqual(await fs.readFile(await download.path()), bytes);
-    const key = await page.locator('#result-key').textContent();
-    assert.equal(await page.locator('#explorer').getAttribute('href'), `https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/${key}`);
+    const saved = await fs.readFile(await download.path());
+    assert.deepEqual(saved, bytes);
+    assert.equal(createHash('sha256').update(saved).digest('hex'), createHash('sha256').update(bytes).digest('hex'));
+    const manifestKey = await page.locator('#manifest').inputValue();
+    assert.equal(await page.locator('#explorer').getAttribute('href'), `https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/${manifestKey}`);
+    return manifestKey;
+  }
+  async function assertChunks(bytes) {
+    const manifestKey = await page.locator('#manifest').inputValue();
     const snippet = await page.locator('#query-code').textContent();
-    assert.ok(snippet.includes(`const manifestKey = '${key}'`));
-    assert.ok(snippet.includes(".where(eq('$key', key(manifestKey)))"));
-    assert.ok(snippet.includes('await downloadFile({'));
-    return key;
+    assert.ok(snippet.includes(`eq('manifest', key('${manifestKey}'))`));
+    assert.ok(snippet.includes('payload: true') && snippet.includes('attributes: true') && snippet.includes('key: true'));
+    assert.ok(!snippet.includes('import ') && !snippet.includes('downloadFile') && !snippet.includes('createPublicClient'));
+    // Execute exactly the displayed query with the real SDK and the same fixture data.
+    const client = createPublicClient({ chain: tiramisu, transport: custom({ request: args => rpc.request(args) }) });
+    const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+    const entities = await new AsyncFunction('client', 'key', 'str', 'eq', `${snippet}\nreturn chunks;`)(client, key, str, eq);
+    entities.sort((a, b) => Number(a.attributes.seq.value - b.attributes.seq.value));
+    const expectedCount = Math.max(1, Math.ceil(bytes.length / 100000));
+    assert.equal(entities.length, expectedCount);
+    const cards = page.locator('#chunk-list article.chunk-card');
+    assert.equal(await cards.count(), expectedCount);
+    const recovered = [];
+    for (let index = 0; index < entities.length; index++) {
+      const entity = entities[index], card = cards.nth(index);
+      const expected = bytes.subarray(index * 100000, (index + 1) * 100000);
+      assert.deepEqual(Buffer.from(entity.payload), expected);
+      assert.equal(await card.getAttribute('data-seq'), String(index));
+      assert.equal(await card.locator('.chunk-key').textContent(), entity.key);
+      assert.equal(await card.locator('.chunk-key').getAttribute('href'), `https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/${entity.key}`);
+      assert.equal(entity.attributes.manifest.value, manifestKey);
+      const payloadDownload = page.waitForEvent('download');
+      await card.locator('.chunk-download').click();
+      const payload = await fs.readFile(await (await payloadDownload).path());
+      assert.deepEqual(payload, expected);
+      recovered.push(payload);
+      assert.equal(await card.locator('.payload-preview').textContent(), expected.length ? expected.subarray(0, 96).toString('utf8') : '(empty payload)');
+      const attributes = JSON.parse(await card.locator('details pre').textContent());
+      assert.equal(attributes.manifest.value, manifestKey);
+      assert.equal(attributes.seq.value, String(index));
+    }
+    assert.deepEqual(Buffer.concat(recovered), bytes);
+    assert.ok(await page.locator('#reassembly').isVisible());
+    assert.ok((await page.locator('#reassembly').textContent()).includes(bytes.length.toLocaleString('en-US')));
+    assert.equal(await page.locator('#result-key, #result-hash').count(), 0);
   }
   async function upload(bytes, filename) {
     await page.locator('#file').setInputFiles({ name: filename, mimeType: 'application/octet-stream', buffer: bytes });
     await page.locator('#upload').click();
     await state('success');
-    return assertDownload(bytes, filename);
+    const manifestKey = await assertDownload(bytes, filename);
+    await assertChunks(bytes);
+    return manifestKey;
   }
 
   await reset();
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+  await page.locator('#theme').click();
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
+  await reset();
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
+  await page.locator('#theme').click();
+  await reset();
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+  checks.push('dark default; real theme toggle supports light and preserves selected theme across reload');
+  assert.equal(await page.locator('[data-step]').count(), 0);
+  await page.locator('details.approvals summary').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('details.approvals').getAttribute('open'), '');
+  assert.match(await page.locator('details.approvals').innerText(), /4 wallet approvals/);
+  assert.match(await page.locator('details.approvals').innerText(), /manifest/i);
+  assert.match(await page.locator('#chunk-approvals').innerText(), /2/);
+  assert.match(await page.locator('details.approvals').innerText(), /complete/i);
+  assert.match(await page.locator('details.approvals').innerText(), /no signatures/i);
+  await page.keyboard.press('Enter');
+  checks.push('keyboard-accessible approval disclosure explains manifest + two chunk writes + completion; static Ready/Store/Verify labels removed');
   await page.locator('#tab-upload').focus();
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('#tab-open').getAttribute('aria-selected'), 'true');
@@ -139,9 +209,15 @@ try {
   const demoBytes = Buffer.from(('Hello from Arkiv!\nThis public sample file is split into queryable chunks, then reconstructed and verified.\n').repeat(1200).slice(0, 120001));
   assert.equal(demoBytes.length, 120001);
   const demoKey = await assertDownload(demoBytes, 'arkiv-demo.txt');
+  await assertChunks(demoBytes);
   assert.equal(rpc.transactions.length, 4);
   await capture('success');
-  checks.push('default120001-byte demo:4 SDK-encoded transactions, automatic retrieval/hash verification, actual attachment equals original, query and explorer route use returned key');
+  await page.locator('#query-details summary').click();
+  await page.locator('#chunk-list article').first().locator('details summary').click();
+  await capture('expanded-query');
+  await page.locator('#query-details summary').click();
+  await page.locator('#chunk-list article').first().locator('details summary').click();
+  checks.push('120001-byte demo:4 SDK transactions; automatic exact file download; displayed SDK query retrieves both actual chunk keys/attributes/payloads; individual payload downloads reassemble original');
 
   const bytes = Buffer.from('Public synthetic fixture.\n'.repeat(11000));
   const beforeCustom = rpc.transactions.length;
@@ -180,7 +256,8 @@ try {
   await page.locator('#upload').click(); await state('error');
   assert.equal(rpc.transactions.length, before + 1);
   assert.equal(await page.locator('#result-title').innerText(), 'Upload status unconfirmed');
-  assert.match(await page.locator('#result-key').textContent(), /^0x[0-9a-f]{64}$/);
+  assert.match(await page.locator('#manifest').inputValue(), /^0x[0-9a-f]{64}$/);
+  assert.equal(await page.locator('#chunk-list article').count(), 0);
   assert.equal(await page.locator('#save').isVisible(), false);
   checks.push('account changes after manifest: guard aborts before next write; partial key remains inspectable');
 
@@ -198,6 +275,7 @@ try {
   await page.locator('#tab-open').click(); await page.locator('#manifest').fill(demoKey);
   await page.locator('#retrieve').click(); await state('success');
   await assertDownload(demoBytes, 'arkiv-demo.txt');
+  await assertChunks(demoBytes);
   assert.equal(rpc.transactions.length, before);
   checks.push('missing wallet prevents writes; open-existing still retrieves verified file without wallet');
 
@@ -225,8 +303,24 @@ try {
   readFailure = false; failAfterFinalize = false; before = rpc.transactions.length;
   await page.locator('#retry').click(); await state('success');
   await assertDownload(demoBytes, 'arkiv-demo.txt');
+  await assertChunks(demoBytes);
   assert.equal(rpc.transactions.length, before);
   checks.push('read failure after final receipt preserves confirmed storage; retry verifies/downloads with zero additional transactions');
+
+  await reset(); inspectionFailure = true; before = rpc.transactions.length;
+  await page.locator('#tab-open').click(); await page.locator('#manifest').fill(demoKey);
+  await page.locator('#retrieve').click(); await state('success');
+  assert.equal(await page.locator('#inspection-status').getAttribute('data-state'), 'error');
+  assert.equal(await page.locator('#retry-inspection').isVisible(), true);
+  assert.equal(await page.locator('#chunk-list article').count(), 0);
+  await assertDownload(demoBytes, 'arkiv-demo.txt');
+  await page.screenshot({ path: join(out, 'sample-inspection-read-failed.png'), fullPage: true });
+  inspectionFailure = false;
+  await page.locator('#retry-inspection').click();
+  await page.locator('#inspection-status[data-state="success"]').waitFor(); await idle();
+  await assertChunks(demoBytes);
+  assert.equal(rpc.transactions.length, before);
+  checks.push('inspection-only RPC failure preserves verified download; details retry restores real chunks and sends zero transactions');
 
   assert.deepEqual(errors, []);
   await fs.writeFile(join(out, 'sample-flow-results.json'), JSON.stringify({ checks, geometry, browser: browser.version(), source: 'real package + real SDK with controlled in-memory RPC and injected wallet; isolated browser; no live chain writes', transactions: rpc.transactions, errors, firstManifestKey: demoKey }, null, 2));

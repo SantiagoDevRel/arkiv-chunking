@@ -1,0 +1,31 @@
+{
+    "verifiedAt":  "2026-09-08T23:30:55.7976270Z",
+    "package":  "arkiv-chunking@0.1.0",
+    "sdk":  "0.8.0",
+    "viem":  "2.56.3",
+    "chainId":  7738577,
+    "manifestKey":  "0x3d66f28a7b3189aa365bb229cd3ed1b17c0965d2e8e4286a4360e18f81ec9c5b",
+    "chunks":  [
+                   {
+                       "seq":  0,
+                       "key":  "0x26b39e9ce750221adf444fbe1da67e5f99aea1cf8e4e3ff395ff7570be6bdaab",
+                       "payloadBytes":  100000,
+                       "preview":  "Hello from Arkiv!\nThis public sample file is split into queryable chunks, then reconstructed and",
+                       "explorerUrl":  "https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/0x26b39e9ce750221adf444fbe1da67e5f99aea1cf8e4e3ff395ff7570be6bdaab",
+                       "explorerContentVerified":  true
+                   },
+                   {
+                       "seq":  1,
+                       "key":  "0xfc7abb6b0dc93358674e7dedb5acdf0aae57a27d89cdccaf0616f76fcee668f4",
+                       "payloadBytes":  20001,
+                       "preview":  "ble chunks, then reconstructed and verified.\nHello from Arkiv!\nThis public sample file is split ",
+                       "explorerUrl":  "https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/0xfc7abb6b0dc93358674e7dedb5acdf0aae57a27d89cdccaf0616f76fcee668f4",
+                       "explorerContentVerified":  true
+                   }
+               ],
+    "reconstructedBytes":  120001,
+    "sha256":  "0xec51e2ead3f4c988ec27c006123bda936fec6eb2eb8f6bdc7dbe84071a9a3b76",
+    "copiedQueryExecutedInNpmConsumer":  true,
+    "newLiveTransactions":  0,
+    "query":  "const chunks = [];\nfor await (const entity of client\n  .select({ key: true, attributes: true, payload: true })\n  .where(\n    eq(\u0027manifest\u0027, key(\u00270x3d66f28a7b3189aa365bb229cd3ed1b17c0965d2e8e4286a4360e18f81ec9c5b\u0027)),\n    eq(\u0027type\u0027, str(\u0027arkiv-chunking/chunk/v1\u0027)),\n  )\n  .ownedBy(\u00270xa618A2736431f24C26F1C8Dac9CA00ECc845a1C6\u0027)\n  .createdBy(\u00270xa618A2736431f24C26F1C8Dac9CA00ECc845a1C6\u0027)\n  .atBlock(200915n)\n  .limit(200)\n) chunks.push(entity);"
+}

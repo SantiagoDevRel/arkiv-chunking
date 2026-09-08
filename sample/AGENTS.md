@@ -22,6 +22,8 @@ The default Tiramisu public connection needs no RPC input or access key. Do not 
 - Keep the fixed RPC configuration internal. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
 - Explorer URLs use the verified Tiramisu indexer origin and validated keys/hashes. Blocks use `/block?block=NUMBER`; entities use `/entity/KEY`.
 - Query examples must work with the documented package/SDK versions. Do not replace the complete file verifier with a bare manifest query.
+- Chunk inspection is a read-only view of actual entities. Pin its query snapshot and ownership, verify its returned payloads with the published package, and keep inspection failures separate from a verified download. Never show synthetic payloads as retrieved data.
+- Start dark unless the visitor saved a light preference. Use the official SVG logo and its recorded provenance; do not replace it with styled text or recolor it.
 - All UI, documentation and guides are English. Reuse the documented Claude Design composition and Arkiv tokens; prototype simulations and injected runtime files do not belong in the app.
 - Keep each explanation in one place. Reserve the status area for actual feedback; show query details on demand. Essential actions and errors must remain visible, and disclosures must work with keyboard and touch.
 
