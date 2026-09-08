@@ -113,7 +113,15 @@ async function checkNetwork(client: ChunkingPublicClient): Promise<number> {
 }
 
 async function requireLiveManifest(client: ChunkingPublicClient, manifestKey: Hex, transactionsRemaining: number): Promise<bigint> {
-  const page = await client.select({ expiresAt: true }).where(eq('$key', key(manifestKey))).limit(1).fetch();
+  const fetchPage = () => client.select({ expiresAt: true }).where(eq('$key', key(manifestKey))).limit(1).fetch();
+  let page;
+  try { page = await fetchPage(); } catch {
+    // Retrying a read cannot duplicate a write. A missing/expired entity is not retried.
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    try { page = await fetchPage(); } catch (cause) {
+      throw new ChunkingError('READ_FAILED', 'Could not verify the manifest lifetime after one read retry. No further writes will be started; inspect confirmed writes before retrying the upload.', { cause });
+    }
+  }
   const manifest = page.entities[0];
   if (!manifest || manifest.expiresAt <= page.blockNumber + BigInt(transactionsRemaining)) {
     fail('INCOMPLETE_UPLOAD', 'The manifest has expired or has too few remaining blocks to finish. No further writes will be started.');
@@ -161,11 +169,10 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
       });
       transactionHashes.push(result.txHash);
     }
-    await requireLiveManifest(publicClient, manifestKey, 1);
+    const expiresAt = await requireLiveManifest(publicClient, manifestKey, 1);
     notify(onProgress, { phase: 'finalize', completed: chunks.length, total: chunks.length, manifestKey });
     const finalized = await walletClient.patchEntity({ entityKey: manifestKey, set: { complete: bool(true) } });
     transactionHashes.push(finalized.txHash);
-    const expiresAt = await requireLiveManifest(publicClient, manifestKey, 0);
     return { manifestKey, sha256, chunkCount: chunks.length, totalBytes: bytes.length, expiresAt, transactionHashes };
   } catch (cause) {
     if (cause instanceof ChunkingError && !manifestKey) throw cause;

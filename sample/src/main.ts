@@ -21,7 +21,7 @@ let uploaded: { key: Hex; bytes: Uint8Array; sha256: Hex } | undefined;
 rpcInput.value = tiramisu.rpcUrls.default.http[0];
 element('version').textContent = `v${VERSION}`;
 
-function status(target: 'upload' | 'download', message: string, state: 'loading' | 'success' | 'error') {
+function status(target: 'upload' | 'download', message: string, state: 'idle' | 'loading' | 'success' | 'error') {
   const output = element(`${target}-status`);
   output.textContent = message;
   output.dataset.state = state;
@@ -100,6 +100,8 @@ element<HTMLFormElement>('upload-form').addEventListener('submit', async event =
   uploaded = undefined;
   element('upload-result').hidden = true;
   clearDownload();
+  manifestInput.value = '';
+  status('download', 'Recupera un manifiesto para verificar el archivo de esta subida.', 'idle');
   let partialKey: Hex | undefined;
   let releaseWalletGuard: (() => void) | undefined;
   try {
@@ -165,10 +167,11 @@ element<HTMLFormElement>('upload-form').addEventListener('submit', async event =
     status('download', 'El manifiesto está listo. Selecciona Recuperar archivo para verificarlo.', 'success');
   } catch (error) {
     if (error instanceof ChunkingError && error.manifestKey) partialKey = error.manifestKey;
-    status('upload', `${errorMessage(error)}${partialKey ? ' Ya se crearon entities: las transacciones confirmadas no se revierten. Conserva la clave del manifiesto incompleto.' : ''}`, 'error');
+    status('upload', `${errorMessage(error)}${partialKey ? ' Conserva la clave y consulta el manifiesto para comprobar su estado.' : ''}`, 'error');
     if (partialKey) {
+      manifestInput.value = partialKey;
       element('uploaded-key').textContent = partialKey;
-      element('upload-summary').textContent = 'Manifiesto incompleto. Esta clave no confirma que el archivo esté disponible.';
+      element('upload-summary').textContent = 'Estado de la subida sin confirmar. Conserva esta clave y comprueba las transacciones antes de volver a subir.';
       element('upload-result').hidden = false;
     }
   } finally { releaseWalletGuard?.(); setBusy(false); }

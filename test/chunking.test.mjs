@@ -16,12 +16,13 @@ const code = expected => error => { assert.equal(error.code, expected); return t
 function network() {
   const entities = [];
   const calls = [];
-  let failWriteAt = 0, writes = 0, failRead = false;
+  let failWriteAt = 0, writes = 0, failRead = false, readFailuresLeft = 0;
   const rpc = async ({ method, params }) => {
     calls.push({ method, params });
     if (method === 'eth_chainId') return toHex(tiramisu.id);
     if (method !== 'arkiv_query') throw Error(`Unexpected method ${method}`);
     if (failRead) throw Error('simulated RPC outage');
+    if (readFailuresLeft > 0) { readFailuresLeft--; throw Error('simulated transient RPC failure'); }
     const [query, options] = params;
     let selected;
     if (query.includes('$key')) selected = entities.filter(e => query.toLowerCase().includes(e.key.toLowerCase()));
@@ -58,7 +59,7 @@ function network() {
     },
   };
   return { publicClient, walletClient, entities, calls,
-    failWrite(n) { failWriteAt = n; }, failReads() { failRead = true; },
+    failWrite(n) { failWriteAt = n; }, failReads() { failRead = true; }, failReadTimes(n) { readFailuresLeft = n; },
     upload(bytes = new Uint8Array(randomBytes(250001)), more = {}) { return uploadFile({ publicClient, walletClient, bytes, filename: 'example.bin', expirationBlocks: 3600, ...more }); },
     download(manifestKey = hex(1), more = {}) { return downloadFile({ publicClient, manifestKey, ...more }); },
   };
@@ -144,6 +145,30 @@ test('expired or near-expiry manifest stops further writes and retains confirmed
 test('progress callback exceptions do not change network success', async () => {
   const n = network(); await n.upload(undefined, { onProgress() { throw Error('UI bug'); } });
   await n.download(hex(1), { onProgress() { throw Error('UI bug'); } });
+});
+test('a confirmed finalization succeeds without a post-write query that can misreport failure', async () => {
+  const n = network(), patch = n.walletClient.patchEntity;
+  n.walletClient.patchEntity = async input => { const result = await patch(input); n.failReadTimes(1); return result; };
+  const stored = await n.upload();
+  assert.equal(stored.transactionHashes.length, 5); assert.equal(stored.expiresAt, 4096n);
+  assert.equal(n.calls.filter(c => c.method === 'arkiv_query').length, 4);
+  n.failReadTimes(0);
+  assert.equal((await n.download()).bytes.length, 250001);
+});
+test('a transient liveness read retries once without duplicating a write', async () => {
+  const n = network(); n.failReadTimes(1);
+  const stored = await n.upload(new Uint8Array([1]));
+  assert.equal(stored.transactionHashes.length, 3); assert.equal(n.entities.length, 2);
+  assert.equal(n.calls.filter(c => c.method === 'arkiv_query').length, 3);
+});
+test('persistent liveness transport failure is distinct from expiry and stops further spending', async () => {
+  const n = network(); n.failReads();
+  await assert.rejects(n.upload(), error => {
+    assert.equal(error.code, 'UPLOAD_FAILED'); assert.equal(error.cause.code, 'READ_FAILED');
+    assert.equal(error.transactionHashes.length, 1); assert.equal(error.manifestKey, hex(1)); return true;
+  });
+  assert.equal(n.calls.filter(c => c.method === 'arkiv_query').length, 2);
+  assert.equal(n.entities.length, 1);
 });
 test('async progress rejection does not become an unhandled rejection after confirmed writes', async () => {
   const n = network();
