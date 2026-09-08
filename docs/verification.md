@@ -23,9 +23,15 @@ Date: 2026-09-08. This is a release candidate, not a publication claim. The pack
 - Rendered dark UI at **390/599/601/768/1440 px**, including both sides of the 600px breakpoint. Empty, loading, malformed key, missing wallet, wrong RPC network, successful reconstruction, corruption and interrupted upload checked. No global horizontal overflow; long filenames and keys wrap. Screenshots opened and inspected.
 - Computed typography and actual font rendering checked via CDP: Space Grotesk for headings, IBM Plex Mono for body/controls. Font requests returned 200. CSS zoom 200% reflow passed; **the native Chrome zoom control was not verified**. There is no light theme in this sample.
 - A fresh agent, without this chat or library implementation, followed only README/AGENTS and installed the packed artifact into a new consumer. Exact example output: `3` then `Hello, Arkiv!`. All public types imported; strict TypeScript with `skipLibCheck: false` compiled an actual SDK client passed to `downloadFile`. Empty bytes and wrong digest also checked. It found package-relative links to omitted files; fixed by including this evidence document and using explicit source links for the sample.
-- Real anonymous RPC read from that consumer: Tiramisu returned chain ID **7738577**. This is connectivity evidence only; no stored file was retrieved from the actual network.
+- Real anonymous RPC reads from that consumer: Tiramisu returned chain ID **7738577**. The delivery agent also ran the installed package's `downloadFile` for the all-zero manifest key against the actual RPC: **NOT_FOUND**. A client configured with a different chain ID against that same RPC returned **NETWORK_MISMATCH**. This verifies connectivity, an actual empty manifest query and the network guard; no stored file was retrieved from the actual network.
 - `npm pack --dry-run` confirms README, AGENTS.md, CLAUDE.md, LICENSE, types, JavaScript and this document are included. Package allowlist excludes sample, tests, scripts and any environment files.
-- Source pushed to `SantiagoDevRel/arkiv-chunking`, branch `feat/file-chunking`; the documented clone command worked in a new directory. `npm ci`, package tests and typecheck passed there. The sample's ordinary registry installation was also attempted and returned E404 for this unpublished candidate.
+- Source pushed to `SantiagoDevRel/arkiv-chunking`, branch `feat/file-chunking`; the documented clone command worked in a new directory. `npm ci`, all 27 package tests and typecheck passed there after updating to the final code commit. The sample's ordinary registry installation was also attempted and returned E404 for this unpublished candidate. Installing the explicit local tarball in that clean checkout allowed its production build to pass; it generated the same `index-DyxqLPF4.js` bundle as the inspected preview.
+
+## Independent Claude audit
+
+Claude Code audited the library, SDK integration, consumer documentation, package contents and rendered sample. Its findings led to block-based expiration, queried expiration results, minimum lifetime budgets, bounded liveness read retries, version consistency checks and clearer recovery states. A post-finalization read was removed so a provider failure cannot misreport a confirmed upload. The sample clears earlier success state when starting another upload and retains the relevant manifest key for recovery.
+
+Claude independently reran **27/27 tests**, typecheck and the browser smoke against the final bundle, inspected screenshots, and reproduced both transient and persistent read failures. Final verdict: **no outstanding code findings**. It verified remote/local parity for code commit [`4988081fa9b49bb64b35ea4ae52bcab288ed4476`](https://github.com/SantiagoDevRel/arkiv-chunking/commit/4988081fa9b49bb64b35ea4ae52bcab288ed4476) using Git refs, individual blob hashes and content fetched from GitHub's API. This review does not substitute for the still-pending npm publication and actual testnet write verification below.
 
 ## Reproduce
 
@@ -37,7 +43,6 @@ Live write script: `node --env-file=/absolute/path/to/your-secret.env scripts/li
 
 ## Still required before final delivery
 
-- npm authentication: `npm whoami` returns `ENEEDAUTH`; the existing stored publisher credential was also checked and returned HTTP 401. No version is claimed published. Registry installation, registry sample lockfile and clean published-package sample startup remain unverified.
+- npm authentication: `npm whoami` returns `ENEEDAUTH`, and the registry returns E404 for this package. No version is claimed published. Registry installation, registry sample lockfile and clean published-package sample startup remain unverified.
 - Actual testnet roundtrip: awaiting authorization to use the identified test wallet, or another supplied wallet. No testnet funds were spent by this task.
-- Complete Claude audit is in progress; its final result and corrections will be recorded here.
 - No public demo deployment or Hub `/tools` change has been made. The user deferred the Hub card. A public branded demo would also need the applicable brand alignment; that does not prevent running the sample locally.
