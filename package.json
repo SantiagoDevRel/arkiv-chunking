@@ -16,7 +16,8 @@
     "AGENTS.md",
     "CLAUDE.md",
     "LICENSE",
-    "docs/verification.md"
+    "docs/verification.md",
+    "docs/testnet-evidence.json"
   ],
   "repository": {
     "type": "git",

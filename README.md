@@ -4,7 +4,7 @@ Split a file into queryable Arkiv entities, store it, and retrieve exactly the o
 
 **These packages are intended for testnet use.**
 
-Version: **0.1.0**. Release candidate: **not yet published**. The commands below name the intended npm version; registry installation and sample checkout are not available until publication is verified. Local package tests use `npm pack`, explicitly distinguished in [verification](docs/verification.md).
+Version: **0.1.0**. [npm package](https://www.npmjs.com/package/arkiv-chunking) Â· [Source and sample](https://github.com/SantiagoDevRel/arkiv-chunking). See [verification](docs/verification.md) for the exact tested SDK, runtime, real Tiramisu transactions and release evidence.
 
 ## Install and run without a wallet
 
@@ -140,7 +140,7 @@ The package never returns partial bytes on an error. Missing/expired manifest â†
 
 | Error / symptom | Action |
 |---|---|
-| npm E404 for this release candidate | Publication has not been verified yet. Use the explicit local verification procedure below; do not advertise a published artifact. |
+| npm E404 | Check the package spelling, version and configured registry with `npm config get registry`. This package uses the public npm registry. |
 | `NETWORK_MISMATCH` | Configure Tiramisu on both clients and switch your browser wallet to chain 7738577. Verify the RPC's `eth_chainId`. |
 | `UPLOAD_FAILED` / wallet rejection | Inspect `manifestKey` and confirmed hashes. Rejection does not roll back earlier chunks. Keep provider details local. If the manifest expired or has too few blocks left, inspect confirmed writes before choosing a larger block budget for a new upload. |
 | Insufficient gas balance | Claim test GLM for the signing address on Tiramisu, then check its balance. |

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es-CO">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
-    <title>Archivos en Arkiv · arkiv-chunking</title>
+    <title>Files on Arkiv · arkiv-chunking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
@@ -13,62 +13,62 @@
     <main>
       <header>
         <p class="eyebrow">[ SAMPLE · ARKIV-CHUNKING <span id="version"></span> ]</p>
-        <h1>Guarda un archivo.<br />Recupéralo completo.</h1>
-        <p>Divide un archivo en Arkiv entities, consulta sus partes y verifica el archivo reconstruido.</p>
+        <h1>Store a file.<br />Retrieve every byte.</h1>
+        <p>Split a file into Arkiv entities, query its chunks and verify the reconstructed file.</p>
       </header>
 
       <section aria-labelledby="connection-heading">
-        <h2 id="connection-heading">Conexión a Tiramisu</h2>
-        <label for="rpc">URL RPC</label>
+        <h2 id="connection-heading">Connect to Tiramisu</h2>
+        <label for="rpc">RPC URL</label>
         <input id="rpc" type="url" spellcheck="false" autocomplete="off" aria-describedby="rpc-help" />
-        <p id="rpc-help" class="help">La URL se usa solo en esta pestaña. Si tu proveedor exige una access key, utiliza una URL autorizada. No compartas claves privadas.</p>
-        <p class="help">Para subir necesitas una wallet en Tiramisu con GLM de testnet. Para recuperar solo necesitas el RPC. <a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Configura la red</a> · <a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Obtén fondos de testnet</a> · <a href="https://hub.arkiv.network/api-keys" target="_blank" rel="noopener noreferrer">Obtén una access key</a></p>
+        <p id="rpc-help" class="help">The URL is used only in this tab. If your provider requires an access key, use an authorized URL. Never share private keys.</p>
+        <p class="help">Uploading requires a wallet on Tiramisu with testnet GLM. Retrieval only requires the RPC. <a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Configure the network</a> · <a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds</a> · <a href="https://hub.arkiv.network/api-keys" target="_blank" rel="noopener noreferrer">Get an access key</a></p>
       </section>
 
       <section aria-labelledby="upload-heading">
-        <h2 id="upload-heading">1. Sube tu archivo</h2>
+        <h2 id="upload-heading">1. Upload your file</h2>
         <form id="upload-form">
-          <label for="file">Archivo</label>
+          <label for="file">File</label>
           <input id="file" type="file" required aria-describedby="file-info" />
-          <p id="file-info" class="help">Selecciona un archivo para ver cuántas partes necesita.</p>
+          <p id="file-info" class="help">Select a file to see how many chunks it needs.</p>
           <label for="expiration">Entity Expiration</label>
           <select id="expiration" aria-describedby="expiration-help">
-            <option value="1800">1.800 bloques</option>
-            <option value="43200" selected>43.200 bloques</option>
-            <option value="302400">302.400 bloques</option>
+            <option value="1800">1,800 blocks</option>
+            <option value="43200" selected>43,200 blocks</option>
+            <option value="302400">302,400 blocks</option>
           </select>
-          <p id="expiration-help" class="help">La duración se mide en bloques desde la creación del manifiesto. No equivale a un tiempo fijo en horas o días.</p>
+          <p id="expiration-help" class="help">Duration is measured in blocks from manifest creation. It does not represent a fixed number of hours or days.</p>
           <label class="consent" for="consent">
             <input id="consent" type="checkbox" required />
-            <span>Entiendo que el archivo y su nombre serán públicos. La expiración no borra el historial. No subiré información sensible.</span>
+            <span>I understand that the file and its name will be public. Expiration does not erase history. I will not upload sensitive information.</span>
           </label>
-          <button type="submit" id="upload">Conectar wallet y subir</button>
+          <button type="submit" id="upload">Connect wallet and upload</button>
         </form>
-        <p id="upload-status" role="status" aria-live="polite">Aún no has subido ningún archivo.</p>
+        <p id="upload-status" role="status" aria-live="polite">You have not uploaded a file yet.</p>
         <div id="upload-result" hidden>
-          <p>Conserva esta clave para recuperar el archivo:</p>
+          <p>Keep this key to retrieve the file:</p>
           <code id="uploaded-key"></code>
           <p class="help" id="upload-summary"></p>
         </div>
       </section>
 
       <section aria-labelledby="download-heading">
-        <h2 id="download-heading">2. Recupera y verifica</h2>
+        <h2 id="download-heading">2. Retrieve and verify</h2>
         <form id="download-form">
-          <label for="manifest">Clave del manifiesto</label>
+          <label for="manifest">Manifest key</label>
           <input id="manifest" type="text" spellcheck="false" autocomplete="off" placeholder="0x…" required aria-describedby="manifest-help" />
-          <p id="manifest-help" class="help">Se completa después de subir. También puedes pegar una clave existente.</p>
-          <button type="submit" id="retrieve">Recuperar archivo</button>
+          <p id="manifest-help" class="help">Filled in after upload. You can also paste an existing key.</p>
+          <button type="submit" id="retrieve">Retrieve file</button>
         </form>
-        <p id="download-status" role="status" aria-live="polite">Aún no has recuperado ningún archivo.</p>
+        <p id="download-status" role="status" aria-live="polite">You have not retrieved a file yet.</p>
         <div id="download-result" hidden>
           <p id="download-summary"></p>
-          <dl><dt>SHA-256 verificado</dt><dd><code id="download-hash"></code></dd></dl>
-          <a id="save" class="button" download>Descargar archivo verificado</a>
+          <dl><dt>Verified SHA-256</dt><dd><code id="download-hash"></code></dd></dl>
+          <a id="save" class="button" download>Download verified file</a>
         </div>
       </section>
 
-      <footer><p>These packages are intended for testnet use.</p><p>Los archivos se reconstruyen en la memoria del navegador. Cerrar la pestaña no revierte las transacciones enviadas.</p></footer>
+      <footer><p>These packages are intended for testnet use.</p><p>Files are reconstructed in browser memory. Closing the tab does not reverse submitted transactions.</p></footer>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

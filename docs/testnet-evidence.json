@@ -1,0 +1,118 @@
+{
+  "package": "0.1.0",
+  "node": "v22.22.3",
+  "chainId": 7738577,
+  "account": "0xa618a2736431f24c26f1c8dac9ca00ecc845a1c6",
+  "started": "2026-09-08T21:13:14.450Z",
+  "cases": [
+    {
+      "filename": "synthetic-roundtrip.txt",
+      "totalBytes": 270000,
+      "chunkSize": 100000,
+      "chunkCount": 3,
+      "manifestKey": "0xf39c18141167055d9cf2275d11affa95c33991feafbc66c0fda8fbb635963176",
+      "expiresAt": "200424",
+      "sha256": "0x7c407fd31d2366b79f8b3a2895c08566f2bcf64a6dcb972846d535e3f36e82e7",
+      "byteExact": true,
+      "transactions": [
+        {
+          "hash": "0x751038c826d4fb1828011b95f75bc81e2959d3e4bdc5c6c9793795c7baddaa7a",
+          "blockNumber": "196824",
+          "calldataBytes": 2020,
+          "gasUsed": "111520"
+        },
+        {
+          "hash": "0x413b4d9998dc97ea07168d7e7503f46a35a5d2241e0e8bba7e798c90e5f9d8d8",
+          "blockNumber": "196827",
+          "calldataBytes": 101348,
+          "gasUsed": "4039730"
+        },
+        {
+          "hash": "0x6a9157d2a29edb8a93057ea51cb490d86635ae2c0ed41d1233ee9de959de728d",
+          "blockNumber": "196840",
+          "calldataBytes": 101348,
+          "gasUsed": "4039760"
+        },
+        {
+          "hash": "0xa1f2608885a5a0f9ba22d9bb3b7638fe17c7d101e0152aa90a9ec38ce5c09cc6",
+          "blockNumber": "196848",
+          "calldataBytes": 71364,
+          "gasUsed": "2839920"
+        },
+        {
+          "hash": "0xe1dac9f26e902ed8b5bb6a4564d0c74239f1a515f8ed33c1c30d9ac18989a2dc",
+          "blockNumber": "196963",
+          "calldataBytes": 516,
+          "gasUsed": "45016"
+        }
+      ]
+    },
+    {
+      "filename": "synthetic-empty.bin",
+      "totalBytes": 0,
+      "chunkSize": 100000,
+      "chunkCount": 1,
+      "manifestKey": "0x8c94477ddaf32f878a02c3a8202b0fc185ca70c96e22133a3255417825fe7598",
+      "expiresAt": "200578",
+      "sha256": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteExact": true,
+      "transactions": [
+        {
+          "hash": "0x932199ae4657633a4709779d3c9334c5a0d38220d1a25b95cb9f068916e65b45",
+          "blockNumber": "196978",
+          "calldataBytes": 2020,
+          "gasUsed": "111456"
+        },
+        {
+          "hash": "0xaf9f28fdb227095e5970877e35fe74737713d1619d82adeb3a8a7e601dd54ace",
+          "blockNumber": "196990",
+          "calldataBytes": 1348,
+          "gasUsed": "95384"
+        },
+        {
+          "hash": "0xa980f4d977ebec4c0d4fc0c58536241e891f285e8f36d65a85e12a89a55efd60",
+          "blockNumber": "197018",
+          "calldataBytes": 516,
+          "gasUsed": "45016"
+        }
+      ]
+    },
+    {
+      "filename": "synthetic-boundary.bin",
+      "totalBytes": 120001,
+      "chunkSize": 120000,
+      "chunkCount": 2,
+      "manifestKey": "0xcda6229c00c3f5b080223acff5b9784c936a1e4ca2f10fe372ea803c66d43156",
+      "expiresAt": "200627",
+      "sha256": "0x5498e47c97da9d3f8a1953ad3815159f3935b97765cec00c753cbedca041fe85",
+      "byteExact": true,
+      "transactions": [
+        {
+          "hash": "0xd03b2a1c542e17b4fd5ba525c7a0d23052c0845e75ba362ddbfed93bf159f707",
+          "blockNumber": "197027",
+          "calldataBytes": 2020,
+          "gasUsed": "111504"
+        },
+        {
+          "hash": "0x8d1368d42b4a6f6c6c5c2242dbba40e5099e51618cfae806063f0dc7f19b5e60",
+          "blockNumber": "197034",
+          "calldataBytes": 121348,
+          "gasUsed": "4825360"
+        },
+        {
+          "hash": "0x20557fce9662d6c43edf99b7d06afc6b5502065e9778b7915c2473af456b890b",
+          "blockNumber": "197039",
+          "calldataBytes": 1380,
+          "gasUsed": "95400"
+        },
+        {
+          "hash": "0x9fdd2731ef7dc0e31e6ecca910ba2ad33f861b88992f607dd0d0eca90c7340ba",
+          "blockNumber": "197044",
+          "calldataBytes": 516,
+          "gasUsed": "45016"
+        }
+      ]
+    }
+  ],
+  "finished": "2026-09-08T21:20:50.115Z"
+}

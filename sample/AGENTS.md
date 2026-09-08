@@ -21,7 +21,7 @@ Do not invent credentials, silently select a mainnet or add unrelated capabiliti
 - Treat all filenames, returned metadata and manifest keys as untrusted strings: assign text through `textContent`, not HTML. Downloads are attachments; never iframe or render uploaded content.
 - Expose a download only after complete verification. On new attempts, clear the previous download and revoke the old object URL.
 - Failed writes do not imply rollback. Show the incomplete manifest when known; do not auto-retry an ambiguous transaction.
-- The page language is Colombian Spanish using tú. Use the existing typography contract and canonical Arkiv tokens documented in the README.
+- All deliverable content and user-facing copy must be in English. Use the existing typography contract and canonical Arkiv tokens documented in the README.
 
 ## Verify an integration
 

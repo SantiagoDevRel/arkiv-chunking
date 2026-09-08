@@ -9,7 +9,7 @@ const out = process.env.ARTIFACTS_DIR ?? join(tmpdir(), 'arkiv-chunking-browser'
 await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
 try {
-const context = await browser.newContext({ colorScheme: 'dark', viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+const context = await browser.newContext({ colorScheme: 'dark', locale: 'en-US', viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
 const rpc = rpcHarness(), errors = [], checks = [];
 let rejectSend = false, changeAfterSend = false;
@@ -40,7 +40,7 @@ async function upload(bytes, filename) {
   await page.locator('#upload-status[data-state="success"]').waitFor({ timeout: 30000 });
   await page.locator('#retrieve').click();
   await page.locator('#download-status[data-state="success"]').waitFor({ timeout: 30000 });
-  assert.match(await page.locator('#download-status').innerText(), /coinciden exactamente/);
+  assert.match(await page.locator('#download-status').innerText(), /bytes exactly match/);
   assert.equal(await page.locator('#download-hash').innerText(), '0x' + createHash('sha256').update(bytes).digest('hex'));
   const pending = page.waitForEvent('download');
   await page.locator('#save').click();
@@ -54,7 +54,7 @@ const bytes = Buffer.from('Public synthetic fixture.\n'.repeat(11000));
 await upload(bytes, 'synthetic-long-file-name-for-layout-and-integrity-verification.bin');
 assert.equal(rpc.transactions.length, 5);
 checks.push(`full ${bytes.length}-byte upload / SDK encoding / simulated receipt / query / byte comparison / actual downloaded attachment`);
-for (const width of [390, 768, 1440]) {
+for (const width of [390, 599, 601, 768, 1440]) {
   await page.setViewportSize({ width, height: 1000 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({ path: `${out}/sample-success-${width}.png`, fullPage: true });
@@ -63,7 +63,7 @@ const validKey = await page.locator('#manifest').inputValue();
 rpc.entities[1].payload = '0x' + '00'.repeat(100000);
 await page.locator('#retrieve').click();
 await page.locator('#download-status[data-state="error"]').waitFor();
-assert.match(await page.locator('#download-status').innerText(), /bytes diferentes/);
+assert.match(await page.locator('#download-status').innerText(), /different bytes/);
 assert.equal(await page.locator('#save').isVisible(), false);
 checks.push('same-length corruption rejects download and removes old attachment');
 await page.screenshot({ path: `${out}/sample-corrupt-file.png`, fullPage: true });
@@ -71,7 +71,7 @@ await upload(Buffer.alloc(0), 'empty.bin'); checks.push('empty upload and downlo
 rejectSend = true;
 await page.locator('#upload').click();
 await page.locator('#upload-status[data-state="error"]').waitFor();
-assert.match(await page.locator('#upload-status').innerText(), /falló|Rechazaste/);
+assert.match(await page.locator('#upload-status').innerText(), /failed|rejected/);
 assert.equal(await page.locator('#download-status').getAttribute('data-state'), 'idle');
 assert.equal(await page.locator('#manifest').inputValue(), '');
 assert.equal(await page.locator('#save').isVisible(), false);
@@ -81,10 +81,14 @@ const before = rpc.transactions.length;
 await page.locator('#upload').click();
 await page.locator('#upload-status[data-state="error"]').waitFor();
 assert.equal(rpc.transactions.length, before + 1);
-assert.match(await page.locator('#upload-summary').innerText(), /Estado de la subida sin confirmar/);
+assert.match(await page.locator('#upload-summary').innerText(), /Upload status is unconfirmed/);
 assert.equal(await page.locator('#download-status').getAttribute('data-state'), 'idle');
 assert.equal(await page.locator('#manifest').inputValue(), await page.locator('#uploaded-key').innerText());
-await page.screenshot({ path: `${out}/sample-interrupted-upload.png`, fullPage: true });
+for (const width of [390, 599, 601, 768, 1440]) {
+  await page.setViewportSize({ width, height: 1000 });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ path: `${out}/sample-interrupted-upload-${width}.png`, fullPage: true });
+}
 checks.push('wallet account change after manifest aborts before next signed transaction');
 assert.deepEqual(errors, []);
 await fs.writeFile(`${out}/sample-flow-results.json`, JSON.stringify({ checks, browser: browser.version(), source: 'real package + real SDK with controlled in-memory RPC and injected wallet; no live chain writes', transactions: rpc.transactions, errors, firstManifestKey: validKey }, null, 2));

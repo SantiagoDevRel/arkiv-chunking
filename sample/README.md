@@ -20,18 +20,18 @@ Open <http://127.0.0.1:3076>. The port is fixed: if occupied, stop the process y
 
 The manifest pins `arkiv-chunking` to `0.1.0`, Arkiv SDK to `0.8.0`, viem to `2.56.3`, TypeScript to `5.9.3` and Vite to `8.2.2`. The package version is displayed using its exported `VERSION`, so the visible version describes the actual import.
 
-**Publication status:** until `arkiv-chunking@0.1.0` is available on npm, the clean install above is blocked. A local tarball test is not evidence of publication. The delivery report in the repository root records publication and verification status.
+The sample resolves `arkiv-chunking@0.1.0` from the public npm registry. See the [verification report](../docs/verification.md) for registry installation and real-network evidence.
 
 ## Perform the complete flow
 
 1. Keep the supplied Tiramisu RPC or enter your own HTTPS RPC URL. It must return chain ID `7738577`. The URL stays in the current form; the sample does not store it in localStorage, analytics or logs. If the provider requires an access key, obtain a browser-appropriate key from that provider; Arkiv Hub provides [access keys](https://hub.arkiv.network/api-keys). A key embedded in a browser URL is visible to that browser and provider; never put an administrative credential here.
 2. For upload, use an injected EIP-1193 wallet connected to Tiramisu, with enough GLM **testnet** funds for the transaction fees and entity storage. Follow the [network setup](https://hub.arkiv.network/networks) and obtain funds from the [testnet faucet](https://hub.arkiv.network/faucet). The sample does not request private keys or automatically alter your wallet's network configuration. Retrieval does not need a wallet or funds.
-3. Select a small, non-sensitive file. For a reproducible two-part example, create `example.txt` containing 120,001 ASCII characters. The default chunk size is 100,000 bytes, so the preview will show two parts. Empty files are supported as one empty part.
-4. Choose Entity Expiration, acknowledge that the bytes and filename will be public, then click **Conectar wallet y subir**. Approve the wallet connection and each transaction. Upload uses one manifest transaction, one transaction per chunk, and one manifest finalization transaction. A two-part file therefore needs four transaction approvals.
-5. Copy the returned manifest key and click **Recuperar archivo**. Expected result: `Verificado: los bytes coinciden exactamente con el archivo que subiste.`, with file size, chunk count, SHA-256 and a download link. The byte comparison uses the original in this tab; the package separately checks the complete file's SHA-256 digest and manifest structure.
-6. Click **Descargar archivo verificado**. The sample serves an attachment as `application/octet-stream`; it never renders uploaded HTML or executes uploaded content.
+3. Select a small, non-sensitive file. For a reproducible example with two chunks, create `example.txt` containing 120,001 ASCII characters. The default chunk size is 100,000 bytes, so the preview will show two chunks. Empty files are supported as one empty chunk.
+4. Choose Entity Expiration, acknowledge that the bytes and filename will be public, then click **Connect wallet and upload**. Approve the wallet connection and each transaction. Upload uses one manifest transaction, one transaction per chunk, and one manifest finalization transaction. A file with two chunks therefore needs four transaction approvals.
+5. Copy the returned manifest key and click **Retrieve file**. Expected result: `Verified: the bytes exactly match the file you uploaded.`, with file size, chunk count, SHA-256 and a download link. The byte comparison uses the original in this tab; the package separately checks the complete file's SHA-256 digest and manifest structure.
+6. Click **Download verified file**. The sample serves an attachment as `application/octet-stream`; it never renders uploaded HTML or executes uploaded content.
 
-Create the two-part fixture from the sample directory with:
+Create the fixture with two chunks from the sample directory with:
 
 ```sh
 node -e "require('node:fs').writeFileSync('example.txt', 'x'.repeat(120001), {flag:'wx'})"
@@ -43,7 +43,7 @@ You can reload the page and paste a manifest key to retrieve an existing file wi
 
 ## Limits and recovery
 
-- Files are buffered in browser memory. The package limit is 32 MiB; this sample uses the default chunk size and displays the actual part count. Start small: every part adds a transaction and testnet storage cost.
+- Files are buffered in browser memory. The package limit is 32 MiB; this sample uses the default chunk size and displays the actual chunk count. Start small: every chunk adds a transaction and testnet storage cost.
 - Expiration is availability policy, not deletion from chain history. Do not upload personal, secret or copyrighted material without authorization.
 - No wallet: install or enable an injected Ethereum-compatible wallet. No account: grant access to a test account. Wallet rejection: approve only the action you intended and retry deliberately.
 - Wrong network: configure both the RPC and wallet for Tiramisu. The sample checks both before upload, and the package checks again.
