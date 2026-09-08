@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Archivos en Arkiv · arkiv-chunking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">[ SAMPLE · ARKIV-CHUNKING <span id="version"></span> ]</p>
+        <h1>Guarda un archivo.<br />Recupéralo completo.</h1>
+        <p>Divide un archivo en Arkiv entities, consulta sus partes y verifica el archivo reconstruido.</p>
+      </header>
+
+      <section aria-labelledby="connection-heading">
+        <h2 id="connection-heading">Conexión a Tiramisu</h2>
+        <label for="rpc">URL RPC</label>
+        <input id="rpc" type="url" spellcheck="false" autocomplete="off" aria-describedby="rpc-help" />
+        <p id="rpc-help" class="help">La URL se usa solo en esta pestaña. Si tu proveedor exige una access key, utiliza una URL autorizada. No compartas claves privadas.</p>
+        <p class="help">Para subir necesitas una wallet en Tiramisu con GLM de testnet. Para recuperar solo necesitas el RPC. <a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Configura la red</a> · <a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Obtén fondos de testnet</a> · <a href="https://hub.arkiv.network/api-keys" target="_blank" rel="noopener noreferrer">Obtén una access key</a></p>
+      </section>
+
+      <section aria-labelledby="upload-heading">
+        <h2 id="upload-heading">1. Sube tu archivo</h2>
+        <form id="upload-form">
+          <label for="file">Archivo</label>
+          <input id="file" type="file" required aria-describedby="file-info" />
+          <p id="file-info" class="help">Selecciona un archivo para ver cuántas partes necesita.</p>
+          <label for="expiration">Entity Expiration</label>
+          <select id="expiration" aria-describedby="expiration-help">
+            <option value="1800">1.800 bloques</option>
+            <option value="43200" selected>43.200 bloques</option>
+            <option value="302400">302.400 bloques</option>
+          </select>
+          <p id="expiration-help" class="help">La duración se mide en bloques desde la creación del manifiesto. No equivale a un tiempo fijo en horas o días.</p>
+          <label class="consent" for="consent">
+            <input id="consent" type="checkbox" required />
+            <span>Entiendo que el archivo y su nombre serán públicos. La expiración no borra el historial. No subiré información sensible.</span>
+          </label>
+          <button type="submit" id="upload">Conectar wallet y subir</button>
+        </form>
+        <p id="upload-status" role="status" aria-live="polite">Aún no has subido ningún archivo.</p>
+        <div id="upload-result" hidden>
+          <p>Conserva esta clave para recuperar el archivo:</p>
+          <code id="uploaded-key"></code>
+          <p class="help" id="upload-summary"></p>
+        </div>
+      </section>
+
+      <section aria-labelledby="download-heading">
+        <h2 id="download-heading">2. Recupera y verifica</h2>
+        <form id="download-form">
+          <label for="manifest">Clave del manifiesto</label>
+          <input id="manifest" type="text" spellcheck="false" autocomplete="off" placeholder="0x…" required aria-describedby="manifest-help" />
+          <p id="manifest-help" class="help">Se completa después de subir. También puedes pegar una clave existente.</p>
+          <button type="submit" id="retrieve">Recuperar archivo</button>
+        </form>
+        <p id="download-status" role="status" aria-live="polite">Aún no has recuperado ningún archivo.</p>
+        <div id="download-result" hidden>
+          <p id="download-summary"></p>
+          <dl><dt>SHA-256 verificado</dt><dd><code id="download-hash"></code></dd></dl>
+          <a id="save" class="button" download>Descargar archivo verificado</a>
+        </div>
+      </section>
+
+      <footer><p>These packages are intended for testnet use.</p><p>Los archivos se reconstruyen en la memoria del navegador. Cerrar la pestaña no revierte las transacciones enviadas.</p></footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

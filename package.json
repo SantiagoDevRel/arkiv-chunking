@@ -1,0 +1,52 @@
+{
+  "name": "arkiv-chunking",
+  "version": "0.1.0",
+  "description": "Split files into queryable Arkiv entities and reconstruct them with integrity verification.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LICENSE",
+    "docs/verification.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SantiagoDevRel/arkiv-chunking.git"
+  },
+  "homepage": "https://github.com/SantiagoDevRel/arkiv-chunking#readme",
+  "bugs": {
+    "url": "https://github.com/SantiagoDevRel/arkiv-chunking/issues"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.10.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:browser": "node test/browser-smoke.mjs",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "@arkiv-network/sdk": "0.8.0",
+    "viem": "^2.56.3"
+  },
+  "devDependencies": {
+    "@arkiv-network/sdk": "0.8.0",
+    "@types/node": "22.19.13",
+    "playwright": "1.62.1",
+    "typescript": "5.9.3",
+    "viem": "2.56.3"
+  },
+  "license": "MIT"
+}

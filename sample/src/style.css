@@ -1,0 +1,66 @@
+/* Tokens and primitive treatments adapted from Arkiv-Network/arkiv-ui:
+   registry/styles/arkiv-tokens.css; button.tsx; section-heading.tsx.
+   Open font fallbacks follow its CONSUMER-INSTALL.md; no licensed binaries. */
+:root {
+  color-scheme: dark;
+  --arkiv-blue: #181ea9;
+  --arkiv-orange: #fe7446;
+  --arkiv-ink: #111111;
+  --arkiv-sand: #f6f4ef;
+  --arkiv-stone: #e9e6de;
+  --font-brutal: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --n-1f: #1f1f1f;
+  --n-c7: #c7c7c7;
+  --radius-md: 8px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-12: 48px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--arkiv-sand);
+  background: var(--arkiv-ink);
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 840px; margin: auto; padding: var(--s-12) var(--s-6); }
+header { margin-bottom: var(--s-12); }
+h1, h2 { font-family: var(--font-brutal); font-weight: 500; line-height: 1.1; letter-spacing: 0; }
+h1 { font-size: 32px; margin: var(--s-6) 0; }
+h2 { font-size: 24px; margin: 0 0 var(--s-6); }
+p { margin: var(--s-4) 0; }
+.eyebrow { font-size: 14px; font-weight: 500; letter-spacing: 0; overflow-wrap: anywhere; color: var(--arkiv-orange); }
+section { border-top: 1px solid var(--n-c7); padding: var(--s-8) 0; }
+label { display: block; margin-top: var(--s-6); margin-bottom: var(--s-2); }
+input, select, button, .button { font: inherit; border-radius: var(--radius-md); }
+input:not([type="checkbox"]), select { width: 100%; min-width: 0; border: 1px solid var(--n-c7); color: var(--arkiv-sand); background: var(--n-1f); padding: var(--s-3); }
+input[type="file"] { white-space: normal; }
+input[type="file"]::file-selector-button { font: inherit; margin-right: var(--s-3); white-space: normal; padding: var(--s-2); border: 0; border-radius: 6px; }
+.help, footer { font-size: 14px; line-height: 1.5; color: var(--n-c7); }
+.consent { display: flex; align-items: flex-start; gap: var(--s-3); margin-bottom: var(--s-6); }
+input[type="checkbox"] { margin: 4px 0 0; width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--arkiv-orange); }
+button, .button { display: inline-flex; justify-content: center; align-items: center; padding: 10px 20px; min-height: 44px; white-space: normal; text-align: center; background: transparent; border: 1px solid var(--arkiv-sand); color: var(--arkiv-sand); cursor: pointer; text-decoration: none; }
+button:hover, .button:hover { background: var(--arkiv-sand); color: var(--arkiv-ink); }
+button:disabled { opacity: .5; cursor: wait; }
+form button { margin-top: var(--s-3); }
+a { color: inherit; text-underline-offset: 4px; }
+code { font-family: var(--font-mono); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+dt { font-size: 14px; color: var(--n-c7); }
+dd { margin: var(--s-2) 0 var(--s-6); }
+[role="status"] { overflow-wrap: anywhere; }
+[data-state="error"] { border-left: 3px solid var(--arkiv-orange); padding-left: var(--s-4); }
+[data-state="success"] { color: var(--arkiv-sand); }
+[data-state="loading"] { color: var(--arkiv-orange); }
+#upload-result, #download-result { padding: var(--s-6); background: var(--n-1f); border-radius: var(--radius-md); overflow-wrap: anywhere; }
+:focus-visible { outline: 2px solid var(--arkiv-orange); outline-offset: 4px; }
+footer { border-top: 1px solid var(--n-c7); padding-top: var(--s-6); }
+@media (max-width: 600px) {
+  main { padding: var(--s-8) var(--s-4); }
+  button, .button { width: 100%; }
+  #upload-result, #download-result { padding: var(--s-4); }
+}
