@@ -116,5 +116,12 @@
   "unverified": [
     "Native browser zoom 200 percent; responsive CSS viewport checks cover narrow layouts",
     "No new real wallet transactions in this UI revision; earlier release evidence documents successful writes"
-  ]
+  ],
+  "reviewers": {
+    "muse": "No blocking findings; 35 local probes",
+    "grok": "No blocking findings; 43 published-artifact probes",
+    "claude": "No blocking findings; 27 published-artifact tests and 13 independent probes",
+    "claudeUi": "93 assertions passed"
+  },
+  "hostedSample": "https://arkiv-chunking-sample.vercel.app"
 }

@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-09-09T05:47:00.617887+00:00",
+  "origin": "https://stage.hub.arkiv.network",
+  "version": {
+    "commit": "2fa884add8dd9d21f6dc441f28456d4204d5976a",
+    "shortCommit": "2fa884a",
+    "ref": "develop",
+    "builtAt": "2026-09-09T05:40:58Z",
+    "deployEnv": "staging"
+  },
+  "pullRequest": "https://github.com/Arkiv-Network/arkiv-hub/pull/107",
+  "ci": {
+    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315625463",
+    "conclusion": "success"
+  },
+  "deployment": {
+    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315846256",
+    "conclusion": "success"
+  },
+  "productionMainUnchanged": "faa23439e9b15ad6e5ef77ac202534c83b264409",
+  "catalog": {
+    "name": "Arkiv Chunking",
+    "package": "arkiv-chunking@0.1.0",
+    "source": "https://github.com/SantiagoDevRel/arkiv-chunking/tree/v0.1.0/sample",
+    "documentation": "https://github.com/SantiagoDevRel/arkiv-chunking/blob/v0.1.0/README.md",
+    "sample": "https://arkiv-chunking-sample.vercel.app",
+    "existingGraphEntryPreserved": true
+  },
+  "browser": {
+    "origin": "https://stage.hub.arkiv.network",
+    "evidence": [
+      {
+        "theme": "dark",
+        "width": 358,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 390,
+        "viewport": 390
+      },
+      {
+        "theme": "dark",
+        "width": 736,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 768,
+        "viewport": 768
+      },
+      {
+        "theme": "dark",
+        "width": 1040,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 1440,
+        "viewport": 1440
+      },
+      {
+        "theme": "light",
+        "width": 358,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 390,
+        "viewport": 390
+      },
+      {
+        "theme": "light",
+        "width": 736,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 768,
+        "viewport": 768
+      },
+      {
+        "theme": "light",
+        "width": 1040,
+        "text": "ARKIV CHUNKING\n\nSplit files into queryable Arkiv entities, then retrieve and verify the original bytes.\n\nTiramisu testnet (chain ID 7738577)\n\nnpm install arkiv-chunking@0.1.0\nCopy\nTry sample dapp\nSample source\nDocumentation\nView on npm\nSetup and limitations",
+        "font": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+        "bodyWidth": 1440,
+        "viewport": 1440
+      }
+    ],
+    "sampleLinkOpened": true
+  },
+  "coverage": {
+    "reviewer": "Codex",
+    "handle": "codex-2d18e4",
+    "turn": 8,
+    "requestedItems": 4,
+    "completedItems": 4
+  },
+  "scope": "PR107 pins three source/setup references on the existing card introduced by concurrent PR106. The shared card layout came from PR105. No production Hub deploy or resource deletion."
+}

@@ -1,10 +1,20 @@
 # Verification — arkiv-chunking 0.1.0
 
+## Hub staging catalog
+
+The card is live on [Hub staging](https://stage.hub.arkiv.network/tools#tool-arkiv-chunking). The actual `/api/version` response confirms `develop` commit `2fa884a`; the [final CI](https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315625463) and [staging deployment](https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315846256) passed. The deployed card was rendered at 390/768/1440 px in dark and light themes, with closed and expanded details, no horizontal overflow, correct release-tag references, and successful navigation to sample v0.1.0. The existing graph entry is preserved. Hub production remains unchanged. [Deployment and browser evidence](hub-staging-evidence.json).
+
+[Hub PR #107](https://github.com/Arkiv-Network/arkiv-hub/pull/107) pins the existing card's sample source, clone command and README to the immutable [v0.1.0 release](https://github.com/SantiagoDevRel/arkiv-chunking/tree/v0.1.0/sample) and adds its exact localhost setup URL. While the catalog integration was being reviewed, concurrent Hub work added both the compact shared card and the Chunking entry to develop. Those changes were preserved; the final PR modifies only three reference/setup fields and does not duplicate the entry.
+
+Local integration checks: lint, TypeScript, production build, 207 unit tests (one worker, 30-second timeout after parallel auth-import timeouts), six Tools E2E checks at 390/768/1440, and both themes with closed/expanded details and actual navigation to the hosted sample. The final reference adjustment passed all four catalog tests.
+
+Claude consolidated the executed frontend and UX reviewer checks with no blockers. The wrapper interrupted those agents before their written reports, so the verdict was recovered from saved commands/results and Claude's own checks. The upstream compact card resolves the earlier 3+1 button observation. No new package functionality or Hub card redesign was added by this task.
+
 ## Hosted sample
 
 [Arkiv Files](https://arkiv-chunking-sample.vercel.app) is deployed on Vercel from the clean sample checkout, consuming npm `arkiv-chunking@0.1.0`. The hosted application was rendered in both themes at 390/768/1440 px and successfully retrieved the real 120,001-byte file and its two chunk entities from Tiramisu. The production HTML, JS, CSS and official logo match the locally verified build. Sensitive/source paths (`/.env`, `/.env.local`, `/keys.json`, `/package.json`, `/src/main.ts`, `/config.json`, `/vercel.json`, `/node_modules/arkiv-chunking/package.json`) return 404.
 
-Claude separately passed 63 UI assertions plus 30 breakpoint assertions on the local production build: tooltip interaction/focus/contrast, icon theme toggle, stable panel geometry, and static deployment allowlist. Framing is denied by response headers. This sample deployment is independent of the Hub production environment.
+Claude separately passed 63 UI assertions plus 30 breakpoint assertions on the local production build: tooltip interaction/focus/contrast, icon theme toggle, stable panel geometry, and static deployment allowlist. Framing is denied by response headers. This sample deployment is independent of the Hub production environment. [Deployment identity, headers and asset hashes](sample-deployment.json).
 
 ## Panel polish and fresh npm consumer (2026-09-09 UTC)
 
@@ -52,7 +62,7 @@ The requested [Claude Design project](https://claude.ai/design/p/31e23730-6446-4
 
 **Copy review:** Claude and Grok Build inspected Upload, Open existing and a real retrieved file. Repeated verification explanations and idle slogans were removed, wallet-free retrieval is explained once, and funding links appear only for uploads. A functional page title works in both modes; success copy is shorter. Manifest-key help remains visible for first-time visitors. Query details use a keyboard/touch-accessible disclosure. Claude's focused follow-up approved the copy changes, keyboard tabs and evidence addendum with no blockers; its JSON encoding and packaged-link observations were corrected. Grok's Cursor lane hit its usage limit; the existing Grok Build lane completed the actual review. Neither reviewer submitted transactions.
 
-No public deployment or Hub card has been created. The current sample is served locally for review; the source report is newer than the immutable report bundled in npm 0.1.0.
+At this earlier verification stage, no public deployment or Hub card had been created. The sample was served locally for review; the source report is newer than the immutable report bundled in npm 0.1.0.
 
 The final Claude delta review closed with **STATUS: OK**: evidence JSON parses, the absolute evidence link resolves packaging concerns, shorter copy preserves the identity distinction, and narrow result metadata no longer overlaps. It also verified no overflow at 320px CSS width. A fresh GitHub clone of code commit `4573518` followed `sample/README.md`: `npm ci`, production build and `npm ls` passed, resolving npm `arkiv-chunking@0.1.0`, SDK 0.8.0 and viem 2.56.3. Its JavaScript/CSS assets match the inspected localhost preview (`index-0dgpEjrT.js`, `index-DVtonyW0.css`).
 

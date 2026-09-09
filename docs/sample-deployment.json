@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-09-09T05:06:22.904Z",
+  "origin": "https://arkiv-chunking-sample.vercel.app",
+  "immutableUrl": "https://arkiv-chunking-sample-gwzllttdj-santiago-hobby.vercel.app",
+  "deployment": "dpl_7sFmiX8tHZKaQJgsWuxgMUmKP7Cx",
+  "sourceCommit": "e5d4250",
+  "package": "arkiv-chunking@0.1.0",
+  "headers": {
+    "frameOptions": "DENY",
+    "csp": "frame-ancestors 'none'",
+    "contentTypeOptions": "nosniff"
+  },
+  "probes": [
+    {
+      "path": "/.env",
+      "status": 404
+    },
+    {
+      "path": "/.env.local",
+      "status": 404
+    },
+    {
+      "path": "/package.json",
+      "status": 404
+    },
+    {
+      "path": "/src/main.ts",
+      "status": 404
+    },
+    {
+      "path": "/keys.json",
+      "status": 404
+    },
+    {
+      "path": "/config.json",
+      "status": 404
+    },
+    {
+      "path": "/vercel.json",
+      "status": 404
+    },
+    {
+      "path": "/node_modules/arkiv-chunking/package.json",
+      "status": 404
+    }
+  ],
+  "assets": [
+    {
+      "path": "index.html",
+      "bytes": 8010,
+      "sha256": "55b2eb5e35a3a3607b3a34d9cabfe8856e9ac455466c87aadea52e589ada9033"
+    },
+    {
+      "path": "brand\\arkiv-wordmark-black.svg",
+      "bytes": 1246,
+      "sha256": "456d2931e350ffb8bfca1d13aa88de267a2742ce556687ddad45cdef8333c729"
+    },
+    {
+      "path": "brand\\arkiv-wordmark-white.svg",
+      "bytes": 1246,
+      "sha256": "ef0040f22c08ea85fc66b065b2f01f36f1572219b63fe0564f0f277130f4cb5c"
+    },
+    {
+      "path": "brand\\provenance.json",
+      "bytes": 1393,
+      "sha256": "4018d9eb8acb62091af1f1ca0d954e7071edffc67fef507972fd24a6bd86334a"
+    },
+    {
+      "path": "assets\\ccip-BAyfmko5.js",
+      "bytes": 2835,
+      "sha256": "fcb0bec48ed99aa398d60a450a76652fc9ff28de1d30ffa7a0f84e1510d25c2f"
+    },
+    {
+      "path": "assets\\index-CNOjN3fN.js",
+      "bytes": 351023,
+      "sha256": "ff59cc0d895417a68bed9cf741ec5e25d103acb11ebca8c9b04a8f4176e1ced6"
+    },
+    {
+      "path": "assets\\index-CuudEXkT.css",
+      "bytes": 13931,
+      "sha256": "3af1ad4bd50f43a4e38a130e3873af4a14323c8733241adf4900ed6829fdef99"
+    }
+  ],
+  "verification": {
+    "liveDownloadBytes": 120001,
+    "liveDownloadSha256": "ec51e2ead3f4c988ec27c006123bda936fec6eb2eb8f6bdc7dbe84071a9a3b76",
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "widths": [
+      390,
+      768,
+      1440
+    ],
+    "sampleHeader": "v0.1.0",
+    "noNewLiveWrites": true
+  }
+}
