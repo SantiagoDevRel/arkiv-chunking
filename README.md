@@ -4,7 +4,7 @@ Split a file into queryable Arkiv entities, store it, and retrieve exactly the o
 
 **These packages are intended for testnet use.**
 
-Version: **0.1.0**. [npm package](https://www.npmjs.com/package/arkiv-chunking) · [Source and sample](https://github.com/SantiagoDevRel/arkiv-chunking). See [verification](docs/verification.md) for the exact tested SDK, runtime, real Tiramisu transactions and release evidence.
+Version: **0.1.0**. [Try the sample](https://arkiv-chunking-sample.vercel.app) ? [npm package](https://www.npmjs.com/package/arkiv-chunking) · [Source and sample](https://github.com/SantiagoDevRel/arkiv-chunking). See [verification](docs/verification.md) for the exact tested SDK, runtime, real Tiramisu transactions and release evidence.
 
 ## Install and run without a wallet
 

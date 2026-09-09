@@ -2,6 +2,8 @@
 
 A compact file workspace built with Claude Design and the Arkiv Design System. It consumes the published **arkiv-chunking@0.1.0** package: choose a file, sign its storage transactions, and get the automatically retrieved and verified result.
 
+[Open the hosted sample](https://arkiv-chunking-sample.vercel.app) ? [Verification](../docs/verification.md)
+
 **These packages are intended for testnet use.**
 
 ## Run from a clean checkout

@@ -1,6 +1,14 @@
 # Verification — arkiv-chunking 0.1.0
 
+## Hosted sample
+
+[Arkiv Files](https://arkiv-chunking-sample.vercel.app) is deployed on Vercel from the clean sample checkout, consuming npm `arkiv-chunking@0.1.0`. The hosted application was rendered in both themes at 390/768/1440 px and successfully retrieved the real 120,001-byte file and its two chunk entities from Tiramisu. The production HTML, JS, CSS and official logo match the locally verified build. Sensitive/source paths (`/.env`, `/.env.local`, `/keys.json`, `/package.json`, `/src/main.ts`, `/config.json`, `/vercel.json`, `/node_modules/arkiv-chunking/package.json`) return 404.
+
+Claude separately passed 63 UI assertions plus 30 breakpoint assertions on the local production build: tooltip interaction/focus/contrast, icon theme toggle, stable panel geometry, and static deployment allowlist. Framing is denied by response headers. This sample deployment is independent of the Hub production environment.
+
 ## Panel polish and fresh npm consumer (2026-09-09 UTC)
+
+[Independent Muse, Grok and Claude audit](package-audit.md): no blocking findings; evidence and limits are recorded per reviewer.
 
 The sample now uses a sun/moon control, a keyboard-accessible explanation beside **File manifest**, and equal-width, equal-height desktop panels whose frames stay fixed when disclosures open. Mobile panels grow naturally. The package API and published `arkiv-chunking@0.1.0` artifact are unchanged.
 
