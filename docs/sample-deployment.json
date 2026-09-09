@@ -1,9 +1,9 @@
 {
-  "checkedAt": "2026-09-09T05:06:22.904Z",
+  "checkedAt": "2026-09-09T05:50:48.323154+00:00",
   "origin": "https://arkiv-chunking-sample.vercel.app",
-  "immutableUrl": "https://arkiv-chunking-sample-gwzllttdj-santiago-hobby.vercel.app",
-  "deployment": "dpl_7sFmiX8tHZKaQJgsWuxgMUmKP7Cx",
-  "sourceCommit": "e5d4250",
+  "immutableUrl": "https://arkiv-chunking-sample-lv8x6jkjy-santiago-hobby.vercel.app",
+  "deployment": "dpl_3aaher1k54dtk8eFdyzSN8zmtYgd",
+  "sourceCommit": "572d52628800c5a9f52eaf58c1c3d5f55a92b289",
   "package": "arkiv-chunking@0.1.0",
   "headers": {
     "frameOptions": "DENY",
@@ -46,39 +46,39 @@
   ],
   "assets": [
     {
-      "path": "index.html",
-      "bytes": 8010,
-      "sha256": "55b2eb5e35a3a3607b3a34d9cabfe8856e9ac455466c87aadea52e589ada9033"
-    },
-    {
-      "path": "brand\\arkiv-wordmark-black.svg",
-      "bytes": 1246,
-      "sha256": "456d2931e350ffb8bfca1d13aa88de267a2742ce556687ddad45cdef8333c729"
-    },
-    {
-      "path": "brand\\arkiv-wordmark-white.svg",
-      "bytes": 1246,
-      "sha256": "ef0040f22c08ea85fc66b065b2f01f36f1572219b63fe0564f0f277130f4cb5c"
-    },
-    {
-      "path": "brand\\provenance.json",
-      "bytes": 1393,
-      "sha256": "4018d9eb8acb62091af1f1ca0d954e7071edffc67fef507972fd24a6bd86334a"
-    },
-    {
-      "path": "assets\\ccip-BAyfmko5.js",
+      "path": "assets/ccip-BAyfmko5.js",
       "bytes": 2835,
       "sha256": "fcb0bec48ed99aa398d60a450a76652fc9ff28de1d30ffa7a0f84e1510d25c2f"
     },
     {
-      "path": "assets\\index-CNOjN3fN.js",
+      "path": "assets/index-CNOjN3fN.js",
       "bytes": 351023,
       "sha256": "ff59cc0d895417a68bed9cf741ec5e25d103acb11ebca8c9b04a8f4176e1ced6"
     },
     {
-      "path": "assets\\index-CuudEXkT.css",
+      "path": "assets/index-CuudEXkT.css",
       "bytes": 13931,
       "sha256": "3af1ad4bd50f43a4e38a130e3873af4a14323c8733241adf4900ed6829fdef99"
+    },
+    {
+      "path": "brand/arkiv-wordmark-black.svg",
+      "bytes": 1246,
+      "sha256": "456d2931e350ffb8bfca1d13aa88de267a2742ce556687ddad45cdef8333c729"
+    },
+    {
+      "path": "brand/arkiv-wordmark-white.svg",
+      "bytes": 1246,
+      "sha256": "ef0040f22c08ea85fc66b065b2f01f36f1572219b63fe0564f0f277130f4cb5c"
+    },
+    {
+      "path": "brand/provenance.json",
+      "bytes": 1393,
+      "sha256": "4018d9eb8acb62091af1f1ca0d954e7071edffc67fef507972fd24a6bd86334a"
+    },
+    {
+      "path": "index.html",
+      "bytes": 8022,
+      "sha256": "378f1b08e77bbc82072b7e8d63fc091bf5b35b85d7ea0a12f6a0d902b4113c2d"
     }
   ],
   "verification": {
@@ -94,6 +94,8 @@
       1440
     ],
     "sampleHeader": "v0.1.0",
-    "noNewLiveWrites": true
-  }
+    "noNewLiveWrites": true,
+    "tiramisuSetupLinks": "Both hosted support links point to stage.hub.arkiv.network."
+  },
+  "sampleSourceTag": "sample-v0.1.0-r1"
 }

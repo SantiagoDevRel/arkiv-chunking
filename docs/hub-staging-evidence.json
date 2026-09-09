@@ -1,28 +1,31 @@
 {
-  "checkedAt": "2026-09-09T05:47:00.617887+00:00",
+  "checkedAt": "2026-09-09T06:00:06.457813+00:00",
   "origin": "https://stage.hub.arkiv.network",
   "version": {
-    "commit": "2fa884add8dd9d21f6dc441f28456d4204d5976a",
-    "shortCommit": "2fa884a",
+    "commit": "84fd9f6ad755b762badad7dee9c9260f73b37f2d",
+    "shortCommit": "84fd9f6",
     "ref": "develop",
-    "builtAt": "2026-09-09T05:40:58Z",
+    "builtAt": "2026-09-09T05:56:00Z",
     "deployEnv": "staging"
   },
-  "pullRequest": "https://github.com/Arkiv-Network/arkiv-hub/pull/107",
+  "pullRequest": "https://github.com/Arkiv-Network/arkiv-hub/pull/108",
   "ci": {
-    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315625463",
-    "conclusion": "success"
+    "conclusion": "success",
+    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34316639940"
   },
   "deployment": {
-    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34315846256",
-    "conclusion": "success"
+    "conclusion": "success",
+    "databaseId": 34316849883,
+    "headSha": "84fd9f6ad755b762badad7dee9c9260f73b37f2d",
+    "url": "https://github.com/Arkiv-Network/arkiv-hub/actions/runs/34316849883",
+    "workflowName": "Deploy Staging"
   },
   "productionMainUnchanged": "faa23439e9b15ad6e5ef77ac202534c83b264409",
   "catalog": {
     "name": "Arkiv Chunking",
     "package": "arkiv-chunking@0.1.0",
-    "source": "https://github.com/SantiagoDevRel/arkiv-chunking/tree/v0.1.0/sample",
-    "documentation": "https://github.com/SantiagoDevRel/arkiv-chunking/blob/v0.1.0/README.md",
+    "source": "https://github.com/SantiagoDevRel/arkiv-chunking/tree/sample-v0.1.0-r1/sample",
+    "documentation": "https://github.com/SantiagoDevRel/arkiv-chunking/blob/sample-v0.1.0-r1/README.md",
     "sample": "https://arkiv-chunking-sample.vercel.app",
     "existingGraphEntryPreserved": true
   },
@@ -87,5 +90,13 @@
     "requestedItems": 4,
     "completedItems": 4
   },
-  "scope": "PR107 pins three source/setup references on the existing card introduced by concurrent PR106. The shared card layout came from PR105. No production Hub deploy or resource deletion."
+  "scope": "PR107 pinned the existing card introduced by concurrent PR106. PR108 updates those three references to sample-v0.1.0-r1 after concurrent package PR1 corrected Tiramisu setup links. npm remains 0.1.0. No Hub production deployment or resource deletion.",
+  "previousVerifiedVersion": {
+    "commit": "2fa884add8dd9d21f6dc441f28456d4204d5976a",
+    "shortCommit": "2fa884a",
+    "ref": "develop",
+    "builtAt": "2026-09-09T05:40:58Z",
+    "deployEnv": "staging"
+  },
+  "deltaReview": "Claude independently verified tag consistency, target URLs, package version, runtime and setup command with no blockers (claude-aa49c4 turn 3)."
 }
