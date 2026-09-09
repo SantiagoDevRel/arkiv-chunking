@@ -39,9 +39,11 @@ This example is entirely local. It requires no network, wallet, funds, or access
 
 ## Store and retrieve on Tiramisu
 
+As verified on September 9, 2026, Tiramisu setup, faucet and access keys are available on the staging Hub; the production Hub still shows Braga. Use the links below. The immutable npm 0.1.0 archive retains earlier Hub links; this source README contains the corrected destinations.
+
 1. Use **Tiramisu testnet**, chain ID **7738577**, from `@arkiv-network/sdk/chains`. Choose the same network in your wallet and RPC configuration. The package refuses missing chains, chains without `testnet: true`, and mismatched RPC/wallet chain IDs. Custom testnet configurations are accepted but have not been tested.
-2. Fund a dedicated test wallet with **test GLM** using the [Hub faucet](https://hub.arkiv.network/faucet). Connect and sign in with that wallet. Test tokens have no monetary value. The [network page](https://hub.arkiv.network/networks) provides current connection details.
-3. Reads through `https://rpc.tiramisu.db-chain.testnet.arkiv.network` are anonymous. If your write RPC requires an access key, obtain a Tiramisu key at [Access Keys](https://hub.arkiv.network/api-keys), then use its connection instructions. Access policy and quotas belong to the provider and may change. A wallet signs writes; an RPC access key does not replace it.
+2. Fund a dedicated test wallet with **test GLM** using the [Hub faucet](https://stage.hub.arkiv.network/faucet). Connect and sign in with that wallet. Test tokens have no monetary value. The [network page](https://stage.hub.arkiv.network/networks) provides current connection details.
+3. Reads through `https://rpc.tiramisu.db-chain.testnet.arkiv.network` are anonymous. If your write RPC requires an access key, obtain a Tiramisu key at [Access Keys](https://stage.hub.arkiv.network/api-keys), then use its connection instructions. Access policy and quotas belong to the provider and may change. A wallet signs writes; an RPC access key does not replace it.
 4. For Node, put `ARKIV_PRIVATE_KEY` in a local secret file **outside your checkout** or your process environment. Optional `ARKIV_RPC_URL` selects your authenticated RPC. Never paste secrets into code, docs, a chat, or a browser bundle. For the browser flow, use the [sample](https://github.com/SantiagoDevRel/arkiv-chunking/tree/feat/file-chunking/sample), which asks your wallet to sign and never accepts a private key.
 
 Save as `roundtrip.mjs` in the consumer directory:
