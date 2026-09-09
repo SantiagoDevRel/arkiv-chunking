@@ -58,7 +58,7 @@ For the built-in file the query returns two entities, with `seq` values `0n` and
 
 The sample uses the SDK's public Tiramisu RPC internally. There is no RPC configuration form. Reads and these tested writes required no access key. If that public service changes access policy, update the integration deliberately; do not put administrative credentials in a browser bundle.
 
-Uploads require test GLM in a testnet wallet. Use the [faucet](https://hub.arkiv.network/faucet) and [network setup](https://hub.arkiv.network/networks). If Tiramisu is not installed in your wallet, follow the setup link, then reconnect. Account and network are checked before every signature; a change during upload stops subsequent writes.
+Uploads require test GLM in a testnet wallet. Use the [faucet](https://stage.hub.arkiv.network/faucet) and [network setup](https://stage.hub.arkiv.network/networks). If Tiramisu is not installed in your wallet, follow the setup link, then reconnect. Account and network are checked before every signature; a change during upload stops subsequent writes.
 
 The date adapter in `src/expiration.ts` calls SDK `getBlockTiming()` immediately before upload, then converts the selected date into the published package's relative `expirationBlocks`. It validates the package's minimum/maximum budgets and rejects timing more than five minutes away from the device clock. It does not silently clamp dates. Network progress and wallet approval delays can shift actual expiration. The result estimates the date from the actual returned `expiresAt` and fresh network timing. A failed date estimate never removes a verified download. Entity Expiration affects current availability; it does not erase historical bytes.
 
