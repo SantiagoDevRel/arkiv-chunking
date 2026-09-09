@@ -27,13 +27,13 @@ The lockfile resolves the exact published package from npm, with no alias to par
 3. Click **Store & verify**. An injected Ethereum-compatible wallet connects and, if necessary, asks to switch to Tiramisu (chain 7738577). The separate **Connect wallet** button lets you connect first. The sample never signs on page load.
 4. Approve each transaction. Expand **4 wallet approvals** to see why: one manifest, two chunks, and finalization. Progress appears while the operation runs. All bytes and filenames are public; use synthetic or otherwise approved public files.
 5. After finalization, retrieval and integrity verification run **automatically**. Expected result: **File verified**, `120,001 bytes`, `2` chunks, and `Every byte matches your file.`
-6. **Download file** saves the reconstructed file. **Copy file key** keeps its manifest key for later; **File manifest** opens that entity in the explorer. The sample file has **three entities** (one manifest and two chunks), written with four approvals because finalization updates the manifest.
+6. **Download file** saves the reconstructed file. **Copy file key** keeps its manifest key for later; **File manifest** opens that entity in the explorer. Its adjacent info button explains the manifest: an index containing the file metadata, while the bytes live in chunks. The sample file has **three entities** (one manifest and two chunks), written with four approvals because finalization updates the manifest.
 7. Each chunk card shows its entity key, byte count and a preview of its actual payload. Click its key to inspect that chunk in the explorer, **Download payload** for all its bytes, or **Attributes** for its manifest reference and zero-based `seq`. The result shows `100,000 + 20,001 → 120,001 bytes restored.` Previews are limited to 96 bytes, rendered as text or hex; they never execute file content.
 8. **Query these chunks** shows only the query fetching those entities, with their attributes and payloads. It iterates all pages at the inspected block, restricted to the manifest's owner and creator. Results need ordering by `seq` before reassembly; the published package handles this and integrity checks. The inspection query is an additional read, not another upload. If it fails, **Reload chunk details** retries only that view; the verified file remains downloadable.
 
 For a read-only flow, choose **Open existing**, paste a manifest key and click **Retrieve & verify**. No wallet or funds are needed. Reloading does not lose the on-chain file; keep its manifest key. In that case verification checks integrity against the manifest, not an independently trusted author. See the package's `expectedSha256` option for trusted digest pinning.
 
-The sample starts in **dark mode**. **Light mode / Dark mode** toggles appearance; your choice is saved locally. No preference means dark, independent of the operating system setting.
+The sample starts in **dark mode**. The **sun / moon** button toggles appearance; your choice is saved locally. No preference means dark, independent of the operating system setting. On desktop, both panels have equal dimensions and scroll independently when details expand. On mobile, panels stack and grow with their content.
 
 ### Run the displayed query
 
@@ -103,3 +103,7 @@ Colors, spacing and button treatments mirror `Arkiv-Network/arkiv-ui`: Ink `#111
 | Code and metadata labels | IBM Plex Mono | 12px /400 /1.5–1.7 |
 
 At widths above 700px, controls and result sit side by side; below that, the result appears when needed. The 960px breakpoint adjusts padding and result metadata wrapping. Inspect 390/768/1440, both sides of 700/960, empty/prepared/loading/error/success, long names, font loading, overflow and 200% reflow. Do not reduce essential control labels or truncate filenames to force a fit. The typography table is a contract, not evidence of a test run.
+
+## Static deployment
+
+Build from the sample directory with `npm ci && npm run build`, then deploy that directory using `vercel --scope YOUR_TEAM`. The checked-in configuration serves the already-built `dist` directory; it does not run a remote build. `.vercelignore` allows only `dist` and `vercel.json`. No runtime environment variables or server signer are needed. Verify the deployed header version, a read-only retrieval, and that `/.env`, `/package.json` and `/src/main.ts` return 404 before sharing the URL.

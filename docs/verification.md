@@ -1,5 +1,17 @@
 # Verification — arkiv-chunking 0.1.0
 
+## Panel polish and fresh npm consumer (2026-09-09 UTC)
+
+The sample now uses a sun/moon control, a keyboard-accessible explanation beside **File manifest**, and equal-width, equal-height desktop panels whose frames stay fixed when disclosures open. Mobile panels grow naturally. The package API and published `arkiv-chunking@0.1.0` artifact are unchanged.
+
+- `npm test`: 34 passed; package typecheck and sample production build passed.
+- Browser regression: 15 workflow checks, 17 controlled SDK transactions, both themes at 390/699/701/768/959/961/1440 px. Added icon visibility, tooltip keyboard/Escape/focus, viewport bounds, and equal panel geometry assertions, including expanded details.
+- Real Tiramisu anonymous read: the displayed query returned two entities (100,000 and 20,001 bytes), and published `downloadFile` returned the same 120,001 bytes and independently checked SHA-256. Both chunk explorer destinations displayed the expected entity key.
+- A new empty consumer installed exact npm versions, executed the example extracted from its installed README, compiled all public TypeScript contracts, and exercised empty/binary inputs, digest mismatch, missing manifest and wrong network. `npm audit --omit=dev` reported zero advisories. Published JavaScript and declarations matched the local build byte for byte.
+- Native Chrome 200% browser zoom was not verified. The tooltip was inspected with viewport captures because full-page screenshot capture crashed Chrome at one intermediate width; DOM geometry and viewport capture passed there. No new real wallet writes were sent for this UI revision.
+
+Machine-readable versions, registry integrity, query result and limitations: [polish-verification.json](polish-verification.json). The npm tarball's documentation remains its release-time snapshot; this repository records subsequent sample verification.
+
 Date: 2026-09-08. This bundled report is the snapshot taken before publishing the reviewed artifact. Post-publication registry and sample checks are tracked in the [current source report](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/docs/verification.md).
 
 ## Current dark/light theme and chunk inspection — 2026-09-08

@@ -78,6 +78,12 @@ try {
       if (await page.locator('html').getAttribute('data-theme') !== theme) await page.locator('#theme').click();
     for (const width of [390, 699, 701, 768, 959, 961, 1440]) {
       await page.setViewportSize({ width, height: 900 });
+      await page.locator('.panel').evaluateAll(nodes => nodes.forEach(node => { node.scrollTop = 0; }));
+      if (width > 700) {
+        const frames = await page.locator('.workspace > .panel').evaluateAll(nodes => nodes.map(node => ({ width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height })));
+        assert.ok(Math.abs(frames[0].width - frames[1].width) <= 1, 'Workspace panels have equal widths');
+        assert.equal(frames[0].height, frames[1].height, 'Workspace panels have equal heights, including expanded details');
+      }
       const probe = await page.evaluate(() => ({
         width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth,
         theme: document.documentElement.dataset.theme, background: getComputedStyle(document.body).backgroundColor,
@@ -117,6 +123,15 @@ try {
     return manifestKey;
   }
   async function assertChunks(bytes) {
+    const info = page.getByRole('button', { name: 'What is a file manifest?' });
+    await info.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#manifest-tip').evaluate(node => node.matches(':popover-open')), true);
+    assert.match(await page.locator('#manifest-tip').innerText(), /file bytes live in the chunk entities/);
+    const tip = await page.locator('#manifest-tip').boundingBox();
+    assert.ok(tip.x >= 0 && tip.y >= 0 && tip.x + tip.width <= 1440 && tip.y + tip.height <= 900, 'Manifest explanation fits viewport');
+    await page.keyboard.press('Escape');
+    assert.equal(await info.evaluate(node => node === document.activeElement), true);
     const manifestKey = await page.locator('#manifest').inputValue();
     const snippet = await page.locator('#query-code').textContent();
     assert.ok(snippet.includes(`eq('manifest', key('${manifestKey}'))`));
@@ -166,7 +181,12 @@ try {
 
   await reset();
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+  assert.equal(await page.locator('#theme').innerText(), '');
+  assert.equal(await page.locator('#theme [data-icon=sun]').isVisible(), true);
+  assert.equal(await page.locator('#theme [data-icon=moon]').isVisible(), false);
   await page.locator('#theme').click();
+  assert.equal(await page.locator('#theme [data-icon=moon]').isVisible(), true);
+  assert.equal(await page.locator('#theme [data-icon=sun]').isVisible(), false);
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
   await reset();
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');

@@ -1,0 +1,120 @@
+{
+  "checkedAt": "2026-09-09T04:45:00Z",
+  "package": "arkiv-chunking@0.1.0",
+  "packageChanged": false,
+  "ui": {
+    "theme": "icon-only sun/moon with accessible action labels; dark default",
+    "manifestHelp": "Native click/keyboard popover; Escape returns focus",
+    "frames": "Equal widths and stable equal heights above 700px; natural stacked mobile height",
+    "widths": [
+      390,
+      699,
+      701,
+      768,
+      959,
+      961,
+      1440
+    ],
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "browserChecks": 15,
+    "controlledTransactions": 17,
+    "liveExplorerKeysVerified": true
+  },
+  "cleanConsumer": {
+    "checkedAt": "2026-09-09T04:42:08.449Z",
+    "node": "v22.22.3",
+    "installed": [
+      {
+        "name": "arkiv-chunking",
+        "version": "0.1.0",
+        "resolved": "https://registry.npmjs.org/arkiv-chunking/-/arkiv-chunking-0.1.0.tgz",
+        "integrity": "sha512-TG0k5wPzRkXcddOD6e/H/DKUGVz2qECXxwe2ya91ktqQynL9WFUlGPyMG0E3AJtxiba4EEcgUl7CVw5nbWNymw=="
+      },
+      {
+        "name": "@arkiv-network/sdk",
+        "version": "0.8.0",
+        "resolved": "https://registry.npmjs.org/@arkiv-network/sdk/-/sdk-0.8.0.tgz",
+        "integrity": "sha512-OnCrCfJqbnqrNtCIw6LaDrjh8mee03BSHz4naNRDjV43LjqEnhrfqCRura6GrbFx75Zzc0y3mfGupxn2oj6Hlg=="
+      },
+      {
+        "name": "viem",
+        "version": "2.56.3",
+        "resolved": "https://registry.npmjs.org/viem/-/viem-2.56.3.tgz",
+        "integrity": "sha512-vUObq3GO7D3lz9gPNEE/xd5jIUnMbeVDWewh252o54pDEDlW4pDe6FEd/qTGL5RyK52cGHMM7kQ3wjxhilEvkQ=="
+      }
+    ],
+    "guides": [
+      {
+        "file": "README.md",
+        "exists": true
+      },
+      {
+        "file": "AGENTS.md",
+        "exists": true
+      },
+      {
+        "file": "CLAUDE.md",
+        "exists": true
+      }
+    ],
+    "relativeLinks": [
+      {
+        "file": "README.md",
+        "link": "docs/verification.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "link": "docs/verification.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "link": "AGENTS.md",
+        "exists": true
+      },
+      {
+        "file": "README.md",
+        "link": "docs/verification.md",
+        "exists": true
+      },
+      {
+        "file": "AGENTS.md",
+        "link": "README.md",
+        "exists": true
+      },
+      {
+        "file": "CLAUDE.md",
+        "link": "AGENTS.md",
+        "exists": true
+      }
+    ],
+    "readmeMatchesProvidedCheckout": false,
+    "exampleSha256": "c3b89ab3e91e669200b67ba952cc6ee5924682bd0920cfcd3da2ef6ccde2c7fe"
+  },
+  "liveRead": {
+    "checkedAt": "2026-09-09T04:44:57.195Z",
+    "package": "arkiv-chunking@0.1.0",
+    "chain": 7738577,
+    "keys": [
+      "0x26b39e9ce750221adf444fbe1da67e5f99aea1cf8e4e3ff395ff7570be6bdaab",
+      "0xfc7abb6b0dc93358674e7dedb5acdf0aae57a27d89cdccaf0616f76fcee668f4"
+    ],
+    "sizes": [
+      100000,
+      20001
+    ],
+    "bytes": 120001,
+    "sha256": "0xec51e2ead3f4c988ec27c006123bda936fec6eb2eb8f6bdc7dbe84071a9a3b76",
+    "filename": "arkiv-demo.txt",
+    "queryMatchesDownload": true
+  },
+  "libraryArtifactSha256": "52c3fc5d674222398b117911016295368478999d3656c2cc28114df6c4d07b3e",
+  "unverified": [
+    "Native browser zoom 200 percent; responsive CSS viewport checks cover narrow layouts",
+    "No new real wallet transactions in this UI revision; earlier release evidence documents successful writes"
+  ]
+}
