@@ -4,7 +4,7 @@ Split a file into queryable Arkiv entities, store it, and retrieve exactly the o
 
 **These packages are intended for testnet use.**
 
-Release candidate: **0.1.1**, with SDK **0.8.1** support. It is not published yet. The current npm release and [deployed sample](https://arkiv-chunking-sample.vercel.app) use **0.1.0 / SDK 0.8.0**. See [verification](docs/verification.md) for candidate checks and the separate historical Tiramisu transactions.
+Version **0.1.1** adds SDK **0.8.1** support. The immutable **0.1.0** archive and the [historical deployed sample](https://arkiv-chunking-sample.vercel.app) use SDK **0.8.0**. Check the registry version before installing; see [verification](docs/verification.md) for source checks and dated Tiramisu evidence.
 
 ## Install and run without a wallet
 
