@@ -1,6 +1,6 @@
 {
   "name": "arkiv-chunking",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Split files into queryable Arkiv entities and reconstruct them with integrity verification.",
   "type": "module",
   "exports": {
@@ -17,7 +17,8 @@
     "CLAUDE.md",
     "LICENSE",
     "docs/verification.md",
-    "docs/testnet-evidence.json"
+    "docs/testnet-evidence.json",
+    "docs/sdk-0.8.1-evidence.json"
   ],
   "repository": {
     "type": "git",
@@ -39,11 +40,11 @@
     "prepack": "npm run build"
   },
   "peerDependencies": {
-    "@arkiv-network/sdk": "0.8.0",
+    "@arkiv-network/sdk": ">=0.8.1 <0.9",
     "viem": "^2.56.3"
   },
   "devDependencies": {
-    "@arkiv-network/sdk": "0.8.0",
+    "@arkiv-network/sdk": "0.8.1",
     "@types/node": "22.19.13",
     "playwright": "1.62.1",
     "typescript": "5.9.3",

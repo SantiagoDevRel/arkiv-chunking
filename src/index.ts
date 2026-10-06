@@ -3,7 +3,7 @@ import { bool, bytes32, key, str, u64 } from '@arkiv-network/sdk/attr';
 import { eq } from '@arkiv-network/sdk/query';
 import type { Hex } from 'viem';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 export const DEFAULT_CHUNK_BYTES = 100_000;
 /** Package policy, not a claim about every Arkiv node. Leaves room for transaction framing. */
 export const MAX_CHUNK_BYTES = 120_000;
