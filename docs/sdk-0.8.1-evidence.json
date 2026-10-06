@@ -1,0 +1,712 @@
+{
+  "schemaVersion": 1,
+  "package": {
+    "name": "arkiv-chunking",
+    "version": "0.1.1",
+    "publicEntry": "dist/index.js",
+    "publicEntrySha256": "c653e0fdf46dad53a07ab5b7c467a242069cc2fa2005cbe273d04662df65cc1d",
+    "publicationStatus": "Local packed candidate; npm publication not verified by this evidence"
+  },
+  "sourceReportSha256": "1440e1c095487f7792e125956330be20270f5443faa40cb1e15bc18003385ddc",
+  "executedSuiteCodeSha256": "308795393ab7d07ea06d35bbb4278dd7204671e4d6c3b777c02286adf76583da",
+  "execution": {
+    "startedAtUTC": "2026-10-06T12:02:20.827Z",
+    "completedAtUTC": "2026-10-06T12:04:45.084Z",
+    "kind": "Shared library suite with actual funded transactions and separately labeled local/controlled fault cases"
+  },
+  "network": {
+    "name": "Tiramisu",
+    "chainId": 7738577,
+    "publicRPC": "https://rpc.tiramisu.db-chain.testnet.arkiv.network",
+    "nativeEntityContract": "0x4400000000000000000000000000000000000044"
+  },
+  "testedCombination": {
+    "sdkVersion": "0.8.1",
+    "sdkPublicEntrySha256": "74a12e58c441192c0e3fae2242b9746ad28688014e5584a3e0b0168cb107eefd",
+    "viemVersion": "2.56.3",
+    "chromeVersion": "154.0.8037.58",
+    "packages": [
+      {
+        "name": "arkiv-chunking",
+        "version": "0.1.1",
+        "publicEntrySha256": "c653e0fdf46dad53a07ab5b7c467a242069cc2fa2005cbe273d04662df65cc1d",
+        "testedArchiveSha256": "700cb3624073a0dc9a847d24324f979dc51b68d09f478ecb6bd211f849e98521"
+      },
+      {
+        "name": "arkiv-images",
+        "version": "0.1.2",
+        "publicEntrySha256": "d37513b512020276a10e84eb9de93af118475d7dbafe37f476a3fa85eb657271",
+        "testedArchiveSha256": "34437b0ec9c0e7eb79730b7e8835ca6f83b9558824f9d02ef4e1e92ebd13a3fc"
+      }
+    ]
+  },
+  "sharedSuite": {
+    "passedCases": 12,
+    "totalCases": 12,
+    "confirmedTransactions": 40,
+    "rasterDecodes": 4,
+    "transactionScope": "Joint arkiv-chunking and arkiv-images suite;40 is the combined total, not40 transactions attributed separately to each package"
+  },
+  "cases": [
+    {
+      "id": "library-local-public-functions",
+      "status": "passed",
+      "sourceCaseSha256": "266b448ef563c57c39239cd9d25f81d2e877de3633d5105cf875da7f58104f38",
+      "confirmedTransactions": 0,
+      "functions": [
+        "splitFile",
+        "hashFile",
+        "reconstructFile",
+        "inspectImage",
+        "planImage"
+      ],
+      "scope": "local_validation",
+      "receipts": [],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 120001,
+        "originalSha256": "0x13871f7aa9fd3887735a3936a9d7c5a73b11aa73fc5327c8060c974c77b2a6d3"
+      },
+      "negativeCaseCount": 5
+    },
+    {
+      "id": "library-chunking-live-main",
+      "status": "passed",
+      "sourceCaseSha256": "30635ab02441d02857b127743be8a9e7e74c3737402608989188922e8adf3c1d",
+      "confirmedTransactions": 4,
+      "functions": [
+        "uploadFile",
+        "downloadFile"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xca9f18519d13bddaf944d8584cd03c4d05ac2a5b043757562fb8f3fff1ff7cf6",
+          "status": "success",
+          "blockHash": "0xd2862835ad935e3e6a151fb4d100b70fc23df19982e9f44e1b806756c52c7079",
+          "blockNumber": "219216",
+          "gasUsed": "111696",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x842d615ab119dc6ce7749e2587e181a790ec6ea2ac4168c0ff48ef8fca5acae8",
+          "status": "success",
+          "blockHash": "0xd358c86ea902920187289c924f2a189688e259b60c37b4f63b89734fc0fd5cfa",
+          "blockNumber": "219218",
+          "gasUsed": "4027790",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x651012732f22feb8b3416e70005c2fd5b43e344b4e903ddb6c936cf634de792e",
+          "status": "success",
+          "blockHash": "0xd165b4e9059c86ab9962fabe1bd198fafc92cbad8b3cc55a6c066919c0e8114e",
+          "blockNumber": "219220",
+          "gasUsed": "837530",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x0870520487b90850bb9ee48fea90459a15fff20806587b8d9819669c17e66468",
+          "status": "success",
+          "blockHash": "0xfea76c27e660bff402984ae2e8081ed6f56f0eeba012fe600182102e4ee863b2",
+          "blockNumber": "219221",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 120001,
+        "originalSha256": "0x13871f7aa9fd3887735a3936a9d7c5a73b11aa73fc5327c8060c974c77b2a6d3",
+        "recoveredSha256": "0x13871f7aa9fd3887735a3936a9d7c5a73b11aa73fc5327c8060c974c77b2a6d3",
+        "byteRoundtripVerified": true,
+        "readSnapshotBlock": "219221",
+        "pageEntityCounts": [
+          2
+        ],
+        "parts": 2
+      }
+    },
+    {
+      "id": "library-chunking-live-empty",
+      "status": "passed",
+      "sourceCaseSha256": "b7e4fab19c02000180234e9ecad0ebad5f7425fe3d2675ef18385e976e5388f8",
+      "confirmedTransactions": 3,
+      "functions": [
+        "uploadFile",
+        "downloadFile"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xa07e8f54da00e7bcf1823aba9385e7f71b436b4d27e26ee48ded7f1c3a0e2b47",
+          "status": "success",
+          "blockHash": "0xa02997bb409fcad76f97eff70c63b85c81c335f29f6d762753dabbe285c082c6",
+          "blockNumber": "219223",
+          "gasUsed": "111680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x1f2784f2524ccd813489cd6d970ac7bf9f082b228df994e30cd985d8af4ea01a",
+          "status": "success",
+          "blockHash": "0x4efee03937ee6365fc1347c7202444e16cd3a5c0d16fb74fe2106d9a26828b52",
+          "blockNumber": "219224",
+          "gasUsed": "95384",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xd0d9403bdfc9315de93cd7508578a385ddfc31cd36db16982e0a18187eaa7e58",
+          "status": "success",
+          "blockHash": "0x6613d9dd5fd9f8bbf4a74ca0f0b3c7523a12ecd22d20a4162cafdd7bb96ac0df",
+          "blockNumber": "219226",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 0,
+        "originalSha256": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "recoveredSha256": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteRoundtripVerified": true,
+        "readSnapshotBlock": "219227",
+        "pageEntityCounts": [
+          1
+        ],
+        "parts": 1
+      }
+    },
+    {
+      "id": "library-chunking-live-pages",
+      "status": "passed",
+      "sourceCaseSha256": "79bd6c776d3af0fb6ec2a71a52923eb044d369cb53f2c0657949d33e67b78135",
+      "confirmedTransactions": 13,
+      "functions": [
+        "downloadFile"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0x42966322de6cad40f972d4b2096ba2723f7f0da703fd8e5d65d0a9efad9bdce8",
+          "status": "success",
+          "blockHash": "0xb684628759b7777b8bc0802e2af168bc5cb612bc7adbf1592f39445873256d3f",
+          "blockNumber": "219228",
+          "gasUsed": "111680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xcdd8dd6ab9c756bcec01814314e8f54512bfa9933e88a21649544eafd89468a3",
+          "status": "success",
+          "blockHash": "0xda4e86126687a1d16f0f9245956b8c973afd1e65f8ad674389f37b3f525db99c",
+          "blockNumber": "219230",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xd7c9fe168d547b2c2af8178951dc6f1e50bc46f69aa58c3e28322d941377d872",
+          "status": "success",
+          "blockHash": "0x89ac74755c2bcea5585004c9cc58683f6743d3dee75bec5ca7d5d15d0207650a",
+          "blockNumber": "219232",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x98bbeff029491677d02fd1f201d2e92657dd8932a286a6ca9e20181c3f7c1c40",
+          "status": "success",
+          "blockHash": "0xcb6c4aed2d0a9e5693f9e3a35d1c275b2a7225992e57ccaa109be5350c94958a",
+          "blockNumber": "219233",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xe44b4bd4ff2c0c8a11789d51bddf10e4af5eadeee3e8481ac3edd25cc17a4426",
+          "status": "success",
+          "blockHash": "0x9c799f3b516fd38d85f7bfda0169497111dba87df1e3395f2e8bc86ec0f5d71d",
+          "blockNumber": "219235",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x43b52a0a06c7814ec2c764b0930da35c0c783953c974e4af58e79ba06f52df99",
+          "status": "success",
+          "blockHash": "0x0f2586406927e7e563ee4851292034b6d4233bc46eb513a4efdcf768ac5ea565",
+          "blockNumber": "219237",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xbcfd03571c3b2097bf1751dcce8e8718c17b03cb70ce7a865dd7c3cde9e186cd",
+          "status": "success",
+          "blockHash": "0xe149596b737bdcbd92372733b4d6f13aba1b0de89b323f5177b2a53e9f79d1ba",
+          "blockNumber": "219238",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xac03ba5c749c5971778fbe47ab6f2c3053596522dc3c389027b183f29cdb54a2",
+          "status": "success",
+          "blockHash": "0x487ba517b4ced02a5bd0aae5fb2ee53c5c83d8010d9da3e8ebd1b8c76c4a7a5c",
+          "blockNumber": "219240",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xbbccb23a6d7c39f44e8e701f537e17c9b265f0643ec6f3e0af65a301bd556855",
+          "status": "success",
+          "blockHash": "0xe5681c1276d7be311b03f4d497442c62892660522cffafa48ab5c3c9e95067f3",
+          "blockNumber": "219241",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x2d1ee58a3c9d89069ccc31c818dadcd39c588151e56b9acb45a24977a11346e4",
+          "status": "success",
+          "blockHash": "0x913d1ec818629e35ce937360c35ac929118166e4e9a2fe45ff6cf911d3b79eef",
+          "blockNumber": "219242",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x7751f8fdeb3d6e47eb5b7d616a484a8c3ae6e7adb429c58252be38497d5129d7",
+          "status": "success",
+          "blockHash": "0x01cecee0b8237bdaa502f6538a272379a13e3be7e92de5b27b81db8d9192cc7c",
+          "blockNumber": "219244",
+          "gasUsed": "2099680",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x52a0103a840824321853e3f4ffaa7e694e6a6beab46f1f4d3c6e55ac7f1a3d29",
+          "status": "success",
+          "blockHash": "0x483d96ee96283249275db9d053e0d0bc6c91b648f2c1905c1b9b3ca3b640d4dc",
+          "blockNumber": "219245",
+          "gasUsed": "95400",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x470a34e49bb18969b6c16cbe38cd35cea1062f1f25d88274fd26239deae88eab",
+          "status": "success",
+          "blockHash": "0x5953141a8a7e9052e541cfc8604b5d77b8352ddcf7ac7b849e10db380f95054c",
+          "blockNumber": "219247",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 120001,
+        "originalSha256": "0x13871f7aa9fd3887735a3936a9d7c5a73b11aa73fc5327c8060c974c77b2a6d3",
+        "recoveredSha256": "0x13871f7aa9fd3887735a3936a9d7c5a73b11aa73fc5327c8060c974c77b2a6d3",
+        "byteRoundtripVerified": true,
+        "readSnapshotBlock": "219248",
+        "pageEntityCounts": [
+          200,
+          1
+        ],
+        "parts": 201
+      }
+    },
+    {
+      "id": "library-upload-result-loss",
+      "status": "passed",
+      "sourceCaseSha256": "42fa2356ec3c28b09c689e40b0da403efa9099f3b8c8502fdedae953cd3c8ae5",
+      "confirmedTransactions": 2,
+      "functions": [
+        "uploadFile",
+        "downloadFile"
+      ],
+      "scope": "Controlled post-receipt SDK-result loss over confirmed task writes; not HTTP send-response loss",
+      "receipts": [
+        {
+          "transactionHash": "0x3ddcc1e98435ac46c0314575384ccf8a203ed66b35bf3b33d3fdb4bd4d6a9ddc",
+          "status": "success",
+          "blockHash": "0xc1f1d98db94f0eb3a5c89d43d5978d5d6b41674aac624449fd96c50bfbcfa237",
+          "blockNumber": "219250",
+          "gasUsed": "111776",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x1af23bf261535ec9e85f32bf7571a4771ef3c7d766c2e205bba0d1557fbdaddd",
+          "status": "success",
+          "blockHash": "0x0d52bcffcdb36354400078f7769cf3b5ae77333d820f1e8688b34ca5e83fd642",
+          "blockNumber": "219252",
+          "gasUsed": "4027790",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "readSnapshotBlock": "219252",
+        "pageEntityCounts": [
+          1
+        ],
+        "parts": 1
+      }
+    },
+    {
+      "id": "library-download-corruption",
+      "status": "passed",
+      "sourceCaseSha256": "4a8d840064be1ec15784318f16a5179e42860479f91753763ce3ceecef8f71d6",
+      "confirmedTransactions": 6,
+      "functions": [
+        "downloadFile"
+      ],
+      "scope": "Controlled corruption fixtures created for this run; no managed readonly chunk was mutated",
+      "receipts": [
+        {
+          "transactionHash": "0x6073afcc77c463152876dd185de177ecdfcb537b2e8049ac7025f017e4b1e619",
+          "status": "success",
+          "blockHash": "0x6c9b4d6ad772b35ae613ead6ab8d9ca2ee489b12d3398c029dc5966c53648588",
+          "blockNumber": "219254",
+          "gasUsed": "111856",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xebc5d3602a8b07bb639a5eabc202fbfb493e520604ec0e6572329493d4d9ee7a",
+          "status": "success",
+          "blockHash": "0x16103bab7d9988a531c081db03a6077463bac73123b5b49b1bbbede678629cb2",
+          "blockNumber": "219256",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x8c4708cb116afeccac332c0470f917cb2f43b355f8d8de812a47a64537f0d42a",
+          "status": "success",
+          "blockHash": "0x903ed49c5aed8144cebb838eafbed02a501b9aa712b86515eb9f60be6bf607f0",
+          "blockNumber": "219258",
+          "gasUsed": "95448",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x9e846072ecd3654a8455d0583d7d606e25ee6b21abf1ccccc2b072548123a89d",
+          "status": "success",
+          "blockHash": "0x2c3f2d5c82fe66f68843abdb78bbd8c53626027a41baa447af4c82c2bec136d0",
+          "blockNumber": "219260",
+          "gasUsed": "45064",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x6931411cd9645574e67b749783a023b63befe9a1e4291660b27968a48e54d27b",
+          "status": "success",
+          "blockHash": "0x4daf4572a41362a10a25260d0fc3a99de520517388be45e4ab27db5c0e88003c",
+          "blockNumber": "219262",
+          "gasUsed": "95448",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x9752e75a3081a4729bac3cd67ab1c71033c9adb82bcf068810a2b8911c0ed66e",
+          "status": "success",
+          "blockHash": "0xc908b12e1eec2a47e59e381f26a647b11c50d68c645c83743a48704217ee111e",
+          "blockNumber": "219263",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "readSnapshotBlock": "219263",
+        "pageEntityCounts": [
+          2
+        ],
+        "parts": 2
+      },
+      "negativeCaseCount": 5
+    },
+    {
+      "id": "library-image-inline-png",
+      "status": "passed",
+      "sourceCaseSha256": "8283e7c8c69615867b194d22942362cb9ff42326925073992d84deb8a8ab7965",
+      "confirmedTransactions": 1,
+      "functions": [
+        "storeImage",
+        "retrieveImage"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xad711249d620255cb92c3f52b766ddcf13560c4c573587e6d24a33e0567d179f",
+          "status": "success",
+          "blockHash": "0x86a3ae838cf37d75444eaea6f3443afae90610409c77d3b01601e6d5a3c2f152",
+          "blockNumber": "219265",
+          "gasUsed": "123648",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 219,
+        "originalSha256": "0x03c553e765999208bf3b7cf4ac201b83e480d489db16137c9a1525f8bd76ed35",
+        "recoveredSha256": "0x03c553e765999208bf3b7cf4ac201b83e480d489db16137c9a1525f8bd76ed35",
+        "byteRoundtripVerified": true,
+        "contentType": "image/png",
+        "width": 32,
+        "height": 24,
+        "mode": "inline"
+      }
+    },
+    {
+      "id": "library-image-inline-jpg",
+      "status": "passed",
+      "sourceCaseSha256": "312b8fff6bd42ebd99de5d2d658c1743b07556cf0d259039295a3a44e394b0cf",
+      "confirmedTransactions": 1,
+      "functions": [
+        "storeImage",
+        "retrieveImage"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xb5728cd024c358f2795891091eec6830e3b0b67d8e29618e9801cad70106f42d",
+          "status": "success",
+          "blockHash": "0x9b375cb33b0b00a5dc0f0df83f306e588e7d434677eaaed751ed5c119882d45b",
+          "blockNumber": "219266",
+          "gasUsed": "136032",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 992,
+        "originalSha256": "0x3432cb87e44962987d907bfdd3440c5ebe3a15d181423956318b1f49b3997c42",
+        "recoveredSha256": "0x3432cb87e44962987d907bfdd3440c5ebe3a15d181423956318b1f49b3997c42",
+        "byteRoundtripVerified": true,
+        "contentType": "image/jpeg",
+        "width": 48,
+        "height": 36,
+        "mode": "inline"
+      }
+    },
+    {
+      "id": "library-image-chunked-png",
+      "status": "passed",
+      "sourceCaseSha256": "c9650d2da0cbda5d7b7d183dee083817ace6d3e7fc9d066ec8e8b56da8cde727",
+      "confirmedTransactions": 5,
+      "functions": [
+        "storeImage",
+        "retrieveImage"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xcba43767ef25e691c361496d0fde5497f12590a2278698d766a1e98adcc5abcc",
+          "status": "success",
+          "blockHash": "0x5c69899c5f09f83abd911ff8a40ff8e91ae27bae3da76dadba78ee347326f342",
+          "blockNumber": "219268",
+          "gasUsed": "111472",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x9ada40b628e6768fce14f20d56e824d0820c573e80b81670cda3d2666bd63443",
+          "status": "success",
+          "blockHash": "0xd89665c48d465f1b9b831d1c90376dbcbe7355d0577e6862b204ca7684ae36f7",
+          "blockNumber": "219269",
+          "gasUsed": "4033700",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x3e52809c7fa36f31c42283c932c59c089f08eca77d67887f63b3c5bb051a0135",
+          "status": "success",
+          "blockHash": "0x01b634185788fb565c72bea1105350cc29754f3ad4eee6eb124435374aa0cc89",
+          "blockNumber": "219271",
+          "gasUsed": "1970980",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x0b4be20d48dc60e0e1394e8b748cba764d293023edd9f18bcf4900caf14f497c",
+          "status": "success",
+          "blockHash": "0xdaa73765711a0d1e3f1f4e9097150ce0f14fd2cafe6fece2ad183612355f4002",
+          "blockNumber": "219272",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x63758ac5ad2b7d37a18e64141d9d49cba5c8761114b188e54cef0316ce1eb1f1",
+          "status": "success",
+          "blockHash": "0x07636f955d937b730b46748f0bce5d1061f686af0bba9331b7d251a0f26ecebc",
+          "blockNumber": "219273",
+          "gasUsed": "125384",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 148379,
+        "originalSha256": "0x2984cbbc34724cf656b08d62372381e5c4a116a4ebd0aa27936b4ab1fe1e629c",
+        "recoveredSha256": "0x2984cbbc34724cf656b08d62372381e5c4a116a4ebd0aa27936b4ab1fe1e629c",
+        "byteRoundtripVerified": true,
+        "contentType": "image/png",
+        "width": 224,
+        "height": 192,
+        "mode": "chunked"
+      }
+    },
+    {
+      "id": "library-image-chunked-jpg",
+      "status": "passed",
+      "sourceCaseSha256": "b10ae7e4aba508a84b1513f64ed7f37340ea3433332eb358d1046ea2d11d09ee",
+      "confirmedTransactions": 5,
+      "functions": [
+        "storeImage",
+        "retrieveImage"
+      ],
+      "scope": "Actual testnet byte roundtrip",
+      "receipts": [
+        {
+          "transactionHash": "0xe510cdf455493deee4b286d4f8af71110c429fd30619e82f1ecd8d5285ab1470",
+          "status": "success",
+          "blockHash": "0xdcd5effcdeeb652d91ff122fdb0101dab9bd9bf723c295bfc898a36e40b87a3e",
+          "blockNumber": "219275",
+          "gasUsed": "111488",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x814f1967428e3f23990b4c9cb5b257eb66637dec6e3d284863f1cdf6a65c3649",
+          "status": "success",
+          "blockHash": "0x7b1f91c9d4fdfe18cfc67ca7898f4555a022e2a82b90172ed1ef4e504ceb65d9",
+          "blockNumber": "219277",
+          "gasUsed": "4011350",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x9ece0643e549797306f2eabe56638f5ec2c714181b79a6477f895194117e7db1",
+          "status": "success",
+          "blockHash": "0xee35ffc49f6c2001533440711f1aeaa94681cdba785931139b94068bb6a4206d",
+          "blockNumber": "219279",
+          "gasUsed": "2539960",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0x6772c17901b79bc6aebb3b2a59dab8f5c8bd39b8ce482c6ff460ae59f696228d",
+          "status": "success",
+          "blockHash": "0x3d971d52a702d4a7ed6c60a5db92436076b87e9e9856dc971fa0b8a9abe016c0",
+          "blockNumber": "219280",
+          "gasUsed": "45016",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        },
+        {
+          "transactionHash": "0xd356cefee3415da3865be6d7e0bd0e4fcb6e547c64fd31bd09e620166f216a92",
+          "status": "success",
+          "blockHash": "0x084c2e05250383e70409fca3169af5aaea4b8a4a833360d40adac8cc6c3b6a85",
+          "blockNumber": "219282",
+          "gasUsed": "125384",
+          "effectiveGasPriceWei": "1000000002",
+          "to": "0x4400000000000000000000000000000000000044"
+        }
+      ],
+      "fixture": {
+        "synthetic": true,
+        "bytes": 162781,
+        "originalSha256": "0x843667678d9a3059d5f1b05b6190f018680abd3938e0a3382c7a8bd0533ed384",
+        "recoveredSha256": "0x843667678d9a3059d5f1b05b6190f018680abd3938e0a3382c7a8bd0533ed384",
+        "byteRoundtripVerified": true,
+        "contentType": "image/jpeg",
+        "width": 512,
+        "height": 384,
+        "mode": "chunked"
+      }
+    },
+    {
+      "id": "library-live-browser-decode",
+      "status": "passed",
+      "sourceCaseSha256": "e4ec57bde5be01787e2f350afac1ad8e4a19386c6ea23e17550ef7923dad6701",
+      "confirmedTransactions": 0,
+      "functions": [],
+      "scope": "browser_decode_of_actual_readback",
+      "receipts": []
+    },
+    {
+      "id": "library-negative-public-functions",
+      "status": "passed",
+      "sourceCaseSha256": "c208e926944599774d943c087129a94a8634f3a65614d823e92b7f5ed8efb778",
+      "confirmedTransactions": 0,
+      "functions": [
+        "uploadFile",
+        "downloadFile",
+        "storeImage",
+        "retrieveImage"
+      ],
+      "scope": "validation_and_actual_chain_digest_rejection",
+      "receipts": [],
+      "negativeCaseCount": 6
+    }
+  ],
+  "browserDecodes": [
+    {
+      "contentType": "image/png",
+      "width": 32,
+      "height": 24,
+      "originalSha256": "0x03c553e765999208bf3b7cf4ac201b83e480d489db16137c9a1525f8bd76ed35",
+      "decodedBeforeAndAfter": true,
+      "blobUrlsRevoked": true
+    },
+    {
+      "contentType": "image/jpeg",
+      "width": 48,
+      "height": 36,
+      "originalSha256": "0x3432cb87e44962987d907bfdd3440c5ebe3a15d181423956318b1f49b3997c42",
+      "decodedBeforeAndAfter": true,
+      "blobUrlsRevoked": true
+    },
+    {
+      "contentType": "image/png",
+      "width": 224,
+      "height": 192,
+      "originalSha256": "0x2984cbbc34724cf656b08d62372381e5c4a116a4ebd0aa27936b4ab1fe1e629c",
+      "decodedBeforeAndAfter": true,
+      "blobUrlsRevoked": true
+    },
+    {
+      "contentType": "image/jpeg",
+      "width": 512,
+      "height": 384,
+      "originalSha256": "0x843667678d9a3059d5f1b05b6190f018680abd3938e0a3382c7a8bd0533ed384",
+      "decodedBeforeAndAfter": true,
+      "blobUrlsRevoked": true
+    }
+  ],
+  "limits": [
+    "The tested artifacts were local packed candidates; registry publication/installation is a separate release gate.",
+    "Only SDK0.8.1, viem2.56.3 and Tiramisu were exercised. Other versions in the declared peer range are untested.",
+    "The four raster readbacks decoded in Chrome154.0.8037.58; this suite does not certify a deployed app or browser wallet-extension signing UX.",
+    "SDK-result loss was injected after a real receipt. HTTP send-response loss, actual expiry and full durable upload continuation are separate scenarios.",
+    "Corruption tests used task-created mutable schema fixtures. No user resource or managed readonly chunk was modified.",
+    "Receipts and digests record the executed test snapshot; current availability after Entity Expiration and historical retention are not promised."
+  ]
+}

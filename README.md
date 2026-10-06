@@ -4,18 +4,20 @@ Split a file into queryable Arkiv entities, store it, and retrieve exactly the o
 
 **These packages are intended for testnet use.**
 
-Version: **0.1.0**. [Try the sample](https://arkiv-chunking-sample.vercel.app) ? [npm package](https://www.npmjs.com/package/arkiv-chunking) · [Source and sample](https://github.com/SantiagoDevRel/arkiv-chunking). See [verification](docs/verification.md) for the exact tested SDK, runtime, real Tiramisu transactions and release evidence.
+Release candidate: **0.1.1**, with SDK **0.8.1** support. It is not published yet. The current npm release and [deployed sample](https://arkiv-chunking-sample.vercel.app) use **0.1.0 / SDK 0.8.0**. See [verification](docs/verification.md) for candidate checks and the separate historical Tiramisu transactions.
 
 ## Install and run without a wallet
 
-Requirements: Node.js **22.10+** with Web Crypto (tested: **22.22.3**), or a browser secure context. This is an **ESM** package. SDK **0.8.0** and viem **2.56.3** are the tested combination; old SDK 0.7 and earlier are incompatible. Other SDK releases, Bun and Deno have not been verified.
+Requirements: Node.js **22.10+** with Web Crypto (tested: **22.22.3**), or a browser secure context. This is an **ESM** package. The candidate is tested with SDK **0.8.1** and viem **2.56.3**; its SDK peer range is `>=0.8.1 <0.9`. Other releases in that range, Bun and Deno have not been verified.
+
+Build and pack the candidate from this checkout with `npm ci` and `npm pack`. Then use the resulting tarball in a clean consumer:
 
 ```sh
 mkdir chunking-consumer
 cd chunking-consumer
 npm init -y
 npm pkg set type=module
-npm install --save-exact arkiv-chunking@0.1.0 @arkiv-network/sdk@0.8.0 viem@2.56.3
+npm install --save-exact /absolute/path/to/arkiv-chunking-0.1.1.tgz @arkiv-network/sdk@0.8.1 viem@2.56.3
 ```
 
 Save this as `example.mjs`:
@@ -91,7 +93,7 @@ node --env-file=/absolute/path/to/your-secret.env roundtrip.mjs
 
 The secret file uses ordinary `NAME=value` syntax: `ARKIV_PRIVATE_KEY` and optionally `ARKIV_RPC_URL`. Supply your own values locally. If already in the process environment, run `node roundtrip.mjs`.
 
-Expected: a new 32-byte manifest key, the queried expiration block in `expiresAt`, `chunks: 3`, `bytes: 270000`, `matches: true`. This creates five transactions: the manifest, three chunks, and finalization. All bytes and metadata become publicly readable. **Entity Expiration stops current queries from returning entities; it does not erase historical bytes.**
+Expected: a new 32-byte manifest key, the queried expiration block in `expiresAt`, `chunks: 3`, `bytes: 270000`, `matches: true`. This creates five transactions: the manifest, three chunks, and finalization. All bytes and metadata become publicly readable. **Entity Expiration removes entities from current queries. It cannot retract copies already read and does not guarantee archive availability.**
 
 ## Public API
 
@@ -170,7 +172,7 @@ npm run typecheck
 npm pack --pack-destination /absolute/path/to/output
 ```
 
-To verify an unpublished candidate in a clean consumer, use the same consumer setup above but replace `arkiv-chunking@0.1.0` with the absolute `.tgz` path produced by `npm pack`. Run `example.mjs`. This proves the packed artifact, **not** registry publication. The sample release dependency must remain the exact published version; local tarball testing does not satisfy its final release gate.
+The clean consumer setup above installs the candidate tarball. Run `example.mjs` there. This proves the packed artifact, **not** registry publication. The deployed sample still uses the published 0.1.0 dependency; its release dependency must change only when the matching release is available.
 
 Optional real write verification from the source checkout:
 

@@ -1,4 +1,16 @@
-# Verification — arkiv-chunking 0.1.0
+# Verification — arkiv-chunking
+
+## SDK 0.8.1 candidate — 2026-10-06
+
+The unpublished **0.1.1** candidate uses SDK **0.8.1**, viem **2.56.3** and Node **22.22.3**. Source typecheck and all 34 existing tests passed before changing the SDK peer. The peer now accepts `>=0.8.1 <0.9`; other versions in this range remain untested.
+
+Two added tests use actual SDK calldata encoding and receipt decoding against an in-memory RPC: 205 chunks recover through two cursor pages with named attribute projections at one block, and a cursor error rejects the whole retrieval without retrying writes. These are controlled fixtures, not chain transactions. The SDK APIs used by the package needed no compatibility rewrite.
+
+The shared SDK 0.8.1 Tiramisu suite passed **12/12 cases with 40 confirmed transactions in total across chunking and images** on 2026-10-06. It round-tripped a 120,001-byte file and an empty file, retrieved 201 parts through two pinned cursor pages, and decoded four recovered PNG/JPEG rasters in Chrome **154.0.8037.58**. These writes used the locally packed 0.1.1 chunking and 0.1.2 images candidates, with their exact public module hashes verified. [Sanitized cases, digests and confirmed receipts](sdk-0.8.1-evidence.json).
+
+Local validations and controlled corruption/post-receipt SDK-result-loss cases are labeled separately; HTTP send-response loss, actual expiry and a full durable upload continuation are not certified by this suite. The current npm release remains 0.1.0. Candidate packing does not prove publication. The sections below retain their original versions, dates and Tiramisu transaction evidence.
+
+## Historical 0.1.0 verification
 
 ## Hub staging catalog
 
