@@ -298,3 +298,10 @@ el('timezone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;
 updateFile();updateWallet();
 window.addEventListener('pagehide',clearDownload);
 window.addEventListener('pagehide',clearInspection);
+const linkedManifest = new URLSearchParams(window.location.search).get('manifest');
+if (linkedManifest && /^0x[0-9a-fA-F]{64}$/.test(linkedManifest)) {
+  setMode('open');
+  el<HTMLInputElement>('manifest').value = linkedManifest;
+  setBusy(true);
+  void verifyFile(linkedManifest as Hex).finally(() => setBusy(false));
+}

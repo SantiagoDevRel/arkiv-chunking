@@ -35,6 +35,8 @@ The lockfile resolves the exact published package from npm, with no alias to par
 
 For a read-only flow, choose **Open existing**, paste a manifest key and click **Retrieve & verify**. No wallet or funds are needed. Reloading does not lose the on-chain file; keep its manifest key. In that case verification checks integrity against the manifest, not an independently trusted author. See the package's `expectedSha256` option for trusted digest pinning.
 
+To share an existing file, append `?manifest=<manifest-key>` to the sample URL. A valid `0x` key with 64 hexadecimal characters opens **Open existing** and retrieves the file automatically without a wallet or transaction.
+
 The sample starts in **dark mode**. The **sun / moon** button toggles appearance; your choice is saved locally. No preference means dark, independent of the operating system setting. On desktop, both panels have equal dimensions and scroll independently when details expand. On mobile, panels stack and grow with their content.
 
 ### Run the displayed query
