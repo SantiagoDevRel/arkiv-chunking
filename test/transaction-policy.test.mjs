@@ -74,7 +74,8 @@ test('an uncertain send or failure without an SDK result still requires a receip
    return result;
   }};
   await assert.rejects(uploadFile({...setup(provider),...input}),e=>{
-   assert.equal(e.code,'UPLOAD_FAILED');
+   assert.equal(e.code,scenario==='receipt-failure'?'CONFIRMATION_PENDING':'UPLOAD_FAILED');
+   if(scenario==='receipt-failure')assert.equal(e.txHash,rpc.transactions[0].hash);
    if(scenario==='receipt-failure')assert.deepEqual(e.transactionHashes,[]);
    return true;
   });

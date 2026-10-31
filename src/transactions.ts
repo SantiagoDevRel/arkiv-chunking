@@ -17,7 +17,7 @@ export type TransactionParameterPolicy = (context: WriteTransactionContext) =>
 export const MIN_TRANSACTION_GAS = 1_000_000n;
 export class WriteConfirmationPendingError extends Error {
   constructor(readonly txHash: Hex, cause?: unknown) {
-    super('SDK reported success, but receipt confirmation is unresolved. Do not resend.', {cause});
+    super('Transaction was submitted, but receipt confirmation is unresolved. Do not resend.', {cause});
     this.name = 'WriteConfirmationPendingError';
   }
 }
@@ -104,13 +104,12 @@ export async function writeWithPolicy<T extends {txHash: Hex}>(
     for (let lookup = 0; lookup < (result ? 5 : 1); lookup++) {
       // Receipts are looked up by hash at the RPC's current head; this method has no block tag.
       try { receipt = await rpc({method: 'eth_getTransactionReceipt', params: [hash]}); }
-      catch (error) { if (!result) throw error; lookupFailure = error; }
+      catch (error) { if (!result) throw new WriteConfirmationPendingError(hash, error); lookupFailure = error; }
       if (validReceipt(receipt)) break;
       if (result && lookup < 4) await new Promise(resolve => setTimeout(resolve, 1000));
     }
     if (!validReceipt(receipt)) {
-      if (result) throw new WriteConfirmationPendingError(hash, lookupFailure);
-      throw Error('Authoritative transaction receipt is unavailable. Inspect the transaction before retrying.');
+      throw new WriteConfirmationPendingError(hash, lookupFailure ?? failure);
     }
     if (!confirmedHashes.includes(hash)) confirmedHashes.push(hash);
     // An SDK-success result never authorizes a resend, even if a later read disagrees.
