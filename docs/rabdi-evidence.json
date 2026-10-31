@@ -200,5 +200,26 @@
   },
   "queryCountKeyA": 34,
   "physicalSampleWalletSigning": "not tested by this lane; caller adapters use the verified explicit nonce/gas/fee mitigation",
-  "browserPreview": "reported separately after preview deployment"
+  "browserPreview": "reported separately after preview deployment",
+  "reviewCorrections": {
+    "date": "2026-10-31",
+    "maximumLifetimeProbe": {
+      "verified": true,
+      "attempts": 1,
+      "transactionHash": "0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e",
+      "literalError": "Transaction 0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e reverted. Reason: the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972",
+      "target": "7895089",
+      "maxLifetime": "7884000",
+      "simulationCurrentBlock": "10972",
+      "receiptBlock": "10971",
+      "status": "reverted",
+      "source": "Installed SDK 1.0.0 src/utils/revert.ts:94-97 maps ExpiryBeyondMaxLifetime to this exact literal message.",
+      "initialAssertionFailure": "The original probe expected the ABI error name, but SDK 1.0.0 formats it as a sentence. Original output/exit retained. This assessment checks its exact numeric fields and reverted receipt; no second create was sent.",
+      "funderSigned": false
+    },
+    "admittedLifetimeBlocks": 7883970,
+    "inclusionMarginBlocks": 30,
+    "expirationPolicy": "One absolute deadline shared by manifest and chunks; coordinated Lifetime Extension is outside this API.",
+    "transactionPolicy": "unsigned latest estimate, gas=max(1000000, 2*estimate), explicit gasPrice/latest nonce, receipt status checks; one retry only after a confirmed gas-exhausted revert; per-write txParams override"
+  }
 }

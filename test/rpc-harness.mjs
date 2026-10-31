@@ -13,7 +13,7 @@ const id = n => `0x${BigInt(n).toString(16).padStart(64, '0')}`;
 const opAddress = '0x4400000000000000000000000000000000000044';
 export const TEST_ACCOUNT = `0x${'12'.repeat(20)}`;
 
-export function rpcHarness() {
+export function rpcHarness({revertAt=[],exhaustGas=false,omitLogsAt=[]}={}) {
   const entities = [], transactions = [], requests = [];
   const receipts = new Map();
   let block = 42;
@@ -35,7 +35,10 @@ export function rpcHarness() {
     if (method === 'eth_blockNumber') return toHex(block);
     if (method === 'arkiv_getBlockTiming') return { current_block: toHex(block), current_block_time: Math.floor(Date.now() / 1000), duration: 2 };
     if (method === 'eth_getBalance') return toHex(10n ** 20n);
-    if (method === 'eth_estimateGas') return toHex(15000000);
+    if (method === 'eth_estimateGas') {
+      if(params[1]!=='latest')throw Error('Gas estimation requires latest state');
+      return toHex(params[0].data.length>200000?4904531:200000);
+    }
     if (method === 'eth_gasPrice' || method === 'eth_maxPriorityFeePerGas') return '0x1';
     if (method === 'eth_getTransactionCount') return toHex(transactions.length);
     if (method === 'eth_getTransactionReceipt') return receipts.get(params[0]) ?? null;
@@ -45,12 +48,14 @@ export function rpcHarness() {
       if (tx.to.toLowerCase() !== opAddress) throw Error('Unexpected target');
       const { args } = decodeFunctionData({ abi: executeAbi, data: tx.data });
       const hash = id(1000 + transactions.length), logs = [];
-      transactions.push({ hash, calldataBytes: (tx.data.length - 2) / 2 });
+      transactions.push({ hash, calldataBytes: (tx.data.length - 2) / 2, ...tx });
+      const reverted=revertAt.includes(transactions.length);
       block++;
-      for (const operation of args[0]) {
+      for (const operation of reverted?[]:args[0]) {
         if (operation.operation === OperationType.Create) {
           const input = decodeAbiParameters(createParams, operation.operationData)[0];
-          const entityKey = id(entities.length + 1), expiresAt = BigInt(block) + input.minLifetime;
+          const entityKey = id(entities.length + 1), minimum = BigInt(block) + input.minLifetime;
+          const expiresAt = input.expiresAt > minimum ? input.expiresAt : minimum;
           const entity = { key: entityKey, owner: tx.from, creator: tx.from, attributes: [], expiresAt: toHex(expiresAt), creationFlags: { raw: input.creationFlags } };
           applyAttributes(entity, input.attributes); entities.push(entity);
           logs.push({ address: opAddress, topics: encodeEventTopics({ abi: ENTITY_EVENTS_ABI, eventName: 'EntityCreated', args: { entityKey, owner: tx.from } }), data: encodeAbiParameters(parseAbiParameters('uint64,uint8'), [expiresAt, input.creationFlags]) });
@@ -61,7 +66,7 @@ export function rpcHarness() {
           applyAttributes(entity, input.mutations);
         } else throw Error(`Unexpected operation ${operation.operation}`);
       }
-      const receipt = { transactionHash: hash, transactionIndex: '0x0', blockHash: id(block), blockNumber: toHex(block), from: tx.from, to: opAddress, cumulativeGasUsed: '0x10000', gasUsed: '0x10000', effectiveGasPrice: '0x1', contractAddress: null, logsBloom: `0x${'00'.repeat(256)}`, status: '0x1', type: '0x2', logs: logs.map((log, i) => ({ ...log, transactionHash: hash, transactionIndex: '0x0', blockHash: id(block), blockNumber: toHex(block), logIndex: toHex(i), removed: false })) };
+      const receipt = { transactionHash: hash, transactionIndex: '0x0', blockHash: id(block), blockNumber: toHex(block), from: tx.from, to: opAddress, cumulativeGasUsed: '0x10000', gasUsed: reverted&&exhaustGas?tx.gas:'0x10000', effectiveGasPrice: '0x1', contractAddress: null, logsBloom: `0x${'00'.repeat(256)}`, status: reverted?'0x0':'0x1', type: '0x2', logs: (omitLogsAt.includes(transactions.length)?[]:logs).map((log, i) => ({ ...log, transactionHash: hash, transactionIndex: '0x0', blockHash: id(block), blockNumber: toHex(block), logIndex: toHex(i), removed: false })) };
       receipts.set(hash, receipt); return hash;
     }
     if (method === 'arkiv_query') {

@@ -24,7 +24,9 @@ for (const [filename, bytes, chunkSize] of [
   ['synthetic-boundary.bin', Uint8Array.from({ length: MAX_CHUNK_BYTES + 1 }, (_, i) => i % 251), MAX_CHUNK_BYTES],
 ]) {
   try {
+    const policy=[];
     const stored = await uploadFile({ publicClient, walletClient, bytes, filename, expirationBlocks: 3600, chunkSize,
+      txParams: context=>{policy.push({...context,estimate:String(context.estimate),defaults:{...context.defaults,gas:String(context.defaults.gas),gasPrice:String(context.defaults.gasPrice)}});return {};},
       onProgress: p => console.log(JSON.stringify({ filename, progress: p })),
     });
     const expectedSha256 = `0x${createHash('sha256').update(bytes).digest('hex')}`;
@@ -34,7 +36,11 @@ for (const [filename, bytes, chunkSize] of [
     for (const hash of stored.transactionHashes) {
       const [tx, receipt] = await Promise.all([publicClient.getTransaction({ hash }), publicClient.getTransactionReceipt({ hash })]);
       assert.equal(receipt.status, 'success');
-      transactions.push({ hash, blockNumber: String(receipt.blockNumber), calldataBytes: (tx.input.length - 2) / 2, gasUsed: String(receipt.gasUsed) });
+      const parameters=policy[transactions.length];
+      assert.equal(tx.gas,BigInt(parameters.defaults.gas));
+      assert.ok(tx.gas>=1000000n&&tx.gas>=2n*BigInt(parameters.estimate));
+      assert.equal(tx.nonce,parameters.defaults.nonce);
+      transactions.push({ hash,status:receipt.status, blockNumber: String(receipt.blockNumber), calldataBytes: (tx.input.length - 2) / 2, gasUsed: String(receipt.gasUsed),gasLimit:String(tx.gas),nonce:tx.nonce,gasPrice:String(tx.gasPrice),estimate:parameters.estimate });
     }
     await assert.rejects(downloadFile({ publicClient, manifestKey: stored.manifestKey, expectedSha256: `0x${'00'.repeat(32)}` }), e => e.code === 'HASH_MISMATCH');
     report.cases.push({ filename, totalBytes: bytes.length, chunkSize, chunkCount: stored.chunkCount, manifestKey: stored.manifestKey, expiresAt: String(stored.expiresAt), sha256: expectedSha256, byteExact: true, transactions });

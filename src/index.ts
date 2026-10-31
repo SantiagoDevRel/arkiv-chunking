@@ -1,7 +1,9 @@
-import { ExpirationTime, type PublicArkivClient, type WalletArkivClient } from '@arkiv-network/sdk';
+import { ExpirationTime, randomSalt, type PublicArkivClient, type WalletArkivClient } from '@arkiv-network/sdk';
 import { bool, bytes, defineSchema, key, str, u64, type Column, type Schema, type TypeTag } from '@arkiv-network/sdk/schema';
 import { and, asc, eq, gt, type Expression } from '@arkiv-network/sdk/query';
 import { hexToBytes, type Hex } from 'viem';
+import {writeWithPolicy, type TransactionParameterPolicy} from './transactions.js';
+export {MIN_TRANSACTION_GAS, type WriteTransactionParameters, type WriteTransactionContext, type TransactionParameterPolicy} from './transactions.js';
 
 export const VERSION = '1.0.0';
 export const DEFAULT_CHUNK_BYTES = 100_000;
@@ -9,6 +11,9 @@ export const DEFAULT_CHUNK_BYTES = 100_000;
 export const MAX_CHUNK_BYTES = 120_000;
 export const MAX_FILE_BYTES = 32 * 1024 * 1024;
 export const MAX_CHUNKS = 4096;
+export const RABDI_MAX_LIFETIME_BLOCKS = 7_884_000;
+export const EXPIRATION_INCLUSION_MARGIN_BLOCKS = 30;
+export const MAX_EXPIRATION_BLOCKS = RABDI_MAX_LIFETIME_BLOCKS - EXPIRATION_INCLUSION_MARGIN_BLOCKS;
 const MANIFEST_TYPE = 'arkiv-chunking/manifest/v2';
 const CHUNK_TYPE = 'arkiv-chunking/chunk/v2';
 /** SDK 1.0 storage format. Binary columns are stored without an index. */
@@ -56,6 +61,8 @@ export interface UploadOptions {
   /** Explicit block lifetime. At least max(32, chunkCount + 3); not wall-clock time. */
   expirationBlocks: number;
   chunkSize?: number;
+  /** Per-write override, after an unsigned latest-state estimate. Unsafe headroom/nonces are rejected. */
+  txParams?: TransactionParameterPolicy;
   onProgress?: (progress: Progress) => void | Promise<void>;
 }
 export interface UploadResult { manifestKey: Hex; sha256: Hex; chunkCount: number; totalBytes: number; expiresAt: bigint; transactionHashes: Hex[] }
@@ -156,7 +163,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
   const bytes = new Uint8Array(options.bytes);
   const chunks = splitFile(bytes, { chunkSize });
   const minimumBlocks = Math.max(32, chunks.length + 3);
-  if (!Number.isSafeInteger(expirationBlocks) || expirationBlocks < minimumBlocks || expirationBlocks > 15_768_000) fail('INVALID_INPUT', `Expiration must be ${minimumBlocks}..15768000 whole blocks for this upload. Blocks are not wall-clock time.`);
+  if (!Number.isSafeInteger(expirationBlocks) || expirationBlocks < minimumBlocks || expirationBlocks > MAX_EXPIRATION_BLOCKS) fail('INVALID_INPUT', `Expiration must be ${minimumBlocks}..${MAX_EXPIRATION_BLOCKS} whole blocks, including the Rabdi inclusion margin. Longer lifetimes require coordinated Lifetime Extension outside this API.`);
   if (!walletClient.account || !walletClient.chain?.testnet || walletClient.chain.id !== publicClient.chain?.id) fail('NETWORK_MISMATCH', 'A wallet account and matching explicit testnet clients are required.');
   const transactionHashes: Hex[] = [];
   let manifestKey: Hex | undefined;
@@ -165,30 +172,36 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
     const walletChainId = await walletClient.transport.request({ method: 'eth_chainId' });
     if (typeof walletChainId !== 'string' || !/^0x[0-9a-f]+$/i.test(walletChainId) || Number(BigInt(walletChainId)) !== chainId) fail('NETWORK_MISMATCH', 'Wallet is connected to a different network.');
     const sha256 = await hashFile(bytes);
-    const expires = ExpirationTime.fromBlocks(expirationBlocks);
+    const head = await walletClient.transport.request({method:'eth_blockNumber'});
+    const expires = ExpirationTime.atBlock(BigInt(head as Hex) + BigInt(expirationBlocks));
     notify(onProgress, { phase: 'manifest', completed: 0, total: chunks.length });
-    const manifest = await walletClient.createEntity(ManifestSchema, {
+    const manifestValues = {
       metadata: encoder.encode(JSON.stringify({ filename, contentType })),
       type: MANIFEST_TYPE, complete: false, sha256,
       totalbytes: u64(bytes.length), chunkcount: u64(chunks.length), chunksize: u64(chunkSize),
-    }, { expiration: expires });
+    };
+    const manifestOptions = {expiration: expires, salt: randomSalt()};
+    const manifest = await writeWithPolicy(walletClient, {phase:'manifest'},
+      unsigned => unsigned.createEntity(ManifestSchema, manifestValues, manifestOptions, {gas:1_000_000n,gasPrice:1n,nonce:0}),
+      params => walletClient.createEntity(ManifestSchema, manifestValues, manifestOptions, params), transactionHashes, options.txParams);
     manifestKey = manifest.entityKey;
-    transactionHashes.push(manifest.txHash);
     for (const [seq, data] of chunks.entries()) {
       await requireLiveManifest(publicClient, manifestKey, chunks.length - seq + 1);
       notify(onProgress, { phase: 'chunks', completed: seq, total: chunks.length, manifestKey });
-      const result = await walletClient.createEntity(ChunkSchema, {
+      const values = {
         type: CHUNK_TYPE, manifest: key(manifestKey), seq: u64(seq), data,
-      }, {
-        // Chunks created later with the same duration outlive the manifest.
-        expiration: expires, flags: { readonly: true },
-      });
-      transactionHashes.push(result.txHash);
+      };
+      const createOptions = {expiration: expires, flags:{readonly:true}, salt:randomSalt()};
+      await writeWithPolicy(walletClient, {phase:'chunks',chunkIndex:seq},
+        unsigned => unsigned.createEntity(ChunkSchema, values, createOptions, {gas:1_000_000n,gasPrice:1n,nonce:0}),
+        params => walletClient.createEntity(ChunkSchema, values, createOptions, params), transactionHashes, options.txParams);
     }
     const expiresAt = await requireLiveManifest(publicClient, manifestKey, 1);
     notify(onProgress, { phase: 'finalize', completed: chunks.length, total: chunks.length, manifestKey });
-    const finalized = await walletClient.patchEntity(ManifestSchema, manifestKey, { set: { complete: true } });
-    transactionHashes.push(finalized.txHash);
+    const finalKey = manifestKey;
+    await writeWithPolicy(walletClient, {phase:'finalize'},
+      unsigned => unsigned.patchEntity(ManifestSchema, finalKey, {set:{complete:true}}, {gas:1_000_000n,gasPrice:1n,nonce:0}),
+      params => walletClient.patchEntity(ManifestSchema, finalKey, {set:{complete:true}}, params), transactionHashes, options.txParams);
     return { manifestKey, sha256, chunkCount: chunks.length, totalBytes: bytes.length, expiresAt, transactionHashes };
   } catch (cause) {
     if (cause instanceof ChunkingError && !manifestKey) throw cause;

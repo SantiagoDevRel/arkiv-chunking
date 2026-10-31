@@ -22,7 +22,9 @@ The endpoint allows only chain/timing reads, the latest header-only block read f
 
 Every signature is guarded against account/network changes. A missing Rabdi network triggers an explicit wallet add/switch request from a user action. The app never receives a private key.
 
-Writes apply the lane W workaround: read the latest account nonce and network gas price before each signature, with explicit gas (15,000,000 for bounded binary creates, 1,000,000 for finalization). The latest block gas limit is checked first. No historical-state rewriting or automatic write retry is used. Node round trips validate the larger binary budget separately from lane W's small-entity wallet matrix; physical browser-wallet behavior on this sample remains a separate verification boundary.
+Writes use uploadFile's public policy: unsigned estimation at latest, gas=max(1,000,000, 2*estimate), explicit gasPrice and latest nonce, block gas-limit admission and authoritative receipt checks. Estimation failure stops before signing. Only a confirmed gas-exhausted revert can receive one retry with increased gas. Physical browser-wallet signing on this sample remains a separate verification boundary.
+
+The date input uses the package's maximum 7,883,970 blocks: Rabdi's 7,884,000-block maximum less a 30-block inclusion margin. All file entities share one absolute deadline. Longer-lived files need coordinated Lifetime Extension, which this sample does not provide.
 
 ## Seed and checks
 

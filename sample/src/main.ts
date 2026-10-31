@@ -271,22 +271,8 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
     }} as EIP1193Provider;
     const walletChain = { ...chain, rpcUrls: { default: { http: [rpcUrl] } } };
     const signer = createWalletClient({ account: address, chain: walletChain, transport: custom(guarded,{retryCount:0}) });
-    const parameters = async (gas: bigint) => {
-      const [nonce,gasPrice,block] = await Promise.all([
-        walletProvider.request({method:'eth_getTransactionCount',params:[address,'latest']}),
-        walletProvider.request({method:'eth_gasPrice'}),
-        client.getBlock({blockTag:'latest'}),
-      ]);
-      if (gas > block.gasLimit) throw new UserError('The current block cannot fit the verified transaction gas budget.');
-      const nonceNumber=Number(BigInt(nonce));
-      if (!Number.isSafeInteger(nonceNumber) || nonceNumber < 0) throw new UserError('The wallet nonce is outside the supported range.');
-      return {nonce:nonceNumber,gas,gasPrice:BigInt(gasPrice)};
-    };
-    const wallet: ChunkingWalletClient = {
-      ...signer,
-      createEntity: async (schema,values,options) => signer.createEntity(schema,values,options,await parameters(15000000n)),
-      patchEntity: async (schema,key,changes) => signer.patchEntity(schema,key,changes,await parameters(1000000n)),
-    };
+    // uploadFile owns unsigned estimation, explicit transaction parameters and receipt checks.
+    const wallet: ChunkingWalletClient = signer;
     const bytes = new Uint8Array(await selectedFile.arrayBuffer());
     let expirationBlocks: number;
     try { expirationBlocks = dateToBlocks(chosenDate, await client.getBlockTiming(), chunks); } catch(error) { throw new UserError(error instanceof Error ? error.message : 'Choose a future expiration date.'); }

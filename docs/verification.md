@@ -4,6 +4,12 @@ Candidate: arkiv-chunking 1.0.0, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Cha
 
 This branch is an unpublished candidate. Registry publication, merge, release and production promotion require the separate approval stage. A packed candidate and its preview are not a published registry release.
 
+## Review corrections: October 31
+
+The maximum-lifetime probe sent exactly one deliberately invalid create from the dedicated CHUNKING wallet, at head + 7,884,000 + 120 blocks. Transaction `0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e` reverted (gas used 33,380 / limit 1,000,000). SDK 1.0.0 reported: "the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972". Its formatter maps this sentence to ExpiryBeyondMaxLifetime. Admission now reserves 30 blocks and uses a coordinated absolute deadline; no longer lifetime or permanent option is claimed.
+
+The public upload policy captures the SDK's unsigned request with signing disabled, estimates at latest, passes explicit gas=max(1,000,000, 2*estimate), gasPrice and latest nonce, and checks the receipt. Tests inspect actual sent parameters, overrides, estimate failures, coordinated deadlines, one confirmed gas-exhaustion retry, semantic reverts and uncertain/successful writes that must never retry. The sample and scripts use this policy rather than fixed binary budgets.
+
 ## Reproducible checks
 
 - node scripts/verify.mjs: locked install, unit and SDK ABI tests, typecheck, syntax/import lint, npm pack, clean ESM tarball consumer, candidate sample build.

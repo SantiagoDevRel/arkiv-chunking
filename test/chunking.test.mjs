@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { createPublicClient } from '@arkiv-network/sdk';
 import { rabdi } from '@arkiv-network/sdk/chains';
 import { custom, toHex } from 'viem';
-import { splitFile, hashFile, reconstructFile, uploadFile, downloadFile, MAX_CHUNK_BYTES, MAX_FILE_BYTES, VERSION } from '../dist/index.js';
+import { splitFile, hashFile, reconstructFile, uploadFile, downloadFile, MAX_CHUNK_BYTES, MAX_FILE_BYTES, MAX_EXPIRATION_BLOCKS, VERSION } from '../dist/index.js';
 
 const testChain = rabdi({ accessKey: 'controlled-test' });
 const owner = '0x' + '12'.repeat(20);
@@ -21,6 +21,12 @@ function network() {
   const rpc = async ({ method, params }) => {
     calls.push({ method, params });
     if (method === 'eth_chainId') return toHex(testChain.id);
+    if (method === 'eth_blockNumber') return '0x2a';
+    if (method === 'eth_estimateGas') { assert.equal(params[1],'latest'); return '0x7a120'; }
+    if (method === 'eth_getTransactionCount') { assert.equal(params[1],'latest'); return toHex(writes); }
+    if (method === 'eth_gasPrice') return '0x2';
+    if (method === 'eth_getBlockByNumber') { assert.deepEqual(params,['latest',false]); return {gasLimit:toHex(100000000)}; }
+    if (method === 'eth_getTransactionReceipt') return {transactionHash:params[0],blockHash:hex(42),status:'0x1',gasUsed:'0x10000'};
     if (method !== 'arkiv_query') throw Error(`Unexpected method ${method}`);
     if (failRead) throw Error('simulated RPC outage');
     if (readFailuresLeft > 0) { readFailuresLeft--; throw Error('simulated transient RPC failure'); }
@@ -125,7 +131,7 @@ test('caller byte mutation after invocation cannot corrupt upload snapshot', asy
   assert.deepEqual((await n.download()).bytes, new Uint8Array([1, 2, 3]));
 });
 test('block lifetime rejects too-small budgets before RPC or spending', async () => {
-  for (const more of [{ expirationBlocks: 31 }, { expirationBlocks: 102, chunkSize: 1 }]) {
+  for (const more of [{ expirationBlocks: 31 }, { expirationBlocks: 102, chunkSize: 1 }, {expirationBlocks:MAX_EXPIRATION_BLOCKS+1}]) {
     const n = network();
     await assert.rejects(n.upload(new Uint8Array(100), more), code('INVALID_INPUT'));
     assert.equal(n.calls.length, 0); assert.equal(n.entities.length, 0);
