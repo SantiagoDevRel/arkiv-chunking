@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@arkiv-network/sdk": "1.0.0",
-    "arkiv-chunking": "1.0.0",
+    "arkiv-chunking": "1.1.2",
     "viem": "2.56.3"
   },
   "devDependencies": {
