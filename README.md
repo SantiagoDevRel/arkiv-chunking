@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**Candidate: arkiv-chunking 1.0.0, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** This branch is awaiting review and publication. Its preview installs the packed candidate; it does not claim a registry release. See [verification](docs/verification.md) and [breaking changes](CHANGELOG.md).
+**Candidate: arkiv-chunking 1.1.0, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** Version 1.0.0 is published; this additive candidate awaits review and publication. The deployed sample remains on 1.0.0. See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.0.0.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.0.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
 ```
 
-After publication, replace the tarball argument with `arkiv-chunking@1.0.0`. Check `npm view arkiv-chunking version` first.
+After publication, replace the tarball argument with `arkiv-chunking@1.1.0`. Check `npm view arkiv-chunking version` first.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -91,12 +91,79 @@ Import only from `arkiv-chunking`; types ship with the package.
 | `downloadFile(options)` | Requires publicClient and manifestKey; optional trusted expectedSha256 and onProgress. No wallet needed. |
 | `ManifestSchema`, `ChunkSchema` | SDK 1.0 schemas for reads and integrations. Do not independently mutate a stored file. |
 | `ChunkingError` | code, optional manifestKey, confirmed transactionHashes, preserved chunkKeys and a local-only cause. CONFIRMATION_PENDING distinguishes a lagging recheck after SDK success. Never expose raw provider causes publicly. |
+| `writeWithPolicy(wallet, context, plan, send, confirmedHashes, policy?, onSdkSuccess?)` | Shared SDK 1.0 write policy, exported from the root since 1.1.0. Captures an unsigned request, estimates at latest, supplies explicit gas/gasPrice/latest nonce, checks receipts and preserves hashes before rechecks. plan uses its supplied unsigned client; send uses the real wallet and supplied parameters. |
+| `WriteConfirmationPendingError` | Root-exported Error class with readonly txHash and a local-only cause. SDK success was observed, but its bounded receipt recheck remains unresolved. Preserve its hash and keys; never resend. |
 | `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
 | `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
 | `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |
 | `UploadOptions`, `UploadResult`, `DownloadOptions`, `DownloadResult`, `Progress`, `ChunkingErrorCode`, `ChunkingPublicClient`, `ChunkingWalletClient` | Public TypeScript types. |
 
 UploadResult contains manifestKey, sha256, chunkCount, totalBytes, expiresAt (bigint block) and confirmed transactionHashes. DownloadResult contains bytes, filename, contentType, sha256, chunkCount and expiresAt. Progress is {phase, completed, total, manifestKey?}; phases are manifest, chunks and finalize. Callback failures are ignored, and async callbacks are not awaited. Only the operation's resolved promise means success.
+
+### Reuse the public write policy
+
+Other libraries can import the same policy from the package root; no private subpath is needed. With a configured Rabdi walletClient from the example above, this helper creates a standalone binary entity. It does not mutate a stored file. Prepare the schema, values, absolute expiration and salt once; both callbacks must use the identical inputs. The plan's explicit parameters only capture unsigned encoding and cannot sign or reach a send RPC. The real send receives fresh explicit gas, gasPrice and latest nonce from the shared policy.
+
+```js
+import {ExpirationTime, randomSalt} from '@arkiv-network/sdk';
+import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
+import {writeWithPolicy, WriteConfirmationPendingError, MIN_TRANSACTION_GAS} from 'arkiv-chunking';
+
+const BinarySchema = defineSchema('example.binary.v1', {data: bytes()});
+const binaryOperations = new Map(); // Outside the UI component; keep across renders/clicks.
+async function storeBinary(operationId, walletClient, data) {
+  if (typeof operationId !== 'string' || !operationId) throw new Error('Provide a stable operation id.');
+  if (binaryOperations.has(operationId)) return binaryOperations.get(operationId);
+  const operation = {state: 'sending', attempts: 0, transactionHashes: []};
+  binaryOperations.set(operationId, operation); // Guard BEFORE the first RPC.
+  try {
+    if (walletClient.chain?.id !== 7794095) throw new Error('Configure Rabdi first.');
+    const head = await walletClient.transport.request({method: 'eth_blockNumber'});
+    const values = {data};
+    const options = {expiration: ExpirationTime.atBlock(BigInt(head) + 3600n), salt: randomSalt()};
+    await writeWithPolicy(walletClient, {phase: 'chunks', chunkIndex: 0},
+      unsigned => unsigned.createEntity(BinarySchema, values, options,
+        {gas: MIN_TRANSACTION_GAS, gasPrice: 1n, nonce: 0}),
+      async txParams => {
+        operation.state = 'sending'; operation.attempts++;
+        try { return await walletClient.createEntity(BinarySchema, values, options, txParams); }
+        catch (error) {
+          operation.state = 'uncertain';
+          for (let cause = error, depth = 0; cause && depth < 8; cause = cause.cause, depth++) {
+            if (/^0x[0-9a-fA-F]{64}$/.test(cause.txHash)) { operation.txHash = cause.txHash; break; }
+          }
+          throw error; // Only the shared policy may authorize a confirmed gas-revert retry.
+        }
+      }, operation.transactionHashes, async ({defaults}) => {
+        const gas = defaults.gas + 100_000n;
+        const head = await walletClient.transport.request({method: 'eth_getBlockByNumber', params: ['latest', false]});
+        if (gas > BigInt(head.gasLimit) / 2n) {
+          operation.reason = 'gas-cap'; throw new Error('Budget exceeds half the latest block gas limit.');
+        }
+        return {gas};
+      }, result => Object.assign(operation, {state: 'submitted', txHash: result.txHash, entityKey: result.entityKey}));
+    operation.state = 'confirmed';
+  } catch (error) {
+    if (error instanceof WriteConfirmationPendingError) {
+      operation.txHash = error.txHash; operation.confirmation = 'pending';
+    }
+    if (operation.state !== 'submitted') {
+      operation.state = operation.attempts ? 'uncertain' : 'terminal';
+      const hash = operation.transactionHashes.at(-1);
+      if (hash && operation.transactionHashes.length === operation.attempts) {
+        try {
+          const receipt = await walletClient.transport.request({method: 'eth_getTransactionReceipt', params: [hash]});
+          if (receipt?.transactionHash === hash && receipt.blockHash && receipt.status === '0x0') operation.state = 'terminal';
+        } catch { /* Remain uncertain; never authorize another send. */ }
+      }
+    }
+    operation.message = 'Check the saved transaction hashes before any new operation; do not resend this one.';
+  }
+  return operation; // Keep the record, including terminal/uncertain outcomes.
+}
+```
+
+Use the same operationId for repeated clicks on one user intent; never generate a fresh id just to retry. Keep binaryOperations outside UI component state and restore saved entries before enabling writes after a reload. Repeated calls return the existing record without any RPC. SDK success sets submitted with its hash/key before the receipt recheck; missing or disagreeing receipts retain that state with confirmation pending. An uncertain send remains blocked, while a confirmed revert is terminal after the shared policy's at-most-one gas-exhaustion retry. Each budget must fit within half the latest block gas limit. No record is cleared automatically, so there are at most two sends per operation ever. Inspect hashes with reads only and serialize operations from one account. The unchanged headroom and transport rules above still apply.
 
 ## Storage format and Entity Expiration
 
@@ -149,7 +216,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The existing production site is promoted only after release approval; this branch's preview uses the candidate tarball.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. Production remains on published 1.0.0 during this additive candidate review; verification builds a temporary sample against the candidate tarball without changing its release pin.
 
 ```sh
 npm test
@@ -158,7 +225,7 @@ npm run lint
 node scripts/verify.mjs
 ```
 
-verify.mjs installs the locked existing toolchain, checks the package, packs it, exercises an independent ESM consumer, and builds the preview against that tarball. It expects TMPDIR (as supplied by the DGX job runner). It never publishes.
+verify.mjs installs the locked existing toolchain, checks the package, packs it, runs test/packed-consumer.mjs against fresh ESM and TypeScript consumers (including the public write policy), and builds a temporary sample against that tarball. It expects TMPDIR (as supplied by the DGX job runner). It never publishes or changes the sample's release dependency.
 
 The explicit synthetic Rabdi seed is `node scripts/seed-rabdi.mjs`, with ARKIV_ACCESS_KEY_A and TEST_CHUNKING_PRIVATE_KEY configured locally. It queries by digest and owner, reuses a byte-verified complete file, refuses ambiguous incomplete seeds, and writes sample/public/sample.json. Run it again to prove writes: 0. `--verify-only` performs no writes. These are dedicated test credentials, never a server signer.
 
