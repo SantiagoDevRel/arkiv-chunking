@@ -2,7 +2,7 @@ import { ExpirationTime, randomSalt, type PublicArkivClient, type WalletArkivCli
 import { bool, bytes, defineSchema, key, str, u64, type Column, type Schema, type TypeTag } from '@arkiv-network/sdk/schema';
 import { and, asc, eq, gt, type Expression } from '@arkiv-network/sdk/query';
 import { hexToBytes, type Hex } from 'viem';
-import {writeWithPolicy, type TransactionParameterPolicy} from './transactions.js';
+import {writeWithPolicy, WriteConfirmationPendingError, type TransactionParameterPolicy} from './transactions.js';
 export {MIN_TRANSACTION_GAS, type WriteTransactionParameters, type WriteTransactionContext, type TransactionParameterPolicy} from './transactions.js';
 
 export const VERSION = '1.0.0';
@@ -33,19 +33,21 @@ export const ChunkSchema: Schema<{
 });
 const encoder = new TextEncoder();
 
-export type ChunkingErrorCode = 'INVALID_INPUT' | 'NETWORK_MISMATCH' | 'NOT_FOUND' | 'INCOMPLETE_UPLOAD' | 'INVALID_MANIFEST' | 'MISSING_CHUNK' | 'INVALID_CHUNK' | 'HASH_MISMATCH' | 'UPLOAD_FAILED' | 'READ_FAILED';
+export type ChunkingErrorCode = 'INVALID_INPUT' | 'NETWORK_MISMATCH' | 'NOT_FOUND' | 'INCOMPLETE_UPLOAD' | 'INVALID_MANIFEST' | 'MISSING_CHUNK' | 'INVALID_CHUNK' | 'HASH_MISMATCH' | 'CONFIRMATION_PENDING' | 'UPLOAD_FAILED' | 'READ_FAILED';
 
 /** Never interpret a failed upload as rolled back. Confirmed entities remain on the network. */
 export class ChunkingError extends Error {
   readonly code: ChunkingErrorCode;
   readonly manifestKey?: Hex;
   readonly transactionHashes: readonly Hex[];
-  constructor(code: ChunkingErrorCode, message: string, options: { cause?: unknown; manifestKey?: Hex; transactionHashes?: readonly Hex[] } = {}) {
+  readonly chunkKeys: readonly Hex[];
+  constructor(code: ChunkingErrorCode, message: string, options: { cause?: unknown; manifestKey?: Hex; transactionHashes?: readonly Hex[]; chunkKeys?: readonly Hex[] } = {}) {
     super(message, { cause: options.cause });
     this.name = 'ChunkingError';
     this.code = code;
     this.manifestKey = options.manifestKey;
     this.transactionHashes = [...(options.transactionHashes ?? [])];
+    this.chunkKeys = [...(options.chunkKeys ?? [])];
   }
 }
 
@@ -166,6 +168,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
   if (!Number.isSafeInteger(expirationBlocks) || expirationBlocks < minimumBlocks || expirationBlocks > MAX_EXPIRATION_BLOCKS) fail('INVALID_INPUT', `Expiration must be ${minimumBlocks}..${MAX_EXPIRATION_BLOCKS} whole blocks, including the Rabdi inclusion margin. Longer lifetimes require coordinated Lifetime Extension outside this API.`);
   if (!walletClient.account || !walletClient.chain?.testnet || walletClient.chain.id !== publicClient.chain?.id) fail('NETWORK_MISMATCH', 'A wallet account and matching explicit testnet clients are required.');
   const transactionHashes: Hex[] = [];
+  const chunkKeys: Hex[] = [];
   let manifestKey: Hex | undefined;
   try {
     const chainId = await checkNetwork(publicClient);
@@ -183,7 +186,8 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
     const manifestOptions = {expiration: expires, salt: randomSalt()};
     const manifest = await writeWithPolicy(walletClient, {phase:'manifest'},
       unsigned => unsigned.createEntity(ManifestSchema, manifestValues, manifestOptions, {gas:1_000_000n,gasPrice:1n,nonce:0}),
-      params => walletClient.createEntity(ManifestSchema, manifestValues, manifestOptions, params), transactionHashes, options.txParams);
+      params => walletClient.createEntity(ManifestSchema, manifestValues, manifestOptions, params), transactionHashes, options.txParams,
+      result => { manifestKey = result.entityKey; });
     manifestKey = manifest.entityKey;
     for (const [seq, data] of chunks.entries()) {
       await requireLiveManifest(publicClient, manifestKey, chunks.length - seq + 1);
@@ -194,7 +198,8 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
       const createOptions = {expiration: expires, flags:{readonly:true}, salt:randomSalt()};
       await writeWithPolicy(walletClient, {phase:'chunks',chunkIndex:seq},
         unsigned => unsigned.createEntity(ChunkSchema, values, createOptions, {gas:1_000_000n,gasPrice:1n,nonce:0}),
-        params => walletClient.createEntity(ChunkSchema, values, createOptions, params), transactionHashes, options.txParams);
+        params => walletClient.createEntity(ChunkSchema, values, createOptions, params), transactionHashes, options.txParams,
+        result => { chunkKeys.push(result.entityKey); });
     }
     const expiresAt = await requireLiveManifest(publicClient, manifestKey, 1);
     notify(onProgress, { phase: 'finalize', completed: chunks.length, total: chunks.length, manifestKey });
@@ -204,8 +209,9 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
       params => walletClient.patchEntity(ManifestSchema, finalKey, {set:{complete:true}}, params), transactionHashes, options.txParams);
     return { manifestKey, sha256, chunkCount: chunks.length, totalBytes: bytes.length, expiresAt, transactionHashes };
   } catch (cause) {
+    if (cause instanceof WriteConfirmationPendingError) throw new ChunkingError('CONFIRMATION_PENDING', 'The SDK reported a successful write, but its receipt recheck is pending. Preserve all hashes and keys, inspect the manifest and receipts with read-only requests, and never resend this upload automatically.', {cause,manifestKey,transactionHashes,chunkKeys});
     if (cause instanceof ChunkingError && !manifestKey) throw cause;
-    throw new ChunkingError('UPLOAD_FAILED', 'Upload failed. Confirmed writes remain; do not automatically retry an ambiguous transaction. Inspect the manifest and transaction receipts before starting a new upload.', { cause, manifestKey, transactionHashes });
+    throw new ChunkingError('UPLOAD_FAILED', 'Upload failed. Confirmed writes remain; do not automatically retry an ambiguous transaction. Inspect the manifest and transaction receipts before starting a new upload.', { cause, manifestKey, transactionHashes, chunkKeys });
   }
 }
 

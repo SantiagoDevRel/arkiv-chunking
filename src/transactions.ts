@@ -15,6 +15,12 @@ export interface WriteTransactionContext {
 export type TransactionParameterPolicy = (context: WriteTransactionContext) =>
   Partial<WriteTransactionParameters> | Promise<Partial<WriteTransactionParameters>>;
 export const MIN_TRANSACTION_GAS = 1_000_000n;
+export class WriteConfirmationPendingError extends Error {
+  constructor(readonly txHash: Hex, cause?: unknown) {
+    super('SDK reported success, but receipt confirmation is unresolved. Do not resend.', {cause});
+    this.name = 'WriteConfirmationPendingError';
+  }
+}
 const isHash = (value: unknown): value is Hex => typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value);
 function quantity(value: unknown): bigint {
   if (typeof value !== 'string' || !/^0x[0-9a-f]+$/i.test(value)) throw Error('Invalid transaction RPC quantity.');
@@ -60,6 +66,7 @@ export async function writeWithPolicy<T extends {txHash: Hex}>(
   send: (parameters: WriteTransactionParameters) => Promise<T>,
   confirmedHashes: Hex[],
   policy?: TransactionParameterPolicy,
+  onSdkSuccess?: (result: T) => void,
 ): Promise<T> {
   const rpc = wallet.transport.request as (request: {method: string; params?: unknown[]}) => Promise<unknown>;
   let priorGas = 0n;
@@ -85,11 +92,32 @@ export async function writeWithPolicy<T extends {txHash: Hex}>(
     try { result = await send(parameters); } catch (error) { failure = error; }
     const hash = result?.txHash ?? transactionHash(failure);
     if (!hash) throw failure ?? Error('Wallet returned no transaction hash.');
-    // Missing/uncertain receipts stop here; they can never authorize another write.
-    const receipt = await rpc({method: 'eth_getTransactionReceipt', params: [hash]});
-    if (!receipt || typeof receipt !== 'object' || !('transactionHash' in receipt) || receipt.transactionHash !== hash || !('blockHash' in receipt) || !isHash(receipt.blockHash) || !('status' in receipt)) throw Error('Authoritative transaction receipt is unavailable. Inspect the transaction before retrying.');
-    if (receipt.status !== '0x1' && receipt.status !== '0x0') throw Error('Unknown transaction receipt status.');
+    // SDK success has already observed a successful receipt. Preserve its evidence before
+    // a lagging RPC can obscure it, including the create result needed by upload recovery.
+    if (result) {
+      if (!confirmedHashes.includes(hash)) confirmedHashes.push(hash);
+      onSdkSuccess?.(result);
+    }
+    const validReceipt = (value: unknown): value is {transactionHash: Hex; blockHash: Hex; status: '0x1' | '0x0'; gasUsed?: unknown} =>
+      !!value && typeof value === 'object' && 'transactionHash' in value && value.transactionHash === hash && 'blockHash' in value && isHash(value.blockHash) && 'status' in value && (value.status === '0x1' || value.status === '0x0');
+    let receipt: unknown, lookupFailure: unknown;
+    for (let lookup = 0; lookup < (result ? 5 : 1); lookup++) {
+      // Receipts are looked up by hash at the RPC's current head; this method has no block tag.
+      try { receipt = await rpc({method: 'eth_getTransactionReceipt', params: [hash]}); }
+      catch (error) { if (!result) throw error; lookupFailure = error; }
+      if (validReceipt(receipt)) break;
+      if (result && lookup < 4) await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    if (!validReceipt(receipt)) {
+      if (result) throw new WriteConfirmationPendingError(hash, lookupFailure);
+      throw Error('Authoritative transaction receipt is unavailable. Inspect the transaction before retrying.');
+    }
     if (!confirmedHashes.includes(hash)) confirmedHashes.push(hash);
+    // An SDK-success result never authorizes a resend, even if a later read disagrees.
+    if (result) {
+      if (receipt.status === '0x1') return result;
+      throw new WriteConfirmationPendingError(hash, Error('Receipt disagrees with SDK success. Inspect the preserved transaction; do not resend.'));
+    }
     if (receipt.status === '0x1') {
       // A successful receipt followed by a missing SDK result is not safe to repeat.
       if (failure) throw failure;

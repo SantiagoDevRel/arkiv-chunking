@@ -76,6 +76,8 @@ Optional `txParams(context)` runs for each write with `{phase, chunkIndex?, atte
 
 A confirmed gas-exhausted revert may be retried once with fresh parameters and at least twice the previous gas. A semantic revert, rejected signature, missing receipt, uncertain submission or successful receipt never authorizes a retry. Confirmed hashes, including reverted attempts, are preserved.
 
+When the SDK returns success, its hash and newly created manifest/chunk keys are saved before any receipt recheck. If that RPC lags, the library polls by hash at the current head up to five times, one second apart; transport timeouts still apply. A delayed receipt permits normal completion. If the recheck remains unavailable, uploadFile throws a typed `ChunkingError` with code `CONFIRMATION_PENDING`, preserving all SDK-success hashes, manifestKey and chunkKeys. It sends no further writes and never resends the successful operation. A hash found only in an SDK error still requires an authoritative receipt before it is treated as confirmed.
+
 ## Public API
 
 Import only from `arkiv-chunking`; types ship with the package.
@@ -88,7 +90,7 @@ Import only from `arkiv-chunking`; types ship with the package.
 | `uploadFile(options)` | Requires publicClient, walletClient, bytes, filename, expirationBlocks; optional contentType, chunkSize, onProgress, per-write txParams callback. Resolves only after a successful finalization receipt. |
 | `downloadFile(options)` | Requires publicClient and manifestKey; optional trusted expectedSha256 and onProgress. No wallet needed. |
 | `ManifestSchema`, `ChunkSchema` | SDK 1.0 schemas for reads and integrations. Do not independently mutate a stored file. |
-| `ChunkingError` | code, optional manifestKey, confirmed transactionHashes and a local-only cause. Never expose raw provider causes publicly. |
+| `ChunkingError` | code, optional manifestKey, confirmed transactionHashes, preserved chunkKeys and a local-only cause. CONFIRMATION_PENDING distinguishes a lagging recheck after SDK success. Never expose raw provider causes publicly. |
 | `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
 | `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
 | `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |
@@ -127,7 +129,7 @@ Ownership transfer, independent mutations and extending a subset of the file are
 | Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (7,884,000 network maximum less 30 inclusion blocks) |
 | Query page | At most 100 entities; smaller binary pages keep responses around 2 MB |
 
-Blocks are not a reliable clock, and wallet delays consume the selected lifetime. A queried expiresAt is authoritative at that read; the upload returns the pre-finalization check. There is no post-finalization read that could turn a confirmed final write into an apparent failure.
+Blocks are not a reliable clock, and wallet delays consume the selected lifetime. A queried expiresAt is authoritative at that read; the upload returns the pre-finalization check. A lagging receipt recheck after SDK-successful finalization is reported as CONFIRMATION_PENDING with all hashes and keys, rather than a plain upload failure. Verify it through read-only requests; do not resend finalization.
 
 If upload fails, retain error.manifestKey and error.transactionHashes. Inspect their receipts and the complete column before deciding to create another file. Confirmed parts remain; an ambiguous timeout may follow a transaction that landed but whose confirmation was not observed. Do not automatically repeat a write or independently patch the manifest to complete. Recovery means inspecting preserved evidence and retrying only a read of a finalized file. There is no automatic upload resume, rollback, cleanup, encryption or read authorization.
 
@@ -139,6 +141,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 | Reverted receipt with gasUsed == gasLimit | The gas budget was exhausted. Use an unsigned `latest` estimate and explicit gas=max(1,000,000, 2*estimate), gasPrice and latest nonce. The library permits one confirmed gas-exhaustion retry with increased gas; never retry a successful or uncertain write. |
 | ExpiryBeyondMaxLifetime | Use at most MAX_EXPIRATION_BLOCKS and a coordinated file deadline; longer storage requires Lifetime Extension outside this API. |
 | UPLOAD_FAILED | Preserve manifest and confirmed hashes; inspect receipts before another upload. |
+| CONFIRMATION_PENDING | The SDK reported success, but a bounded receipt recheck is pending. Preserve manifestKey, chunkKeys and transactionHashes. Inspect receipts and the manifest with reads only; never resend automatically. |
 | NOT_FOUND | Check manifest key, network and Entity Expiration. |
 | INCOMPLETE_UPLOAD, MISSING_CHUNK | Inspect upload receipts; reconstruction refuses partial bytes. |
 | INVALID_MANIFEST, INVALID_CHUNK, HASH_MISMATCH | Reject the file. Never bypass validation. |

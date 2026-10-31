@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createPublicClient,createWalletClient} from '@arkiv-network/sdk';
 import {rabdi} from '@arkiv-network/sdk/chains';
 import {custom} from 'viem';
-import {uploadFile,MAX_EXPIRATION_BLOCKS} from '../dist/index.js';
+import {uploadFile,MAX_EXPIRATION_BLOCKS,ChunkingError} from '../dist/index.js';
 import {rpcHarness,TEST_ACCOUNT} from './rpc-harness.mjs';
 const chain=rabdi({accessKey:'controlled-test'});
 function setup(rpc) {
@@ -64,16 +64,74 @@ test('semantic reverts and a second exhausted revert stop and preserve confirmed
  }
 });
 
-test('an uncertain send, uncertain receipt or successful receipt without an SDK result never retries',async()=>{
- for(const scenario of ['send','receipt','sdk-result']) {
-  const rpc=rpcHarness(scenario==='sdk-result'?{omitLogsAt:[1]}:{});let receiptReads=0;
+test('an uncertain send or failure without an SDK result still requires a receipt and never retries without it',async()=>{
+ for(const scenario of ['send','receipt-failure','sdk-result']) {
+  const rpc=rpcHarness(scenario==='sdk-result'?{omitLogsAt:[1]}:scenario==='receipt-failure'?{revertAt:[1],exhaustGas:true}:{});let receiptReads=0;
   const provider={request:async args=>{
-   if(scenario==='receipt'&&args.method==='eth_getTransactionReceipt'&&++receiptReads===2)return null;
+   if(scenario==='receipt-failure'&&args.method==='eth_getTransactionReceipt'&&++receiptReads===2)return null;
    const result=await rpc.request(args);
    if(scenario==='send'&&args.method==='eth_sendTransaction')throw Error('Connection lost after submission');
    return result;
   }};
-  await assert.rejects(uploadFile({...setup(provider),...input}),e=>e.code==='UPLOAD_FAILED');
+  await assert.rejects(uploadFile({...setup(provider),...input}),e=>{
+   assert.equal(e.code,'UPLOAD_FAILED');
+   if(scenario==='receipt-failure')assert.deepEqual(e.transactionHashes,[]);
+   return true;
+  });
   assert.equal(rpc.transactions.length,1);
  }
+});
+
+test('SDK success with persistently missing receipt preserves every hash and key as confirmation pending, including finalize',async()=>{
+ for(const blockedWrite of [1,2,4]) {
+  const rpc=rpcHarness(),reads=new Map();
+  const provider={request:async args=>{
+   if(args.method==='eth_getTransactionReceipt') {
+    const hash=args.params[0],count=(reads.get(hash)??0)+1;reads.set(hash,count);
+    if(hash===rpc.transactions[blockedWrite-1]?.hash&&count>1)return null;
+   }
+   return rpc.request(args);
+  }};
+  await assert.rejects(uploadFile({...setup(provider),...input,bytes:new Uint8Array([1,2]),chunkSize:1}),error=>{
+   assert.ok(error instanceof ChunkingError);assert.equal(error.code,'CONFIRMATION_PENDING');
+   assert.equal(error.manifestKey,rpc.entities[0].key);
+   assert.deepEqual(error.chunkKeys,rpc.entities.slice(1).map(e=>e.key));
+   assert.deepEqual(error.transactionHashes,rpc.transactions.map(tx=>tx.hash));
+   assert.equal(reads.get(rpc.transactions.at(-1).hash),6); // SDK receipt plus five bounded rechecks.
+   return true;
+  });
+  assert.equal(rpc.transactions.length,blockedWrite);
+  if(blockedWrite===4)assert.equal(rpc.entities[0].attributes.find(a=>a.name==='complete').value,true);
+ }
+});
+
+test('SDK success with a delayed receipt completes without another send at manifest, chunk and finalize',async()=>{
+ for(const delayedWrite of [1,2,4]) {
+  const rpc=rpcHarness(),reads=new Map();
+  const provider={request:async args=>{
+   if(args.method==='eth_getTransactionReceipt') {
+    const hash=args.params[0],count=(reads.get(hash)??0)+1;reads.set(hash,count);
+    if(hash===rpc.transactions[delayedWrite-1]?.hash&&count===2)return null;
+   }
+   return rpc.request(args);
+  }};
+  const stored=await uploadFile({...setup(provider),...input,bytes:new Uint8Array([1,2]),chunkSize:1});
+  assert.equal(stored.manifestKey,rpc.entities[0].key);
+  assert.deepEqual(stored.transactionHashes,rpc.transactions.map(tx=>tx.hash));
+  assert.equal(rpc.transactions.length,4);assert.equal(reads.get(rpc.transactions[delayedWrite-1].hash),3);
+ }
+});
+
+test('a receipt contradicting SDK success cannot authorize a resend or erase recovery evidence',async()=>{
+ const rpc=rpcHarness();let reads=0;
+ const provider={request:async args=>{
+  const result=await rpc.request(args);
+  if(args.method==='eth_getTransactionReceipt'&&++reads===2)return {...result,status:'0x0',gasUsed:rpc.transactions[0].gas};
+  return result;
+ }};
+ await assert.rejects(uploadFile({...setup(provider),...input}),error=>{
+  assert.equal(error.code,'CONFIRMATION_PENDING');assert.equal(error.manifestKey,rpc.entities[0].key);
+  assert.deepEqual(error.transactionHashes,rpc.transactions.map(tx=>tx.hash));return true;
+ });
+ assert.equal(rpc.transactions.length,1);
 });
