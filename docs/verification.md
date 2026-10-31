@@ -1,8 +1,8 @@
-# Rabdi candidate verification
+# Rabdi release verification
 
-Candidate: arkiv-chunking 1.0.0, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095.
+Current published library: arkiv-chunking 1.1.1, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095. The measured receipts below were captured with the initial 1.0.0 release; they do not certify a later patch.
 
-This branch is an unpublished candidate. Registry publication, merge, release and production promotion require the separate approval stage. A packed candidate and its preview are not a published registry release.
+arkiv-chunking@1.1.1 is published on npm. This branch prepares 1.1.2; publication and sample deployment remain phase 2. Registry publication, merge, release and production promotion require the separate approval stage. A packed candidate and its preview are not a published registry release.
 
 ## Review corrections: October 31
 

@@ -2,11 +2,11 @@
 
 Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.0.0 and SDK 1.0.0.
 
-This branch is an unpublished candidate. The existing arkiv-chunking-sample Vercel project receives a preview before registry publication or production promotion. The preview builds against the actual packed candidate. The final release dependency is the exact registry version, with no source alias.
+arkiv-chunking@1.1.1 is published on npm. This branch prepares 1.1.2; publication and sample deployment remain phase 2. The existing arkiv-chunking-sample Vercel project receives a preview before registry publication or production promotion. The preview builds against the actual packed candidate. The final release dependency is the exact registry version, with no source alias.
 
 ## Run
 
-Use Node 22.12+, npm and viem 2.56.3. After the registry release, run npm ci and npm run dev in sample. Before publication, run node scripts/verify.mjs from the repository root to build this sample against the candidate tarball. The development command listens on 127.0.0.1:3076.
+Use Node 22.12+, npm and viem 2.56.3. The sample pins a published registry release; run npm ci and npm run dev in sample. Before publication, run node scripts/verify.mjs from the repository root to build this sample against the candidate tarball. The development command listens on 127.0.0.1:3076.
 
 Reads go through POST /api/rpc. Set server-side ARKIV_ACCESS_KEY to a Rabdi read access key in the existing Vercel project. Never use a VITE_ or NEXT_PUBLIC_ variable. The static Vite dev server does not execute Vercel functions; browser tests intercept the read transport, while real preview checks exercise the deployed endpoint.
 

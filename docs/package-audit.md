@@ -1,3 +1,5 @@
+> Historical evidence for an earlier release. It is not current SDK 1.0/Rabdi guidance or evidence of the pending 1.1.2 patch. Use the root README and AGENTS.md for the published 1.1.1 baseline and the phase-1 changes.
+
 # Independent package audit ? 2026-09-09 UTC
 
 Artifact: `arkiv-chunking@0.1.0`, SDK 0.8.0, viem 2.56.3. The UI revision does not change the npm artifact.
