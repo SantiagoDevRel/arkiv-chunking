@@ -24,6 +24,27 @@ test('proxy accepts actual SDK read queries including keyset pages, and rejects 
   ]) assert.equal(allowedQuery(params),false);
 });
 function response(){return{statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},status(s){this.statusCode=s;return this;},json(b){this.body=b;return this;}};}
+
+test('proxy accepts omitted params from viem no-argument HTTP requests',async()=>{
+  const oldFetch=globalThis.fetch,oldKey=process.env.ARKIV_ACCESS_KEY;
+  process.env.ARKIV_ACCESS_KEY='controlled-test';
+  const forwarded=[];
+  globalThis.fetch=async(_,options)=>{
+    const request=JSON.parse(options.body);forwarded.push(request);
+    return {ok:true,json:async()=>({jsonrpc:'2.0',id:request.id,result:'0x76edaf'})};
+  };
+  try {
+    for(const method of ['eth_chainId','arkiv_getBlockTiming']) {
+      const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:0,method}},res);
+      assert.equal(res.statusCode,200);assert.equal(forwarded.at(-1).method,method);
+    }
+    for(const params of [null,{},['unexpected']]) {
+      const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:0,method:'eth_chainId',params}},res);
+      assert.equal(res.statusCode,400);
+    }
+    assert.equal(forwarded.length,2);
+  } finally {globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.ARKIV_ACCESS_KEY;else process.env.ARKIV_ACCESS_KEY=oldKey;}
+});
 test('proxy rejects methods and cross-origin reads before accessing provider credentials',async()=>{
   for(const req of [
     {method:'GET',headers:{}},

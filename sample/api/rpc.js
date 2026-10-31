@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       !['eth_chainId','arkiv_getBlockTiming','eth_getBlockByNumber','arkiv_query'].includes(body.method) ||
       (body.method === 'arkiv_query' ? !allowedQuery(body.params) : body.method === 'eth_getBlockByNumber'
         ? !Array.isArray(body.params) || body.params.length !== 2 || body.params[0] !== 'latest' || body.params[1] !== false
-        : !Array.isArray(body.params) || body.params.length !== 0)) return send(400,{error:'Unsupported read request.'});
+        : body.params !== undefined && (!Array.isArray(body.params) || body.params.length !== 0))) return send(400,{error:'Unsupported read request.'});
   // Best effort per-instance cap. Durable provider quotas remain authoritative.
   const now = Date.now(), identity = String(req.headers?.['x-real-ip'] ?? 'shared').slice(0,100);
   for (const [key,entry] of usage) if (now-entry.start >= 60000) usage.delete(key);
