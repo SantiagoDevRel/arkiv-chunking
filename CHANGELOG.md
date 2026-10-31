@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 — candidate
+
+- Added: root exports writeWithPolicy, WriteConfirmationPendingError.
+- Preserve the existing transaction policy and all previous exports; no storage or transaction behavior change.
+
 ## 1.0.0 — candidate
 
 - Breaking: requires SDK 1.0.0 (peer ^1.0.0), Rabdi configuration and an explicit access key.
