@@ -110,30 +110,60 @@ import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
 import {writeWithPolicy, WriteConfirmationPendingError, MIN_TRANSACTION_GAS} from 'arkiv-chunking';
 
 const BinarySchema = defineSchema('example.binary.v1', {data: bytes()});
-async function storeBinary(walletClient, data) {
-  if (walletClient.chain?.id !== 7794095) throw new Error('Configure Rabdi first.');
-  const head = await walletClient.transport.request({method: 'eth_blockNumber'});
-  const values = {data};
-  const options = {expiration: ExpirationTime.atBlock(BigInt(head) + 3600n), salt: randomSalt()};
-  const hashes = [];
-  let entityKey;
+const binaryOperations = new Map(); // Outside the UI component; keep across renders/clicks.
+async function storeBinary(operationId, walletClient, data) {
+  if (typeof operationId !== 'string' || !operationId) throw new Error('Provide a stable operation id.');
+  if (binaryOperations.has(operationId)) return binaryOperations.get(operationId);
+  const operation = {state: 'sending', attempts: 0, transactionHashes: []};
+  binaryOperations.set(operationId, operation); // Guard BEFORE the first RPC.
   try {
-    const result = await writeWithPolicy(walletClient, {phase: 'chunks', chunkIndex: 0},
+    if (walletClient.chain?.id !== 7794095) throw new Error('Configure Rabdi first.');
+    const head = await walletClient.transport.request({method: 'eth_blockNumber'});
+    const values = {data};
+    const options = {expiration: ExpirationTime.atBlock(BigInt(head) + 3600n), salt: randomSalt()};
+    await writeWithPolicy(walletClient, {phase: 'chunks', chunkIndex: 0},
       unsigned => unsigned.createEntity(BinarySchema, values, options,
         {gas: MIN_TRANSACTION_GAS, gasPrice: 1n, nonce: 0}),
-      txParams => walletClient.createEntity(BinarySchema, values, options, txParams),
-      hashes, ({defaults}) => ({gas: defaults.gas + 100_000n}),
-      result => { entityKey = result.entityKey; });
-    return {status: 'confirmed', entityKey: result.entityKey, transactionHashes: hashes};
+      async txParams => {
+        operation.state = 'sending'; operation.attempts++;
+        try { return await walletClient.createEntity(BinarySchema, values, options, txParams); }
+        catch (error) {
+          operation.state = 'uncertain';
+          for (let cause = error, depth = 0; cause && depth < 8; cause = cause.cause, depth++) {
+            if (/^0x[0-9a-fA-F]{64}$/.test(cause.txHash)) { operation.txHash = cause.txHash; break; }
+          }
+          throw error; // Only the shared policy may authorize a confirmed gas-revert retry.
+        }
+      }, operation.transactionHashes, async ({defaults}) => {
+        const gas = defaults.gas + 100_000n;
+        const head = await walletClient.transport.request({method: 'eth_getBlockByNumber', params: ['latest', false]});
+        if (gas > BigInt(head.gasLimit) / 2n) {
+          operation.reason = 'gas-cap'; throw new Error('Budget exceeds half the latest block gas limit.');
+        }
+        return {gas};
+      }, result => Object.assign(operation, {state: 'submitted', txHash: result.txHash, entityKey: result.entityKey}));
+    operation.state = 'confirmed';
   } catch (error) {
-    if (!(error instanceof WriteConfirmationPendingError)) throw error;
-    // hashes already includes this SDK-success hash; capture keys before the receipt lookup.
-    return {status: 'confirmation-pending', txHash: error.txHash, entityKey, transactionHashes: hashes};
+    if (error instanceof WriteConfirmationPendingError) {
+      operation.txHash = error.txHash; operation.confirmation = 'pending';
+    }
+    if (operation.state !== 'submitted') {
+      operation.state = operation.attempts ? 'uncertain' : 'terminal';
+      const hash = operation.transactionHashes.at(-1);
+      if (hash && operation.transactionHashes.length === operation.attempts) {
+        try {
+          const receipt = await walletClient.transport.request({method: 'eth_getTransactionReceipt', params: [hash]});
+          if (receipt?.transactionHash === hash && receipt.blockHash && receipt.status === '0x0') operation.state = 'terminal';
+        } catch { /* Remain uncertain; never authorize another send. */ }
+      }
+    }
+    operation.message = 'Check the saved transaction hashes before any new operation; do not resend this one.';
   }
+  return operation; // Keep the record, including terminal/uncertain outcomes.
 }
 ```
 
-Keep the returned pending hash/key data for read-only inspection; never automatically call storeBinary again after SDK success. onSdkSuccess runs before the extra receipt lookup and should only capture recovery data without throwing. The unchanged minimum-headroom, latest-state, authoritative-revert-only retry and transport rules above also apply to this public helper. Serialize writes from the same account.
+Use the same operationId for repeated clicks on one user intent; never generate a fresh id just to retry. Keep binaryOperations outside UI component state and restore saved entries before enabling writes after a reload. Repeated calls return the existing record without any RPC. SDK success sets submitted with its hash/key before the receipt recheck; missing or disagreeing receipts retain that state with confirmation pending. An uncertain send remains blocked, while a confirmed revert is terminal after the shared policy's at-most-one gas-exhaustion retry. Each budget must fit within half the latest block gas limit. No record is cleared automatically, so there are at most two sends per operation ever. Inspect hashes with reads only and serialize operations from one account. The unchanged headroom and transport rules above still apply.
 
 ## Storage format and Entity Expiration
 

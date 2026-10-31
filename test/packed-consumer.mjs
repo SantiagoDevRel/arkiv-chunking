@@ -12,7 +12,9 @@ test('packed root API is additive, type-safe, and preserves SDK-success recovery
   const consumer=fs.mkdtempSync(path.join(process.env.TMPDIR,'chunking-packed-'));
   fs.writeFileSync(path.join(consumer,'package.json'),JSON.stringify({private:true,type:'module'}));
   const run=(command,args)=>{
-    const result=spawnSync(command,args,{cwd:consumer,encoding:'utf8',env:process.env,timeout:120000});
+    const environment={...process.env};
+    delete environment.NODE_TEST_CONTEXT; // A nested node --test must start its own runner.
+    const result=spawnSync(command,args,{cwd:consumer,encoding:'utf8',env:environment,timeout:120000});
     assert.equal(result.status,0,result.stdout+'\n'+result.stderr);
     return result.stdout;
   };
@@ -76,6 +78,14 @@ for(const scenario of ['success','delayed','pending']) {
 console.log('Packed root ESM exports, additive compatibility, explicit parameters and pending/delayed behavior passed.');
 `);
   console.log(run(process.execPath,['check.mjs']).trim());
+  const readme=fs.readFileSync(path.join(consumer,'node_modules/arkiv-chunking/README.md'),'utf8').replace(/\r\n/g,'\n');
+  const example=readme.split('### Reuse the public write policy\n')[1]?.match(/```js\n([\s\S]*?)\n```/)?.[1];
+  assert.ok(example,'The packaged README must contain the public write-policy example.');
+  fs.writeFileSync(path.join(consumer,'readme-example.mjs'),example+'\nexport {storeBinary, binaryOperations};\n');
+  fs.copyFileSync(new URL('./readme-policy-consumer.mjs',import.meta.url),path.join(consumer,'readme-policy-consumer.mjs'));
+  const readmeResults=run(process.execPath,['--test','readme-policy-consumer.mjs']);
+  assert.match(readmeResults,/tests\s+8/);assert.match(readmeResults,/pass\s+8/);
+  console.log(readmeResults.trim());
   fs.writeFileSync(path.join(consumer,'check.ts'), `import {createPublicClient, createWalletClient, ExpirationTime, randomSalt} from '@arkiv-network/sdk';
 import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
 import {rabdi} from '@arkiv-network/sdk/chains';
