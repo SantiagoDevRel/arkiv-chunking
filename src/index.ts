@@ -5,7 +5,7 @@ import { hexToBytes, type Hex } from 'viem';
 import {writeWithPolicy, WriteConfirmationPendingError, type TransactionParameterPolicy} from './transactions.js';
 export {MIN_TRANSACTION_GAS, writeWithPolicy, WriteConfirmationPendingError, type WriteTransactionParameters, type WriteTransactionContext, type TransactionParameterPolicy} from './transactions.js';
 
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';
 export const DEFAULT_CHUNK_BYTES = 100_000;
 /** Package policy, not a claim about every Arkiv node. Leaves room for transaction framing. */
 export const MAX_CHUNK_BYTES = 120_000;
@@ -41,13 +41,16 @@ export class ChunkingError extends Error {
   readonly manifestKey?: Hex;
   readonly transactionHashes: readonly Hex[];
   readonly chunkKeys: readonly Hex[];
-  constructor(code: ChunkingErrorCode, message: string, options: { cause?: unknown; manifestKey?: Hex; transactionHashes?: readonly Hex[]; chunkKeys?: readonly Hex[] } = {}) {
+  /** Submitted hash whose confirmation is unresolved; not necessarily a confirmed transaction. */
+  readonly txHash?: Hex;
+  constructor(code: ChunkingErrorCode, message: string, options: { cause?: unknown; manifestKey?: Hex; transactionHashes?: readonly Hex[]; chunkKeys?: readonly Hex[]; txHash?: Hex } = {}) {
     super(message, { cause: options.cause });
     this.name = 'ChunkingError';
     this.code = code;
     this.manifestKey = options.manifestKey;
     this.transactionHashes = [...(options.transactionHashes ?? [])];
     this.chunkKeys = [...(options.chunkKeys ?? [])];
+    this.txHash = options.txHash;
   }
 }
 
@@ -209,7 +212,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
       params => walletClient.patchEntity(ManifestSchema, finalKey, {set:{complete:true}}, params), transactionHashes, options.txParams);
     return { manifestKey, sha256, chunkCount: chunks.length, totalBytes: bytes.length, expiresAt, transactionHashes };
   } catch (cause) {
-    if (cause instanceof WriteConfirmationPendingError) throw new ChunkingError('CONFIRMATION_PENDING', 'The SDK reported a successful write, but its receipt recheck is pending. Preserve all hashes and keys, inspect the manifest and receipts with read-only requests, and never resend this upload automatically.', {cause,manifestKey,transactionHashes,chunkKeys});
+    if (cause instanceof WriteConfirmationPendingError) throw new ChunkingError('CONFIRMATION_PENDING', 'A submitted write has unresolved receipt confirmation. Preserve its txHash and all confirmed hashes and keys, inspect them with read-only requests, and never resend this upload automatically.', {cause,manifestKey,transactionHashes,chunkKeys,txHash:cause.txHash});
     if (cause instanceof ChunkingError && !manifestKey) throw cause;
     throw new ChunkingError('UPLOAD_FAILED', 'Upload failed. Confirmed writes remain; do not automatically retry an ambiguous transaction. Inspect the manifest and transaction receipts before starting a new upload.', { cause, manifestKey, transactionHashes, chunkKeys });
   }

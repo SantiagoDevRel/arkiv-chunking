@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
 
 test('packed root API is additive, type-safe, and preserves SDK-success recovery without resending', {timeout:180000}, () => {
   const archive=process.env.CHUNKING_PACKED_TARBALL;
@@ -19,10 +18,7 @@ test('packed root API is additive, type-safe, and preserves SDK-success recovery
     return result.stdout;
   };
   run('npm',['install','--no-audit','--no-fund',archive,'previous-chunking@npm:arkiv-chunking@1.0.0','@arkiv-network/sdk@1.0.0','viem@2.56.3']);
-  // Inspect the old packed policy bytes as evidence; consumers never import a private subpath.
-  const digest=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-  assert.equal(digest(path.join(consumer,'node_modules/arkiv-chunking/dist/transactions.js')),
-    digest(path.join(consumer,'node_modules/previous-chunking/dist/transactions.js')),'The reviewed transaction implementation must remain byte-identical.');
+  // The patch intentionally changes policy error propagation. Check its public behavior below.
   fs.copyFileSync(new URL('./rpc-harness.mjs',import.meta.url),path.join(consumer,'rpc-harness.mjs'));
   fs.writeFileSync(path.join(consumer,'check.mjs'), `import assert from 'node:assert/strict';
 import * as current from 'arkiv-chunking';
@@ -33,7 +29,7 @@ import {rabdi} from '@arkiv-network/sdk/chains';
 import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
 import {custom} from 'viem';
 import {rpcHarness, TEST_ACCOUNT} from './rpc-harness.mjs';
-assert.equal(VERSION,'1.1.0');
+assert.equal(VERSION,'1.1.1');
 assert.equal(current.MAX_EXPIRATION_BLOCKS,7883970);assert.equal(MIN_TRANSACTION_GAS,1000000n);
 assert.equal(current.ChunkSchema.columns.data.isIndexed,false);assert.equal(current.ManifestSchema.columns.sha256.isIndexed,true);
 assert.equal(previous.writeWithPolicy,undefined);assert.equal(previous.WriteConfirmationPendingError,undefined);
@@ -86,11 +82,17 @@ console.log('Packed root ESM exports, additive compatibility, explicit parameter
   const readmeResults=run(process.execPath,['--test','readme-policy-consumer.mjs']);
   assert.match(readmeResults,/tests\s+8/);assert.match(readmeResults,/pass\s+8/);
   console.log(readmeResults.trim());
+  const regression=fs.readFileSync(new URL('./confirmation-pending.test.mjs',import.meta.url),'utf8')
+    .replace("'../dist/index.js'", "'arkiv-chunking'");
+  fs.writeFileSync(path.join(consumer,'confirmation-pending.test.mjs'),regression);
+  const regressionResults=run(process.execPath,['--test','confirmation-pending.test.mjs']);
+  assert.match(regressionResults,/pass\s+17/);assert.match(regressionResults,/fail\s+0/);
+  console.log(regressionResults.trim());
   fs.writeFileSync(path.join(consumer,'check.ts'), `import {createPublicClient, createWalletClient, ExpirationTime, randomSalt} from '@arkiv-network/sdk';
 import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
 import {rabdi} from '@arkiv-network/sdk/chains';
 import {http, type Hex} from 'viem';
-import {writeWithPolicy, WriteConfirmationPendingError, MIN_TRANSACTION_GAS, ChunkSchema, ManifestSchema, downloadFile, type ChunkingPublicClient, type TransactionParameterPolicy, type WriteTransactionParameters} from 'arkiv-chunking';
+import {writeWithPolicy, WriteConfirmationPendingError, ChunkingError, MIN_TRANSACTION_GAS, ChunkSchema, ManifestSchema, downloadFile, type ChunkingPublicClient, type TransactionParameterPolicy, type WriteTransactionParameters} from 'arkiv-chunking';
 const publicClient:ChunkingPublicClient=createPublicClient({chain:rabdi({accessKey:'controlled-test'}),transport:http()});void publicClient;void downloadFile;
 const wallet=createWalletClient({chain:rabdi({accessKey:'controlled-test'}),account:'0x1212121212121212121212121212121212121212',transport:http()});
 const schema=defineSchema('consumer.binary.v1',{data:bytes()}),values={data:new Uint8Array([1])};
@@ -104,6 +106,8 @@ const result=await writeWithPolicy(wallet,{phase:'chunks',chunkIndex:0},
 const transaction:Hex=result.txHash;void transaction;
 const pending:WriteConfirmationPendingError=new WriteConfirmationPendingError(result.txHash);
 const saved:Hex=pending.txHash;void saved;
+const uploadPending=new ChunkingError('CONFIRMATION_PENDING','Pending',{txHash:saved});
+const submitted:Hex|undefined=uploadPending.txHash;void submitted;
 function narrow(error:unknown){if(error instanceof WriteConfirmationPendingError){const hash:Hex=error.txHash;return hash;}}void narrow;
 const storedOnly:false=ChunkSchema.columns.data.isIndexed;
 const indexed:true=ManifestSchema.columns.sha256.isIndexed;void storedOnly;void indexed;

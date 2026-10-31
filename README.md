@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**Candidate: arkiv-chunking 1.1.0, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** Version 1.0.0 is published; this additive candidate awaits review and publication. The deployed sample remains on 1.0.0. See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**Candidate: arkiv-chunking 1.1.1, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** Version 1.1.0 is published; this patch awaits review and publication. The deployed sample remains on 1.0.0. See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.0.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.1.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
 ```
 
-After publication, replace the tarball argument with `arkiv-chunking@1.1.0`. Check `npm view arkiv-chunking version` first.
+After publication, replace the tarball argument with `arkiv-chunking@1.1.1`. Check `npm view arkiv-chunking version` first.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -76,7 +76,7 @@ Optional `txParams(context)` runs for each write with `{phase, chunkIndex?, atte
 
 A confirmed gas-exhausted revert may be retried once with fresh parameters and at least twice the previous gas. A semantic revert, rejected signature, missing receipt, uncertain submission or successful receipt never authorizes a retry. Confirmed hashes, including reverted attempts, are preserved.
 
-When the SDK returns success, its hash and newly created manifest/chunk keys are saved before any receipt recheck. If that RPC lags, the library polls by hash at the current head up to five times, one second apart; transport timeouts still apply. A delayed receipt permits normal completion. If the recheck remains unavailable, uploadFile throws a typed `ChunkingError` with code `CONFIRMATION_PENDING`, preserving all SDK-success hashes, manifestKey and chunkKeys. It sends no further writes and never resends the successful operation. A hash found only in an SDK error still requires an authoritative receipt before it is treated as confirmed.
+When the SDK returns success, its hash and newly created manifest/chunk keys are saved before any receipt recheck. If that RPC lags, the library polls by hash at the current head up to five times, one second apart; transport timeouts still apply. A delayed receipt permits normal completion. If the recheck remains unavailable, uploadFile throws a typed `ChunkingError` with code `CONFIRMATION_PENDING`, preserving all SDK-success hashes, manifestKey and chunkKeys. It sends no further writes and never resends the successful operation. A hash found only in an SDK error still requires an authoritative receipt before it is treated as confirmed. If that lookup throws or is unavailable, writeWithPolicy throws WriteConfirmationPendingError with the exact txHash; uploadFile exposes it as ChunkingError.txHash with code CONFIRMATION_PENDING. Unverified hashes never enter confirmed transactionHashes, and unavailable entity keys are not invented. Use read-only inspection; never resend automatically.
 
 ## Public API
 
@@ -90,9 +90,9 @@ Import only from `arkiv-chunking`; types ship with the package.
 | `uploadFile(options)` | Requires publicClient, walletClient, bytes, filename, expirationBlocks; optional contentType, chunkSize, onProgress, per-write txParams callback. Resolves only after a successful finalization receipt. |
 | `downloadFile(options)` | Requires publicClient and manifestKey; optional trusted expectedSha256 and onProgress. No wallet needed. |
 | `ManifestSchema`, `ChunkSchema` | SDK 1.0 schemas for reads and integrations. Do not independently mutate a stored file. |
-| `ChunkingError` | code, optional manifestKey, confirmed transactionHashes, preserved chunkKeys and a local-only cause. CONFIRMATION_PENDING distinguishes a lagging recheck after SDK success. Never expose raw provider causes publicly. |
+| `ChunkingError` | code, optional manifestKey, confirmed transactionHashes, preserved chunkKeys, optional unresolved txHash and a local-only cause. CONFIRMATION_PENDING preserves an unresolved submitted txHash, including a hash from an SDK error. Never expose raw provider causes publicly. |
 | `writeWithPolicy(wallet, context, plan, send, confirmedHashes, policy?, onSdkSuccess?)` | Shared SDK 1.0 write policy, exported from the root since 1.1.0. Captures an unsigned request, estimates at latest, supplies explicit gas/gasPrice/latest nonce, checks receipts and preserves hashes before rechecks. plan uses its supplied unsigned client; send uses the real wallet and supplied parameters. |
-| `WriteConfirmationPendingError` | Root-exported Error class with readonly txHash and a local-only cause. SDK success was observed, but its bounded receipt recheck remains unresolved. Preserve its hash and keys; never resend. |
+| `WriteConfirmationPendingError` | Root-exported Error class with readonly txHash and a local-only cause. The SDK returned success or threw with a txHash, and receipt confirmation remains unresolved. Preserve txHash; never resend. SDK-success rechecks are bounded; an error-only hash needs an authoritative receipt before entering confirmedHashes. |
 | `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
 | `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
 | `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |

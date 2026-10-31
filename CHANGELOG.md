@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — candidate
+
+- Fixed: preserve SDK-error transaction hashes in WriteConfirmationPendingError when receipt lookup fails or is unavailable; never resend an uncertain write.
+- Added: optional ChunkingError.txHash exposes the unresolved submitted hash separately from confirmed transactionHashes.
+- Cover direct writes, manifest creation, second chunks and finalization; keep existing receipt and retry rules.
+
 ## 1.1.0 — candidate
 
 - Added: root exports writeWithPolicy, WriteConfirmationPendingError.
