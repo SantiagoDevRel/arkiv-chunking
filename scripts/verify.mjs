@@ -29,7 +29,7 @@ fs.cpSync(path.resolve('sample'),sampleDir,{recursive:true,filter:source=>{
 }});
 run('npm',['install','--save-exact','--no-audit','--no-fund',tarball],sampleDir);
 // The sample's published dependency stays unchanged in the checkout. Only this private
-// build installs the candidate, so verification cannot silently rewrite its release pin.
+// build installs the archive, so verification cannot silently rewrite its release pin.
 run('npm',['run','build'],sampleDir);
 run('tar',['-czf','sample-preview.tgz','-C',sampleDir,'dist']);
 const sdkFiles=['README.md','src/schema/schema.ts','src/clients/decorators/arkivWallet.ts','src/query/queryBuilder.ts'];
@@ -40,4 +40,4 @@ fs.writeFileSync('candidate-checks.json',JSON.stringify({
   installedSdkSources:Object.fromEntries(sdkFiles.map(file=>[file,createHash('sha256').update(fs.readFileSync('node_modules/@arkiv-network/sdk/'+file)).digest('hex')])),
   checks,finishedAt:new Date().toISOString(),
 },null,2));
-console.log('Root tests, checks, packed consumer and candidate sample build passed.');
+console.log('Root tests, checks, packed consumer and archive sample build passed.');

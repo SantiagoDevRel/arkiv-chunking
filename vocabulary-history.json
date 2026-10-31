@@ -1,0 +1,12 @@
+[
+  {
+    "file": "docs/chunk-inspection-evidence.json",
+    "revision": "7b800baef3004d84d4e54c1c7c925defc0148c20",
+    "sha256": "de00e1e4f1f440da6d0fe6d125b10fd1856543e084a101cd44b18fc152c20f18",
+    "lines": [
+      "                       \"pay\u006coadBytes\":  100000,",
+      "                       \"pay\u006coadBytes\":  20001,",
+      "    \"query\":  \"const chunks = [];\\nfor await (const entity of client\\n  .select({ key: true, attributes: true, pay\u006coad: true })\\n  .where(\\n    eq(\\u0027manifest\\u0027, key(\\u00270x3d66f28a7b3189aa365bb229cd3ed1b17c0965d2e8e4286a4360e18f81ec9c5b\\u0027)),\\n    eq(\\u0027type\\u0027, str(\\u0027arkiv-chunking/chunk/v1\\u0027)),\\n  )\\n  .ownedBy(\\u00270xa618A2736431f24C26F1C8Dac9CA00ECc845a1C6\\u0027)\\n  .createdBy(\\u00270xa618A2736431f24C26F1C8Dac9CA00ECc845a1C6\\u0027)\\n  .atBlock(200915n)\\n  .limit(200)\\n) chunks.push(entity);\""
+    ]
+  }
+]

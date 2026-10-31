@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**Candidate: arkiv-chunking 1.1.1, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** Version 1.1.0 is published; this patch awaits review and publication. The deployed sample remains on 1.0.0. See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**arkiv-chunking 1.1.2 · SDK 1.0.0 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.1.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.2.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
 ```
 
-After publication, replace the tarball argument with `arkiv-chunking@1.1.1`. Check `npm view arkiv-chunking version` first.
+For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.2 @arkiv-network/sdk@1.0.0 viem@2.56.3`.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -216,7 +216,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. Production remains on published 1.0.0 during this additive candidate review; verification builds a temporary sample against the candidate tarball without changing its release pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.0.0 independently of this 1.1.2 library. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test
@@ -229,4 +229,5 @@ verify.mjs installs the locked existing toolchain, checks the package, packs it,
 
 The explicit synthetic Rabdi seed is `node scripts/seed-rabdi.mjs`, with ARKIV_ACCESS_KEY_A and TEST_CHUNKING_PRIVATE_KEY configured locally. It queries by digest and owner, reuses a byte-verified complete file, refuses ambiguous incomplete seeds, and writes sample/public/sample.json. Run it again to prove writes: 0. `--verify-only` performs no writes. These are dedicated test credentials, never a server signer.
 
-Read [AGENTS.md](AGENTS.md) explicitly when integrating, and include [CLAUDE.md](CLAUDE.md) for Claude consumers. Dated historical evidence stays in docs; [the current report](docs/verification.md) distinguishes live writes from simulations and unpublished artifacts.
+Read [AGENTS.md](AGENTS.md) explicitly when integrating, and include [CLAUDE.md](CLAUDE.md) for Claude consumers. Dated historical evidence stays in docs; [verification procedures](docs/verification.md) distinguish archive checks, controlled transports and historical live observations.
+

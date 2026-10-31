@@ -6,6 +6,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 
 test('packed root API is additive, type-safe, and preserves SDK-success recovery without resending', {timeout:180000}, () => {
+  const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
   const archive=process.env.CHUNKING_PACKED_TARBALL;
   assert.ok(archive && fs.existsSync(archive),'Run node scripts/verify.mjs to build and pack first.');
   const consumer=fs.mkdtempSync(path.join(process.env.TMPDIR,'chunking-packed-'));
@@ -29,7 +30,7 @@ import {rabdi} from '@arkiv-network/sdk/chains';
 import {bytes, defineSchema} from '@arkiv-network/sdk/schema';
 import {custom} from 'viem';
 import {rpcHarness, TEST_ACCOUNT} from './rpc-harness.mjs';
-assert.equal(VERSION,'1.1.1');
+assert.equal(VERSION,${JSON.stringify(version)});
 assert.equal(current.MAX_EXPIRATION_BLOCKS,7883970);assert.equal(MIN_TRANSACTION_GAS,1000000n);
 assert.equal(current.ChunkSchema.columns.data.isIndexed,false);assert.equal(current.ManifestSchema.columns.sha256.isIndexed,true);
 assert.equal(previous.writeWithPolicy,undefined);assert.equal(previous.WriteConfirmationPendingError,undefined);

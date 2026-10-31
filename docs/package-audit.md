@@ -1,3 +1,5 @@
+> Historical dated evidence, preserved from 7b800ba. For current API and installation guidance, use the root README and AGENTS.md.
+
 # Independent package audit ? 2026-09-09 UTC
 
 Artifact: `arkiv-chunking@0.1.0`, SDK 0.8.0, viem 2.56.3. The UI revision does not change the npm artifact.
