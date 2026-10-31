@@ -1,8 +1,8 @@
 # Arkiv Files sample
 
-Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.0.0 and SDK 1.0.0.
+Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.2 and SDK 1.0.0.
 
-The sample pins exact registry arkiv-chunking 1.0.0. The library API is documented at version 1.1.2 in the root README. Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
+The sample pins exact registry arkiv-chunking 1.1.2. The library API is documented at version 1.1.2 in the root README. Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
 
 ## Run
 
