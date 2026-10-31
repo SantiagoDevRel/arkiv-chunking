@@ -10,6 +10,8 @@ Use Node 22.12+, npm and viem 2.56.3. The sample pins a published registry relea
 
 Reads go through POST /api/rpc. Set server-side ARKIV_ACCESS_KEY to a Rabdi read access key in the existing Vercel project. Never use a VITE_ or NEXT_PUBLIC_ variable. The static Vite dev server does not execute Vercel functions; browser tests intercept the read transport, while real preview checks exercise the deployed endpoint.
 
+To deploy, run npm ci and npm run build in sample, then deploy from sample. Vercel uploads the existing dist/ and api/ and skips installation and building (vercel.json). A clean checkout has no dist/, so rebuild before every deployment.
+
 The endpoint allows only chain/timing reads, the latest header-only block read for the gas guard, and the package's bounded manifest/chunk queries. It rejects writes, arbitrary queries, batches and cross-origin browser requests. Errors are sanitized, responses use no-store, and a per-instance rate cap supplements the provider quota. This cap is not a durable distributed rate limiter.
 
 ## Use
