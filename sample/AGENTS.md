@@ -1,6 +1,6 @@
 # Consumer guide: Arkiv Files sample
 
-Integrates the public `arkiv-chunking` API with a browser wallet, automatic retrieval, verified downloads and an inspectable query. Read [README.md](README.md) for setup, candidate/release status and recovery; read the [package guide](../AGENTS.md) for API invariants. [CLAUDE.md](CLAUDE.md) points here.
+Integrates the public `arkiv-chunking` API with a browser wallet, automatic retrieval, verified downloads and an inspectable query. Read [README.md](README.md) for setup, setup and recovery; read the [package guide](../AGENTS.md) for API invariants. [CLAUDE.md](CLAUDE.md) points here.
 
 ## Ask the developer
 
@@ -13,7 +13,7 @@ Reads use the server endpoint with a server-only access key. Wallet writes use t
 
 ## Invariants
 
-- Release imports use the exact published npm dependency. Before publication, preview verification installs the actual packed candidate and labels it unpublished. Never copy the implementation or use a parent-source alias.
+- Release imports use the exact published npm dependency. Archive verification uses an isolated consumer and preserves the sample registry dependency. Never copy the implementation or use a parent-source alias.
 - Storage follows an explicit Store & verify action and wallet approvals. No consent checkbox is required by this sample. No write occurs on page load, file selection or connection alone.
 - Network switching is a wallet request triggered by a user action, targeting Rabdi only. Check account and network before every signature and stop if they change during upload.
 - Dates are approximate. Use `expiration.ts` with fresh SDK network timing, preserve admission limits and reject invalid/stale inputs. Never pretend a selected date is a guaranteed deadline.

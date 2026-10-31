@@ -1,2 +1,2 @@
-# Keep official asset bytes identical to their verified Drive sources on Windows.
-sample/public/brand/*.svg -text
+docs/package-audit.md text eol=lf
+docs/chunk-inspection-evidence.json text eol=lf

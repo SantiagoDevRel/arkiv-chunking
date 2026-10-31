@@ -2,11 +2,11 @@
 
 Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.0.0 and SDK 1.0.0.
 
-arkiv-chunking@1.1.1 is published on npm. This branch prepares 1.1.2; publication and sample deployment remain phase 2. The existing arkiv-chunking-sample Vercel project receives a preview before registry publication or production promotion. The preview builds against the actual packed candidate. The final release dependency is the exact registry version, with no source alias.
+The sample pins exact registry arkiv-chunking 1.0.0. The library API is documented at version 1.1.2 in the root README. Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
 
 ## Run
 
-Use Node 22.12+, npm and viem 2.56.3. The sample pins a published registry release; run npm ci and npm run dev in sample. Before publication, run node scripts/verify.mjs from the repository root to build this sample against the candidate tarball. The development command listens on 127.0.0.1:3076.
+Use Node 22.12+, npm and viem 2.56.3. The sample pins a published registry release; run npm ci and npm run dev in sample. Run node scripts/verify.mjs from the repository root for archive consumer checks. The development command listens on 127.0.0.1:3076.
 
 Reads go through POST /api/rpc. Set server-side ARKIV_ACCESS_KEY to a Rabdi read access key in the existing Vercel project. Never use a VITE_ or NEXT_PUBLIC_ variable. The static Vite dev server does not execute Vercel functions; browser tests intercept the read transport, while real preview checks exercise the deployed endpoint.
 
@@ -30,6 +30,6 @@ The date input uses the package's maximum 7,883,970 blocks: Rabdi's 7,884,000-bl
 
 Run node scripts/seed-rabdi.mjs at the repository root using its documented dedicated test environment. It creates only deterministic public bytes, verifies at least three chunks, and writes public/sample.json. A second run must report writes: 0. After a network reset, run it again and redeploy the sample descriptor.
 
-Package tests and the candidate consumer/sample build run via node scripts/verify.mjs on the DGX. Browser checks must distinguish controlled RPC fixtures from real Rabdi data, verify downloads directly and by hash, exercise missing/corrupt/failed-read states, and inspect 390/768/1440 widths and both themes. Record physical browser-wallet boundaries separately from SDK writes.
+Package tests and the archive consumer/sample build run via node scripts/verify.mjs on the DGX. Browser checks must distinguish controlled RPC fixtures from real Rabdi data, verify downloads directly and by hash, exercise missing/corrupt/failed-read states, and inspect 390/768/1440 widths and both themes. Record physical browser-wallet boundaries separately from SDK writes.
 
 Retain the official Arkiv logo provenance, existing design tokens, default dark theme, accessible controls and complete error/loading states. [AGENTS.md](AGENTS.md) contains integration invariants; [package API](../README.md) owns storage and verification logic.

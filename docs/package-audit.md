@@ -1,4 +1,4 @@
-> Historical evidence for an earlier release. It is not current SDK 1.0/Rabdi guidance or evidence of the pending 1.1.2 patch. Use the root README and AGENTS.md for the published 1.1.1 baseline and the phase-1 changes.
+> Historical dated evidence, preserved from 7b800ba. For current API and installation guidance, use the root README and AGENTS.md.
 
 # Independent package audit ? 2026-09-09 UTC
 

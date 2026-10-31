@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+
+- Clarify versioned installation and archive verification; guard source-map metadata and preserve dated evidence.
+
+> Historical version entries below are preserved as recorded; use README.md for the current release.
+
 ## 1.1.1 — candidate
 
 - Fixed: preserve SDK-error transaction hashes in WriteConfirmationPendingError when receipt lookup fails or is unavailable; never resend an uncertain write.
