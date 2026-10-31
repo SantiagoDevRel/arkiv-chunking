@@ -1,6 +1,6 @@
 # Consumer guide: Arkiv Files sample
 
-Integrates published `arkiv-chunking` with a browser wallet, automatic retrieval, verified downloads and an inspectable query. Read [README.md](README.md) for the single source of truth on setup, workflow, design and recovery; read the [package guide](../AGENTS.md) for API invariants. [CLAUDE.md](CLAUDE.md) points here.
+Integrates the public `arkiv-chunking` API with a browser wallet, automatic retrieval, verified downloads and an inspectable query. Read [README.md](README.md) for setup, candidate/release status and recovery; read the [package guide](../AGENTS.md) for API invariants. [CLAUDE.md](CLAUDE.md) points here.
 
 ## Ask the developer
 
@@ -9,20 +9,20 @@ Integrates published `arkiv-chunking` with a browser wallet, automatic retrieval
 - Is the built-in synthetic file sufficient, or which approved public file should replace it?
 - Does retrieval require a trusted digest from outside the manifest? Internal integrity is not proof of author identity.
 
-The default Tiramisu public connection needs no RPC input or access key. Do not ask for credentials that this integration does not need. Faucet and setup links belong to README.
+Reads use the server endpoint with a server-only access key. Wallet writes use the user-configured Rabdi RPC. Obtain access keys and test GLM through the Hub links in README.
 
 ## Invariants
 
-- Import the exact published npm dependency. Never copy its chunking/storage/validation code or use a parent-source alias.
+- Release imports use the exact published npm dependency. Before publication, preview verification installs the actual packed candidate and labels it unpublished. Never copy the implementation or use a parent-source alias.
 - Storage follows an explicit Store & verify action and wallet approvals. No consent checkbox is required by this sample. No write occurs on page load, file selection or connection alone.
-- Network switching is a wallet request triggered by a user action, targeting Tiramisu only. Check account and network before every signature and stop if they change during upload.
+- Network switching is a wallet request triggered by a user action, targeting Rabdi only. Check account and network before every signature and stop if they change during upload.
 - Dates are approximate. Use `expiration.ts` with fresh SDK network timing, preserve admission limits and reject invalid/stale inputs. Never pretend a selected date is a guaranteed deadline.
-- Separate confirmed storage from failed readback. Retry verification must call only the read path, never re-upload. Retain an uncertain upload's manifest for inspection.
+- Separate confirmed storage from failed readback. Retry verification must call only the read path, never re-upload. Retain an uncertain upload's manifest and observed confirmed transaction links for inspection.
 - Clear old results on new attempts and expose downloads only after full verification. Metadata is untrusted text; neutral attachments never render uploaded content.
-- Keep the fixed RPC configuration internal. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
-- Explorer URLs use the verified Tiramisu indexer origin and validated keys/hashes. Blocks use `/block?block=NUMBER`; entities use `/entity/KEY`.
+- Keep the server read access key internal. Never persist the user-configured wallet RPC. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
+- Explorer URLs use the verified Rabdi indexer origin and validated keys/hashes. Blocks use `/block?block=NUMBER`; entities use `/entity/KEY`.
 - Query examples must work with the documented package/SDK versions. Do not replace the complete file verifier with a bare manifest query.
-- Chunk inspection is a read-only view of actual entities. Pin its query snapshot and ownership, verify its returned payloads with the published package, and keep inspection failures separate from a verified download. Never show synthetic payloads as retrieved data.
+- Chunk inspection is a read-only view of actual entities. Scope its keyset pages by ownership, verify its returned binary columns with the published package, and keep inspection failures separate from a verified download. Never show synthetic binary columns as retrieved data.
 - Start dark unless the visitor saved a light preference. Use the official SVG logo and its recorded provenance; do not replace it with styled text or recolor it.
 - All UI, documentation and guides are English. Reuse the documented Claude Design composition and Arkiv tokens; prototype simulations and injected runtime files do not belong in the app.
 - Keep each explanation in one place. Reserve the status area for actual feedback; show query details on demand. Essential actions and errors must remain visible, and disclosures must work with keyboard and touch.

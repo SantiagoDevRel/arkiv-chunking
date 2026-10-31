@@ -1,42 +1,48 @@
 import type { PublicArkivClient } from '@arkiv-network/sdk';
-import { key, str } from '@arkiv-network/sdk/attr';
-import { eq } from '@arkiv-network/sdk/query';
+import { key, str } from '@arkiv-network/sdk/schema';
+import { and, asc, eq, gt, type Expression } from '@arkiv-network/sdk/query';
 import { reconstructFile, type DownloadResult } from 'arkiv-chunking';
-import type { Hex } from 'viem';
+import { hexToBytes, type Hex } from 'viem';
 
-/** Read-only presentation data. The published package still owns file verification. */
+/** Actual entity presentation; the package owns complete file verification. */
 export async function inspectChunks(client: PublicArkivClient, manifestKey: Hex, verified: DownloadResult) {
-  const page = await client.select({ owner: true, creator: true })
+  const page = await client.select({ $owner: true, $creator: true })
     .where(eq('$key', key(manifestKey))).limit(1).fetch();
   const manifest = page.entities[0];
-  if (!manifest) throw new Error('Manifest unavailable');
-  if (![manifest.owner, manifest.creator].every(address => /^0x[0-9a-fA-F]{40}$/.test(address)) || typeof page.blockNumber !== 'bigint' || page.blockNumber < 0n) throw new Error('Invalid query scope');
-  const query = client.select({ key: true, attributes: true, payload: true })
-    .where(eq('manifest', key(manifestKey)), eq('type', str('arkiv-chunking/chunk/v1')))
-    .ownedBy(manifest.owner).createdBy(manifest.creator).atBlock(page.blockNumber).limit(200);
+  if (!manifest || ![manifest.$owner,manifest.$creator].every(a => /^0x[0-9a-fA-F]{40}$/.test(a))) throw Error('Manifest unavailable');
   const chunks = [];
-  for await (const entity of query) {
-    if (chunks.length >= verified.chunkCount) throw new Error('Unexpected chunk count');
-    const seq = entity.attributes.seq;
-    if (seq?.type !== 'u64' || typeof seq.value !== 'bigint' || seq.value < 0n || seq.value >= BigInt(verified.chunkCount)) throw new Error('Unexpected chunk order');
-    if (!/^0x[0-9a-fA-F]{64}$/.test(entity.key)) throw new Error('Invalid entity key');
-    chunks.push({ ...entity, seq: Number(seq.value) });
+  let lastKey: Hex | undefined;
+  for (;;) {
+    const filters: Expression[] = [eq('manifest',key(manifestKey)),eq('type',str('arkiv-chunking/chunk/v2'))];
+    if (lastKey) filters.push(gt('$key',key(lastKey)));
+    const result = await client.select({$key:true,seq:true,data:true})
+      .where(and(...filters)).ownedBy(manifest.$owner).createdBy(manifest.$creator)
+      .orderBy(asc('$key')).limit(8).fetch();
+    for (const entity of result.entities) {
+      if (chunks.length >= verified.chunkCount || !/^0x[0-9a-fA-F]{64}$/.test(entity.$key) ||
+          (lastKey && entity.$key.toLowerCase() <= lastKey.toLowerCase())) throw Error('Unexpected chunk count or key');
+      const seq = entity.seq;
+      if (seq?.type !== 'u64' || seq.value < 0n || seq.value >= BigInt(verified.chunkCount) ||
+          entity.data?.type !== 'bytes' || !/^0x(?:[0-9a-fA-F]{2})*$/.test(entity.data.value) ||
+          entity.data.value.length > 240002) throw Error('Invalid chunk');
+      chunks.push({key:entity.$key,seq:Number(seq.value),data:hexToBytes(entity.data.value),attributes:{manifest: {type:'key',value:manifestKey},seq,data:entity.data}});
+      lastKey = entity.$key;
+    }
+    if (result.entities.length < 8) break;
   }
-  chunks.sort((a, b) => a.seq - b.seq);
-  if (chunks.length !== verified.chunkCount || chunks.some((chunk, index) => chunk.seq !== index)) throw new Error('Incomplete chunk inspection');
-  // Do not label later, potentially changed query results as the verified file.
-  await reconstructFile(chunks.map(chunk => chunk.payload), verified.sha256);
-  const code = `const chunks = [];
-for await (const entity of client
-  .select({ key: true, attributes: true, payload: true })
-  .where(
-    eq('manifest', key('${manifestKey}')),
-    eq('type', str('arkiv-chunking/chunk/v1')),
-  )
-  .ownedBy('${manifest.owner}')
-  .createdBy('${manifest.creator}')
-  .atBlock(${page.blockNumber}n)
-  .limit(200)
-) chunks.push(entity);`;
-  return { chunks, code };
+  chunks.sort((a,b) => a.seq-b.seq);
+  if (chunks.length !== verified.chunkCount || chunks.some((c,i) => c.seq !== i)) throw Error('Incomplete chunks');
+  await reconstructFile(chunks.map(c => c.data),verified.sha256);
+  const code = [
+    '// Repeat with gt("$key", key(lastKey)) for later pages; each query reads the latest block.',
+    'const page = await client.select({ $key: true, seq: true, data: true })',
+    '  .where(and(',
+    '    eq("manifest", key("' + manifestKey + '")),',
+    '    eq("type", str("arkiv-chunking/chunk/v2")),',
+    '  ))',
+    '  .ownedBy("' + manifest.$owner + '")',
+    '  .createdBy("' + manifest.$creator + '")',
+    '  .orderBy(asc("$key")).limit(8).fetch();',
+  ].join('\n');
+  return {chunks,code};
 }

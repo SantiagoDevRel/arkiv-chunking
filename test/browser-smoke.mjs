@@ -6,14 +6,19 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createPublicClient } from '@arkiv-network/sdk';
-import { tiramisu } from '@arkiv-network/sdk/chains';
-import { key, str } from '@arkiv-network/sdk/attr';
-import { eq } from '@arkiv-network/sdk/query';
-import { custom } from 'viem';
+import { rabdi } from '@arkiv-network/sdk/chains';
+import { key, str } from '@arkiv-network/sdk/schema';
+import { and, asc, eq, gt } from '@arkiv-network/sdk/query';
+import { custom, hexToBytes } from 'viem';
 
+const chain=rabdi({accessKey:'controlled-test'});
 const out = process.env.ARTIFACTS_DIR ?? join(tmpdir(), 'arkiv-chunking-browser');
 await fs.mkdir(out, { recursive: true });
-const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.BROWSER_EXECUTABLE_PATH ? {executablePath: process.env.BROWSER_EXECUTABLE_PATH} : {}),
+  ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}),
+});
 const checks = [], errors = [], geometry = [];
 let page;
 try {
@@ -21,7 +26,7 @@ try {
   const context = await browser.newContext({ colorScheme: 'dark', locale: 'en-US', viewport: { width: 1440, height: 900 }, acceptDownloads: true });
   page = await context.newPage();
   const rpc = rpcHarness();
-  let rejectSend = false, changeAfterSend = false, walletChain = '0x7614d1', readFailure = false;
+  let rejectSend = false, changeAfterSend = false, walletChain = '0x76edaf', readFailure = false;
   let staleTiming = false, failAfterFinalize = false, inspectionFailure = false, heldSend;
   let releaseSend;
   page.on('pageerror', error => errors.push(error.message));
@@ -40,7 +45,7 @@ try {
       }
       if (failAfterFinalize && rpc.entities.at(-1) && rpc.entities.some(entity => entity.attributes.some(a => a.name === 'complete' && a.value === true))) {
         // Arm against the just-written manifest only, never against a previous completed upload.
-        const latestManifest = rpc.entities.findLast(entity => entity.attributes.some(a => a.name === 'type' && a.value === 'arkiv-chunking/manifest/v1'));
+        const latestManifest = rpc.entities.findLast(entity => entity.attributes.some(a => a.name === 'type' && a.value === 'arkiv-chunking/manifest/v2'));
         if (latestManifest?.attributes.some(a => a.name === 'complete' && a.value === true)) readFailure = true;
       }
     }
@@ -56,7 +61,7 @@ try {
     window.fixtureEmit = (event, data) => { for (const listener of listeners.get(event) ?? []) listener(data); };
   });
   // The application uses its real fixed RPC URL; intercept transport only, preserving SDK encoding/query parsing.
-  await page.route('https://rpc.tiramisu.db-chain.testnet.arkiv.network/**', async route => {
+  await page.route('**/api/rpc', async route => {
     const request = route.request().postDataJSON();
     try {
       if (request.method === 'arkiv_query' && readFailure) throw Error('Controlled post-confirmation read failure');
@@ -70,7 +75,7 @@ try {
   });
   async function idle() { await page.locator('#workspace[aria-busy="false"]').waitFor({ timeout: 30000 }); }
   async function state(value) { await page.locator(`#workflow-status[data-state="${value}"]`).waitFor({ timeout: 30000 }); await idle(); }
-  async function reset() { await page.goto(process.env.SAMPLE_URL ?? 'http://127.0.0.1:3076'); await page.locator('#selected-meta').filter({ hasText: '120,001 bytes' }).waitFor(); }
+  async function reset() { await page.goto(process.env.SAMPLE_URL ?? 'http://127.0.0.1:3076'); await page.locator('#selected-meta').filter({ hasText: '120,001 bytes' }).waitFor(); await page.locator('#wallet-rpc').fill('https://rpc.rabdi.db-chain.testnet.arkiv.network/controlled-test'); }
   async function capture(stateName) {
     await page.evaluate(() => document.fonts.ready);
     for (const theme of ['dark', 'light']) {
@@ -119,7 +124,7 @@ try {
     assert.deepEqual(saved, bytes);
     assert.equal(createHash('sha256').update(saved).digest('hex'), createHash('sha256').update(bytes).digest('hex'));
     const manifestKey = await page.locator('#manifest').inputValue();
-    assert.equal(await page.locator('#explorer').getAttribute('href'), `https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/${manifestKey}`);
+    assert.equal(await page.locator('#explorer').getAttribute('href'), `https://rabdi.explorer.arkiv.network/entity/${manifestKey}`);
     return manifestKey;
   }
   async function assertChunks(bytes) {
@@ -134,14 +139,14 @@ try {
     assert.equal(await info.evaluate(node => node === document.activeElement), true);
     const manifestKey = await page.locator('#manifest').inputValue();
     const snippet = await page.locator('#query-code').textContent();
-    assert.ok(snippet.includes(`eq('manifest', key('${manifestKey}'))`));
-    assert.ok(snippet.includes('payload: true') && snippet.includes('attributes: true') && snippet.includes('key: true'));
+    assert.ok(snippet.includes(manifestKey));
+    assert.ok(snippet.includes('data: true') && snippet.includes('seq: true') && snippet.includes('$key: true'));
     assert.ok(!snippet.includes('import ') && !snippet.includes('downloadFile') && !snippet.includes('createPublicClient'));
     // Execute exactly the displayed query with the real SDK and the same fixture data.
-    const client = createPublicClient({ chain: tiramisu, transport: custom({ request: args => rpc.request(args) }) });
+    const client = createPublicClient({ chain, transport: custom({ request: args => rpc.request(args) }) });
     const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
-    const entities = await new AsyncFunction('client', 'key', 'str', 'eq', `${snippet}\nreturn chunks;`)(client, key, str, eq);
-    entities.sort((a, b) => Number(a.attributes.seq.value - b.attributes.seq.value));
+    const entities = await new AsyncFunction('client','key','str','eq','and','asc','gt',`${snippet}\nreturn page.entities;`)(client,key,str,eq,and,asc,gt);
+    entities.sort((a, b) => Number(a.seq.value - b.seq.value));
     const expectedCount = Math.max(1, Math.ceil(bytes.length / 100000));
     assert.equal(entities.length, expectedCount);
     const cards = page.locator('#chunk-list article.chunk-card');
@@ -150,19 +155,19 @@ try {
     for (let index = 0; index < entities.length; index++) {
       const entity = entities[index], card = cards.nth(index);
       const expected = bytes.subarray(index * 100000, (index + 1) * 100000);
-      assert.deepEqual(Buffer.from(entity.payload), expected);
+      assert.deepEqual(Buffer.from(hexToBytes(entity.data.value)), expected);
       assert.equal(await card.getAttribute('data-seq'), String(index));
-      assert.equal(await card.locator('.chunk-key').textContent(), entity.key);
-      assert.equal(await card.locator('.chunk-key').getAttribute('href'), `https://indexer.tiramisu.db-chain.testnet.arkiv.network/entity/${entity.key}`);
-      assert.equal(entity.attributes.manifest.value, manifestKey);
-      const payloadDownload = page.waitForEvent('download');
+      assert.equal(await card.locator('.chunk-key').textContent(), entity.$key);
+      assert.equal(await card.locator('.chunk-key').getAttribute('href'), `https://rabdi.explorer.arkiv.network/entity/${entity.$key}`);
+
+      const bytesDownload = page.waitForEvent('download');
       await card.locator('.chunk-download').click();
-      const payload = await fs.readFile(await (await payloadDownload).path());
-      assert.deepEqual(payload, expected);
-      recovered.push(payload);
-      assert.equal(await card.locator('.payload-preview').textContent(), expected.length ? expected.subarray(0, 96).toString('utf8') : '(empty payload)');
+      const chunkBytes = await fs.readFile(await (await bytesDownload).path());
+      assert.deepEqual(chunkBytes, expected);
+      recovered.push(chunkBytes);
+      assert.equal(await card.locator('.bytes-preview').textContent(), expected.length ? expected.subarray(0, 96).toString('utf8') : '(empty bytes)');
       const attributes = JSON.parse(await card.locator('details pre').textContent());
-      assert.equal(attributes.manifest.value, manifestKey);
+
       assert.equal(attributes.seq.value, String(index));
     }
     assert.deepEqual(Buffer.concat(recovered), bytes);
@@ -217,7 +222,7 @@ try {
   assert.equal(await page.locator('#consent').count(), 0);
   assert.equal(await page.locator('#selected-name').innerText(), 'arkiv-demo.txt');
   await capture('baseline');
-  checks.push('default sample selected; no RPC or acknowledgment input; 1440x900 primary action visible without scrolling');
+  checks.push('default sample selected; user RPC configured only for wallet writes; 1440x900 primary action visible without scrolling');
 
   heldSend = new Promise(resolve => { releaseSend = resolve; });
   await page.locator('#upload').click();
@@ -237,7 +242,7 @@ try {
   await capture('expanded-query');
   await page.locator('#query-details summary').click();
   await page.locator('#chunk-list article').first().locator('details summary').click();
-  checks.push('120001-byte demo:4 SDK transactions; automatic exact file download; displayed SDK query retrieves both actual chunk keys/attributes/payloads; individual payload downloads reassemble original');
+  checks.push('120001-byte demo: 4 SDK transactions; exact file download; displayed SDK query retrieves actual chunk keys, attributes and bytes; chunk downloads reassemble the original');
 
   const bytes = Buffer.from('Public synthetic fixture.\n'.repeat(11000));
   const beforeCustom = rpc.transactions.length;
@@ -248,7 +253,7 @@ try {
   checks.push('custom286000-byte file:3 chunks,5 transactions, automatic exact-byte download');
 
   const customChunk = rpc.entities.find(entity => entity.attributes.some(a => a.name === 'manifest' && a.value === customKey));
-  customChunk.payload = '0x' + '00'.repeat((customChunk.payload.length - 2) / 2);
+  const data = customChunk.attributes.find(a=>a.name==='data'); data.value='0x'+'00'.repeat((data.value.length-2)/2);
   await page.locator('#tab-open').click();
   await page.locator('#manifest').fill(customKey);
   await page.locator('#retrieve').click();
@@ -276,6 +281,9 @@ try {
   await page.locator('#upload').click(); await state('error');
   assert.equal(rpc.transactions.length, before + 1);
   assert.equal(await page.locator('#result-title').innerText(), 'Upload status unconfirmed');
+  assert.equal(await page.locator('#recovery').isVisible(), true);
+  assert.equal(await page.locator('#recovery-transactions a').count(), 1);
+  assert.match(await page.locator('#recovery-transactions a').getAttribute('href'), /^https:\/\/rabdi\.explorer\.arkiv\.network\/tx\/0x[0-9a-f]{64}$/);
   assert.match(await page.locator('#manifest').inputValue(), /^0x[0-9a-f]{64}$/);
   assert.equal(await page.locator('#chunk-list article').count(), 0);
   assert.equal(await page.locator('#save').isVisible(), false);
@@ -284,8 +292,8 @@ try {
   await reset(); walletChain = '0x1'; before = rpc.transactions.length;
   await page.locator('#upload').click(); await state('error');
   assert.equal(rpc.transactions.length, before);
-  assert.match(await page.locator('#workflow-status').innerText(), /Tiramisu/);
-  walletChain = '0x7614d1';
+  assert.match(await page.locator('#workflow-status').innerText(), /Rabdi/);
+  walletChain = '0x76edaf';
   checks.push('wallet remaining on wrong network after switch request sends zero transactions');
 
   await reset(); await page.evaluate(() => { window.ethereum = undefined; }); before = rpc.transactions.length;

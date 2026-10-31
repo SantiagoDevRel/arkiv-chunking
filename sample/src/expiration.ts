@@ -1,11 +1,9 @@
 import type { GetBlockTimingReturnType } from '@arkiv-network/sdk';
+import {MAX_EXPIRATION_BLOCKS,MAX_CHUNKS} from 'arkiv-chunking';
 
 const MAX_DATE_MS = 8_640_000_000_000_000;
 const MAX_UINT64 = (1n << 64n) - 1n;
 const MAX_SAFE_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
-// This sample consumes arkiv-chunking 0.1.0, whose admission limits are block based.
-const MAX_EXPIRATION_BLOCKS = 15_768_000;
-const MAX_CHUNKS = 4096;
 export const MAX_TIMING_AGE_MS = 5 * 60 * 1000;
 
 /** Safe, user-facing input errors; never contains a provider response or URL. */
@@ -58,7 +56,7 @@ export function dateToBlocks(
     fail('Choose a later expiration so there is time to approve and store this file.');
   }
   if (!Number.isSafeInteger(blocks) || blocks > MAX_EXPIRATION_BLOCKS || timing.currentBlock + BigInt(blocks) > MAX_UINT64) {
-    fail('Choose an earlier expiration. This date exceeds the supported storage lifetime.');
+    fail('Choose an earlier expiration. Longer storage needs coordinated Lifetime Extension, which this sample does not provide.');
   }
   return blocks;
 }

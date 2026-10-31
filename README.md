@@ -1,194 +1,165 @@
 # arkiv-chunking
 
-Split a file into queryable Arkiv entities, store it, and retrieve exactly the original bytes. A typed `key` attribute links each chunk to its manifest. The reader fetches every page at one block, restores sequence order, and verifies the length and SHA-256 before returning anything.
+Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**These packages are intended for testnet use.**
+**Candidate: arkiv-chunking 1.0.0, SDK 1.0.0, Rabdi DB-Chain testnet (7794095).** This branch is awaiting review and publication. Its preview installs the packed candidate; it does not claim a registry release. See [verification](docs/verification.md) and [breaking changes](CHANGELOG.md).
 
-Version **0.1.1** adds SDK **0.8.1** support. The immutable **0.1.0** archive and the [historical deployed sample](https://arkiv-chunking-sample.vercel.app) use SDK **0.8.0**. Check the registry version before installing; see [verification](docs/verification.md) for source checks and dated Tiramisu evidence.
+## Local use without credentials
 
-## Install and run without a wallet
-
-Requirements: Node.js **22.10+** with Web Crypto (tested: **22.22.3**), or a browser secure context. This is an **ESM** package. The candidate is tested with SDK **0.8.1** and viem **2.56.3**; its SDK peer range is `>=0.8.1 <0.9`. Other releases in that range, Bun and Deno have not been verified.
-
-Build and pack the candidate from this checkout with `npm ci` and `npm pack`. Then use the resulting tarball in a clean consumer:
+Use Node.js 22.10+ or a browser secure context, ESM, SDK 1.0.0 and viem 2.56.3. From this checkout:
 
 ```sh
-mkdir chunking-consumer
-cd chunking-consumer
+npm ci
+npm run build
+npm pack
+```
+
+Install the resulting tarball into a clean consumer:
+
+```sh
 npm init -y
 npm pkg set type=module
-npm install --save-exact /absolute/path/to/arkiv-chunking-0.1.1.tgz @arkiv-network/sdk@0.8.1 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.0.0.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
 ```
 
-Save this as `example.mjs`:
+After publication, replace the tarball argument with `arkiv-chunking@1.0.0`. Check `npm view arkiv-chunking version` first.
 
 ```js
-import { splitFile, hashFile, reconstructFile } from 'arkiv-chunking';
-
+import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
 const original = new TextEncoder().encode('Hello, Arkiv!');
-const expectedSha256 = await hashFile(original);
-const chunks = splitFile(original, { chunkSize: 5 });
-const restored = await reconstructFile(chunks, expectedSha256);
-console.log(chunks.length); // 3
-console.log(new TextDecoder().decode(restored)); // Hello, Arkiv!
+const chunks = splitFile(original, {chunkSize: 5});
+const restored = await reconstructFile(chunks, await hashFile(original));
+console.log(chunks.length, new TextDecoder().decode(restored)); // 3, Hello, Arkiv!
 ```
 
-```sh
-node example.mjs
-```
+Splitting, hashing and local reconstruction need no network, signing wallet or access key.
 
-This example is entirely local. It requires no network, wallet, funds, or access key and does not demonstrate persistence. The next example does.
+## Store and retrieve on Rabdi
 
-## Store and retrieve on Tiramisu
+Get a free [access key](https://hub.arkiv.network/access-keys) and fund a dedicated test wallet with test GLM at the [Hub faucet](https://hub.arkiv.network/faucet). Use matching explicit Rabdi configurations for the RPC and wallet. The [explorer](https://rabdi.explorer.arkiv.network) shows entities and transactions. No mainnet support is claimed.
 
-As verified on September 9, 2026, Tiramisu setup, faucet and access keys are available on the staging Hub; the production Hub still shows Braga. Use the links below. The immutable npm 0.1.0 archive retains earlier Hub links; this source README contains the corrected destinations.
-
-1. Use **Tiramisu testnet**, chain ID **7738577**, from `@arkiv-network/sdk/chains`. Choose the same network in your wallet and RPC configuration. The package refuses missing chains, chains without `testnet: true`, and mismatched RPC/wallet chain IDs. Custom testnet configurations are accepted but have not been tested.
-2. Fund a dedicated test wallet with **test GLM** using the [Hub faucet](https://stage.hub.arkiv.network/faucet). Connect and sign in with that wallet. Test tokens have no monetary value. The [network page](https://stage.hub.arkiv.network/networks) provides current connection details.
-3. Reads through `https://rpc.tiramisu.db-chain.testnet.arkiv.network` are anonymous. If your write RPC requires an access key, obtain a Tiramisu key at [Access Keys](https://stage.hub.arkiv.network/api-keys), then use its connection instructions. Access policy and quotas belong to the provider and may change. A wallet signs writes; an RPC access key does not replace it.
-4. For Node, put `ARKIV_PRIVATE_KEY` in a local secret file **outside your checkout** or your process environment. Optional `ARKIV_RPC_URL` selects your authenticated RPC. Never paste secrets into code, docs, a chat, or a browser bundle. For the browser flow, use the [sample](https://github.com/SantiagoDevRel/arkiv-chunking/tree/feat/file-chunking/sample), which asks your wallet to sign and never accepts a private key.
-
-Save as `roundtrip.mjs` in the consumer directory:
+Configure `ARKIV_ACCESS_KEY` and `ARKIV_PRIVATE_KEY` locally, outside source control. Never paste a signing key into chat, a browser app or a bundle. An access key is required for practical network use; it does not sign transactions. The SDK throws `MissingAccessKeyError` if the accessKey option is missing. Obtain a key from the Hub and pass it explicitly rather than bypassing the check.
 
 ```js
-import { createPublicClient, createWalletClient } from '@arkiv-network/sdk';
-import { tiramisu } from '@arkiv-network/sdk/chains';
-import { http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { uploadFile, downloadFile } from 'arkiv-chunking';
+import {createPublicClient, createWalletClient, MissingAccessKeyError} from '@arkiv-network/sdk';
+import {rabdi} from '@arkiv-network/sdk/chains';
+import {http} from 'viem';
+import {privateKeyToAccount} from 'viem/accounts';
+import {uploadFile, downloadFile} from 'arkiv-chunking';
 
-if (!process.env.ARKIV_PRIVATE_KEY) throw new Error('Set ARKIV_PRIVATE_KEY locally.');
-const rpc = process.env.ARKIV_RPC_URL ?? tiramisu.rpcUrls.default.http[0];
-const transport = () => http(rpc, {
-  retryCount: 0,
-  timeout: 30_000,
-  fetchOptions: { cache: 'no-store' },
-});
-const publicClient = createPublicClient({ chain: tiramisu, transport: transport() });
+if (!process.env.ARKIV_ACCESS_KEY) throw new MissingAccessKeyError('Rabdi');
+if (!process.env.ARKIV_PRIVATE_KEY) throw new Error('Configure a dedicated signing key locally.');
+const chain = rabdi({accessKey: process.env.ARKIV_ACCESS_KEY});
+const transport = () => http(undefined, {retryCount: 0, timeout: 30000, fetchOptions: {cache: 'no-store'}});
+const publicClient = createPublicClient({chain, transport: transport()});
 const walletClient = createWalletClient({
-  chain: tiramisu,
-  transport: transport(),
-  account: privateKeyToAccount(process.env.ARKIV_PRIVATE_KEY),
+  chain, transport: transport(), account: privateKeyToAccount(process.env.ARKIV_PRIVATE_KEY),
 });
 const original = new TextEncoder().encode('Public test data.\n'.repeat(15000));
 const stored = await uploadFile({
-  publicClient, walletClient, bytes: original,
-  filename: 'example.txt', contentType: 'text/plain',
-  expirationBlocks: 3600,
+  publicClient, walletClient, bytes: original, filename: 'example.txt',
+  contentType: 'text/plain', expirationBlocks: 3600,
 });
 const restored = await downloadFile({
-  publicClient, manifestKey: stored.manifestKey,
-  expectedSha256: stored.sha256,
+  publicClient, manifestKey: stored.manifestKey, expectedSha256: stored.sha256,
 });
-const matches = original.length === restored.bytes.length &&
-  original.every((value, index) => value === restored.bytes[index]);
-if (!matches) throw new Error('Byte comparison failed');
-console.log({ manifestKey: stored.manifestKey, expiresAt: String(stored.expiresAt), chunks: stored.chunkCount,
-  bytes: restored.bytes.length, matches });
+if (original.length !== restored.bytes.length ||
+    original.some((byte, index) => byte !== restored.bytes[index])) throw new Error('Byte comparison failed.');
+console.log({manifestKey: stored.manifestKey, chunks: stored.chunkCount, bytes: restored.bytes.length});
 ```
 
-```sh
-node --env-file=/absolute/path/to/your-secret.env roundtrip.mjs
-```
+Save this as roundtrip.mjs. Run `node --env-file=/absolute/path/to/your-secret.env roundtrip.mjs`, with ARKIV_ACCESS_KEY and ARKIV_PRIVATE_KEY configured outside the checkout. This example writes public synthetic bytes in at least three chunks. All bytes and metadata are publicly readable. Entity Expiration is not historical erasure.
 
-The secret file uses ordinary `NAME=value` syntax: `ARKIV_PRIVATE_KEY` and optionally `ARKIV_RPC_URL`. Supply your own values locally. If already in the process environment, run `node roundtrip.mjs`.
+`uploadFile` owns the per-write transaction policy, including in the sample and scripts. It uses a signing-disabled SDK client to capture the unsigned request, estimates it at `latest`, and stops before signing if estimation fails. Gas is `max(1_000_000, 2 * estimate)`, with a fresh `latest` nonce and network `gasPrice` passed explicitly to every SDK write. It rejects a budget above the latest block gas limit and checks every authoritative receipt. A measured 100,000-byte chunk consumed 4,904,531 gas; the floor alone is insufficient for large chunks.
 
-Expected: a new 32-byte manifest key, the queried expiration block in `expiresAt`, `chunks: 3`, `bytes: 270000`, `matches: true`. This creates five transactions: the manifest, three chunks, and finalization. All bytes and metadata become publicly readable. **Entity Expiration removes entities from current queries. It cannot retract copies already read and does not guarantee archive availability.**
+Optional `txParams(context)` runs for each write with `{phase, chunkIndex?, attempt, estimate, defaults}`. Return a partial override, for example `txParams: ({defaults}) => ({gas: defaults.gas + 100_000n})`. Gas must retain the minimum headroom; gasPrice must be positive; nonce must match the fresh latest nonce. Policy reads use the wallet's configured RPC. Serialize uploads from one account and disable transport retries as shown above.
+
+A confirmed gas-exhausted revert may be retried once with fresh parameters and at least twice the previous gas. A semantic revert, rejected signature, missing receipt, uncertain submission or successful receipt never authorizes a retry. Confirmed hashes, including reverted attempts, are preserved.
+
+When the SDK returns success, its hash and newly created manifest/chunk keys are saved before any receipt recheck. If that RPC lags, the library polls by hash at the current head up to five times, one second apart; transport timeouts still apply. A delayed receipt permits normal completion. If the recheck remains unavailable, uploadFile throws a typed `ChunkingError` with code `CONFIRMATION_PENDING`, preserving all SDK-success hashes, manifestKey and chunkKeys. It sends no further writes and never resends the successful operation. A hash found only in an SDK error still requires an authoritative receipt before it is treated as confirmed.
 
 ## Public API
 
-Types ship with the package. Import the types you need from `arkiv-chunking`; no internal path imports.
+Import only from `arkiv-chunking`; types ship with the package.
 
 | Export | Contract |
 |---|---|
-| `splitFile(bytes, { chunkSize? })` | Synchronous `Uint8Array[]`, in order; copies input. Empty file becomes one empty chunk. |
-| `hashFile(bytes)` | `Promise<Hex>` with SHA-256 of the bytes. |
-| `reconstructFile(orderedChunks, expectedSha256)` | `Promise<Uint8Array>`; rejects oversized input or digest mismatch. It cannot infer order; callers provide it. |
-| `uploadFile(options)` | `Promise<UploadResult>`: manifest key, digest, byte/chunk counts, queried `expiresAt: bigint` block and confirmed transaction hashes. Required: public/wallet clients, bytes, filename, expirationBlocks. Optional: MIME contentType, chunkSize, onProgress. |
-| `downloadFile(options)` | `Promise<DownloadResult>`: verified bytes, filename, MIME contentType, digest, chunkCount, `expiresAt: bigint` block. Required: publicClient, manifestKey. Optional: expectedSha256, onProgress. No wallet. |
-| `ChunkingError` | `code`, `manifestKey?`, `transactionHashes`, and `cause` for local diagnostics. Never display raw `cause` publicly: SDK/provider errors may contain sensitive RPC URLs. |
-| `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Version and enforced package limits. |
-| `UploadOptions`, `UploadResult`, `DownloadOptions`, `DownloadResult`, `Progress`, `ChunkingErrorCode`, `ChunkingPublicClient`, `ChunkingWalletClient` | Public TypeScript integration types. |
+| `splitFile(bytes, {chunkSize?})` | Copies input into ordered Uint8Array chunks. An empty file has one empty chunk. |
+| `hashFile(bytes)` | Promise of a 32-byte SHA-256 hex string. |
+| `reconstructFile(orderedChunks, expectedSha256)` | Verified bytes, or an error. Caller supplies order. No RPC. |
+| `uploadFile(options)` | Requires publicClient, walletClient, bytes, filename, expirationBlocks; optional contentType, chunkSize, onProgress, per-write txParams callback. Resolves only after a successful finalization receipt. |
+| `downloadFile(options)` | Requires publicClient and manifestKey; optional trusted expectedSha256 and onProgress. No wallet needed. |
+| `ManifestSchema`, `ChunkSchema` | SDK 1.0 schemas for reads and integrations. Do not independently mutate a stored file. |
+| `ChunkingError` | code, optional manifestKey, confirmed transactionHashes, preserved chunkKeys and a local-only cause. CONFIRMATION_PENDING distinguishes a lagging recheck after SDK success. Never expose raw provider causes publicly. |
+| `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
+| `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
+| `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |
+| `UploadOptions`, `UploadResult`, `DownloadOptions`, `DownloadResult`, `Progress`, `ChunkingErrorCode`, `ChunkingPublicClient`, `ChunkingWalletClient` | Public TypeScript types. |
 
-`onProgress` receives `{ phase, completed, total, manifestKey? }`. Phases are `manifest`, `chunks`, and `finalize`; downloads report `chunks`. Completion counts chunks, not transactions. Only a resolved promise signals success. Callbacks are observational: thrown errors and rejected callback promises are ignored so they cannot turn a confirmed write into an apparent failed upload. Callback promises are not awaited and cannot delay a write.
+UploadResult contains manifestKey, sha256, chunkCount, totalBytes, expiresAt (bigint block) and confirmed transactionHashes. DownloadResult contains bytes, filename, contentType, sha256, chunkCount and expiresAt. Progress is {phase, completed, total, manifestKey?}; phases are manifest, chunks and finalize. Callback failures are ignored, and async callbacks are not awaited. Only the operation's resolved promise means success.
 
-## Limits and failure semantics
+## Storage format and Entity Expiration
 
-| Constraint | Value / behavior |
+Format v2 uses named SDK schemas:
+
+| Schema | Indexed columns | Stored columns |
+|---|---|---|
+| Manifest | type, complete, sha256, arkiv.schema | totalbytes, chunkcount, chunksize, metadata (bytes) |
+| Chunk | type, manifest (key), seq (u64), arkiv.schema | data (bytes, never indexed) |
+
+Metadata is UTF-8 JSON with filename and contentType; a filename can be 255 UTF-8 bytes, without fitting it into an SDK str column. The digest is a 66-character str. Chunk bytes are selected as `data.value` (hex in SDK 1.0).
+
+Upload creates an incomplete manifest, writes immutable chunks sequentially, then patches complete to true. There are N+2 successful writes; a confirmed gas-exhausted revert can add one attempt per write. Manifest and chunks share one absolute expiration block, computed from the initial chain head and the requested lifetime. Before every chunk and finalization, a read checks that the manifest has enough blocks remaining. One failed liveness read receives one read-only retry.
+
+Rabdi rejects a target more than 7,884,000 blocks after the current block with `ExpiryBeyondMaxLifetime`. The package admits at most 7,883,970 blocks, reserving 30 blocks of inclusion margin; the date picker uses the same exported bound. There is no permanent/no-expiration option. Longer-lived files need coordinated Lifetime Extension; this package does not implement it, and extending only a subset of the file is unsupported.
+
+The reader scopes chunks by manifest, type, owner and creator. It uses ascending immutable keys and a strict greater-than key predicate for later pages, then orders by seq. SDK 1.0 reads the latest block per request; this is not a pinned snapshot. After checking the complete count, exact lengths and SHA-256, the reader queries the manifest again and rejects a changed or expired manifest. It rejects mutable chunks, duplicate keys/indexes and missing parts. No partial bytes are returned.
+
+Ownership transfer, independent mutations and extending a subset of the file are unsupported. An independently trusted expectedSha256 pins integrity beyond the manifest's current claim; a digest alone does not prove publisher identity.
+
+## Limits and recovery
+
+| Policy | Limit |
 |---|---|
-| File size | 0–33,554,432 bytes (32 MiB), in memory; no streaming |
-| Default chunk | 100,000 bytes |
-| Configurable chunk | 1–120,000 bytes, at most 4,096 chunks |
-| Filename | Basename only, 1–255 UTF-8 bytes; no separators or control characters |
-| MIME type | At most 128 bytes, `type/subtype`, without parameters |
-| Entity lifetime | Explicit whole blocks: at least `max(32, chunkCount + 3)`, at most 15,768,000; starts during upload |
-| Write pattern | One manifest + N sequential chunk transactions + one finalization patch; N+2 confirmations and wallet approvals |
-| Upload checks | Manifest queried before each chunk and before finalization (N+1 queries); stops new writes when insufficient blocks remain |
-| Read pattern | One chain check, one manifest query, then all chunk pages, 200 entities per page, pinned to the manifest's query block |
+| File | 0–33,554,432 bytes (32 MiB), in memory |
+| Chunk | Default 100,000 bytes; configurable 1–120,000 |
+| Chunks | At most 4,096 |
+| Filename | Basename, 1–255 UTF-8 bytes; no separators/control characters |
+| Content type | MIME type/subtype without parameters, at most 128 bytes |
+| Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (7,884,000 network maximum less 30 inclusion blocks) |
+| Query page | At most 100 entities; smaller binary pages keep responses around 2 MB |
 
-These are package policies, not universal network maxima. The chunk ceiling leaves space for the entire signed transaction and its fixed attributes; **a payload maximum is not a transaction maximum**. The conservative budget comes from the existing cookbook and Sourcify chunking implementation. Actual compatibility and measured sizes live in [verification](docs/verification.md).
+Blocks are not a reliable clock, and wallet delays consume the selected lifetime. A queried expiresAt is authoritative at that read; the upload returns the pre-finalization check. A lagging receipt recheck after SDK-successful finalization is reported as CONFIRMATION_PENDING with all hashes and keys, rather than a plain upload failure. Verify it through read-only requests; do not resend finalization.
 
-The manifest is created with `complete: false`, typed count/size/hash attributes, and JSON filename/MIME metadata. Each chunk has a versioned `type`, a `manifest: key(...)` reference, `seq: u64(...)`, raw bytes and the read-only creation flag. The final patch sets `complete: true` only after all chunk receipts succeed. Chunks receive the same relative block lifetime later, so they outlive the manifest. The lifetime is **not** a guarantee of a full interval after upload completion.
+If upload fails, retain error.manifestKey and error.transactionHashes. Inspect their receipts and the complete column before deciding to create another file. Confirmed parts remain; an ambiguous timeout may follow a transaction that landed but whose confirmation was not observed. Do not automatically repeat a write or independently patch the manifest to complete. Recovery means inspecting preserved evidence and retrying only a read of a finalized file. There is no automatic upload resume, rollback, cleanup, encryption or read authorization.
 
-`expirationBlocks` uses the SDK's `ExpirationTime.fromBlocks`. Blocks are not a reliable clock: no duration in seconds, hours or days is promised. Returned `expiresAt` comes from querying the entity, not the SDK write receipt's estimate; upload returns the value checked immediately before finalization. The minimum block budget is a conservative admission rule, not a completion guarantee. Slow wallet approval, block advancement or a stalled provider can still exhaust the lifetime. Liveness checks stop subsequent writes with `UPLOAD_FAILED` (cause `INCOMPLETE_UPLOAD`), but cannot cancel a signature or transaction already in flight. Choose enough blocks for the upload and intended retrieval window; automatic lifetime extension is outside scope.
-
-A failed liveness query receives one read-only retry after one second, in addition to retries configured on your client's transport. If both attempts fail, upload stops with `UPLOAD_FAILED` and cause `READ_FAILED`: the entity's lifetime is unknown, not proven expired. Confirmed entities remain. A successfully queried but absent/expired manifest is not retried. Provider quotas must accommodate these checks; a persistent outage can interrupt the upload. No extra read runs after the finalization receipt, so a later RPC error cannot turn that confirmed upload into a reported failure.
-
-The reader scopes chunks by manifest reference **and manifest owner/creator**, validates exact indexes and lengths, rejects duplicates, and verifies SHA-256. A hash proves integrity against that manifest, not publisher identity. The owner can change the manifest; supply an independently trusted `expectedSha256` when you need a pinned file. Ownership transfer and extending a subset of entities are not supported workflows.
-
-There is no whole-file atomicity, automatic retry/resume, deduplication, cleanup, encryption, compression, access control or storage service. The package never deletes entities. If a write fails, confirmed parts remain and incur testnet costs. A timeout may follow a successful transaction; `transactionHashes` includes only confirmations observed by this call, not every transaction that might have landed. Inspect receipts and any returned manifest key before deciding to start another upload. Concurrent uploads from the same signing account require caller serialization to avoid nonce races.
-
-The package never returns partial bytes on an error. Missing/expired manifest → `NOT_FOUND`; unfinished manifest → `INCOMPLETE_UPLOAD`; missing part → `MISSING_CHUNK`; duplicate/index/size problem → `INVALID_CHUNK`; invalid manifest → `INVALID_MANIFEST`; wrong bytes → `HASH_MISMATCH`. An expired snapshot cursor or provider error → `READ_FAILED`; start a new read from the manifest instead of reusing an old cursor.
-
-## Troubleshooting
-
-| Error / symptom | Action |
+| Error | Action |
 |---|---|
-| npm E404 | Check the package spelling, version and configured registry with `npm config get registry`. This package uses the public npm registry. |
-| `NETWORK_MISMATCH` | Configure Tiramisu on both clients and switch your browser wallet to chain 7738577. Verify the RPC's `eth_chainId`. |
-| `UPLOAD_FAILED` / wallet rejection | Inspect `manifestKey` and confirmed hashes. Rejection does not roll back earlier chunks. Keep provider details local. If the manifest expired or has too few blocks left, inspect confirmed writes before choosing a larger block budget for a new upload. |
-| Insufficient gas balance | Claim test GLM for the signing address on Tiramisu, then check its balance. |
-| RPC 401/403 or 429 | Check your network-specific access key or provider quota; avoid automatic write retries. |
-| `NOT_FOUND` | Verify key/network and Entity Expiration. No fallback network is selected automatically. |
-| `INCOMPLETE_UPLOAD`, `MISSING_CHUNK` | Inspect original upload receipts and expiration; the tool refuses reconstruction. A new upload is a new set of entities. |
-| `INVALID_MANIFEST`, `INVALID_CHUNK`, `HASH_MISMATCH` | Treat the file as invalid. Do not bypass validation or offer a partial download. |
-| `crypto.subtle` unavailable | Use Node 22.10+ or an HTTPS/localhost browser context. |
-| `require()` import failure | Use ESM `import`; CommonJS is not a supported export. |
+| NETWORK_MISMATCH | Match Rabdi chain 7794095 across the clients, wallet and RPC. |
+| MissingAccessKeyError, HTTP 401/403/429 | Configure an access key from the Hub; check its provider quota. |
+| -32603, "arkiv serves state at the chain head only" | Use `latest` for state reads and unsigned gas estimation. `safe`, `finalized` and old block hashes are unsupported for these calls. Stop before signing when estimation fails. |
+| Reverted receipt with gasUsed == gasLimit | The gas budget was exhausted. Use an unsigned `latest` estimate and explicit gas=max(1,000,000, 2*estimate), gasPrice and latest nonce. The library permits one confirmed gas-exhaustion retry with increased gas; never retry a successful or uncertain write. |
+| ExpiryBeyondMaxLifetime | Use at most MAX_EXPIRATION_BLOCKS and a coordinated file deadline; longer storage requires Lifetime Extension outside this API. |
+| UPLOAD_FAILED | Preserve manifest and confirmed hashes; inspect receipts before another upload. |
+| CONFIRMATION_PENDING | The SDK reported success, but a bounded receipt recheck is pending. Preserve manifestKey, chunkKeys and transactionHashes. Inspect receipts and the manifest with reads only; never resend automatically. |
+| NOT_FOUND | Check manifest key, network and Entity Expiration. |
+| INCOMPLETE_UPLOAD, MISSING_CHUNK | Inspect upload receipts; reconstruction refuses partial bytes. |
+| INVALID_MANIFEST, INVALID_CHUNK, HASH_MISMATCH | Reject the file. Never bypass validation. |
+| READ_FAILED | Retry a complete read from the manifest; do not re-upload. |
 
-## Sample, agents and development
+## Sample and verification
 
-- [Sample app and clean checkout commands](https://github.com/SantiagoDevRel/arkiv-chunking/tree/feat/file-chunking/sample): wallet-signed upload, retrieve, byte comparison, and downloadable result. It pins the npm release and does not duplicate the package implementation.
-- [Consumer agent guide](AGENTS.md) and [sample agent guide](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/AGENTS.md). Give these files or links explicitly to your agent; do not assume it reads instructions in `node_modules`.
-- [Verification evidence](docs/verification.md): distinguishes simulated RPC tests, local tarball consumers and actual network checks.
-
-For a source checkout, then Node 22.22.3 and npm:
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The existing production site is promoted only after release approval; this branch's preview uses the candidate tarball.
 
 ```sh
-git clone --branch feat/file-chunking https://github.com/SantiagoDevRel/arkiv-chunking.git
-cd arkiv-chunking
-npm ci
 npm test
 npm run typecheck
-npm pack --pack-destination /absolute/path/to/output
+npm run lint
+node scripts/verify.mjs
 ```
 
-The clean consumer setup above installs the candidate tarball. Run `example.mjs` there. This proves the packed artifact, **not** registry publication. The deployed sample still uses the published 0.1.0 dependency; its release dependency must change only when the matching release is available.
+verify.mjs installs the locked existing toolchain, checks the package, packs it, exercises an independent ESM consumer, and builds the preview against that tarball. It expects TMPDIR (as supplied by the DGX job runner). It never publishes.
 
-Optional real write verification from the source checkout:
+The explicit synthetic Rabdi seed is `node scripts/seed-rabdi.mjs`, with ARKIV_ACCESS_KEY_A and TEST_CHUNKING_PRIVATE_KEY configured locally. It queries by digest and owner, reuses a byte-verified complete file, refuses ambiguous incomplete seeds, and writes sample/public/sample.json. Run it again to prove writes: 0. `--verify-only` performs no writes. These are dedicated test credentials, never a server signer.
 
-```sh
-node --env-file=/absolute/path/to/your-secret.env scripts/live-smoke.mjs
-```
-
-This deliberately spends test GLM to upload only synthetic public data (270,000-byte text, an empty file, and a maximum-chunk boundary case). It compares actual recovered bytes and independent Node SHA-256, checks receipts and prints manifest keys and transaction evidence. Do not run with a wallet whose use has not been authorized.
-
-For the reproducible browser integration check, first start the sample using its README in a separate terminal. Then, from the repository root:
-
-```sh
-npx playwright install chromium
-npm run test:browser
-```
-
-This is a separate required sample verification command; `npm test` runs the library, SDK transport and sample date-adapter tests. The browser check uses the published package and SDK with an in-memory RPC and an injected test wallet. It checks automatic retrieval and the saved attachment, date validation, corrupt data, rejected/changed wallets, and read-only recovery after confirmed storage. It captures layouts at 390/768/1440 pixels and around the sample's breakpoints. No live transactions are sent. Screenshots and JSON evidence go to the operating-system temporary directory (`arkiv-chunking-browser`); `ARTIFACTS_DIR` overrides that path. `SAMPLE_URL` overrides localhost:3076. With a locally installed Chrome, `BROWSER_CHANNEL=chrome` selects it instead of the Playwright browser download.
-
-Design provenance: the existing Arkiv cookbook file-manifest/key-reference recipe and the Sourcify POC's checksum-verified chunk lane. This package completes that model with typed SDK 0.8 operations, complete-state gating, snapshot pagination and bounded validation. It does not change the Hub or add a `/tools` entry in this delivery.
+Read [AGENTS.md](AGENTS.md) explicitly when integrating, and include [CLAUDE.md](CLAUDE.md) for Claude consumers. Dated historical evidence stays in docs; [the current report](docs/verification.md) distinguishes live writes from simulations and unpublished artifacts.

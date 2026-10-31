@@ -9,7 +9,7 @@ const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
 });
 const { dateToBlocks, estimateExpirationDate, toLocalDateTimeInput, ExpirationInputError, MAX_TIMING_AGE_MS } =
-  await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+  await import(`data:text/javascript;base64,${Buffer.from(outputText.replace("from 'arkiv-chunking'",'from '+JSON.stringify(new URL('../dist/index.js',import.meta.url).href))).toString('base64')}`);
 const now = Date.parse('2026-09-08T22:00:00Z');
 const timing = { currentBlock: 198000n, currentBlockTime: now / 1000, blockDuration: 2 };
 const future = seconds => new Date(now + seconds * 1000);
@@ -23,8 +23,8 @@ test('date adapter uses live network cadence and rounds up without assuming two-
 test('date adapter enforces chunk-dependent minimum and maximum without clamping', () => {
   assert.throws(() => dateToBlocks(future(64), timing, 40, now), ExpirationInputError);
   assert.equal(dateToBlocks(future(86), timing, 40, now), 43);
-  assert.equal(dateToBlocks(future(15_768_000 * 2), timing, 2, now), 15_768_000);
-  assert.throws(() => dateToBlocks(future(15_768_000 * 2 + 1), timing, 2, now), /earlier/);
+  assert.equal(dateToBlocks(future(7_883_970 * 2), timing, 2, now), 7_883_970);
+  for(const blocks of [7_883_971,7_884_000,15_768_000]) assert.throws(() => dateToBlocks(future(blocks * 2), timing, 2, now), /earlier.*Lifetime Extension/);
   for (const count of [0, -1, 1.5, NaN, 4097]) {
     assert.throws(() => dateToBlocks(future(3600), timing, count, now), /chunks/);
   }

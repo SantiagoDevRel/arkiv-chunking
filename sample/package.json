@@ -1,6 +1,6 @@
 {
   "name": "arkiv-chunking-sample",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,8 +12,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 3076 --strictPort"
   },
   "dependencies": {
-    "@arkiv-network/sdk": "0.8.0",
-    "arkiv-chunking": "0.1.0",
+    "@arkiv-network/sdk": "1.0.0",
+    "arkiv-chunking": "1.0.0",
     "viem": "2.56.3"
   },
   "devDependencies": {

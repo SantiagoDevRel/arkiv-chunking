@@ -1,0 +1,225 @@
+{
+  "status": "pre-review candidate; live Rabdi verification passed",
+  "package": "arkiv-chunking",
+  "version": "1.0.0",
+  "sdk": "1.0.0",
+  "viem": "2.56.3",
+  "network": "Rabdi",
+  "chainId": 7794095,
+  "registryPublished": false,
+  "productionPromoted": false,
+  "platform": "linux",
+  "arch": "aarch64",
+  "seed": {
+    "package": "1.0.0",
+    "sdk": "1.0.0",
+    "node": "v24.22.1",
+    "network": "Rabdi",
+    "chainId": 7794095,
+    "owner": "0x3f0f89BFE9AFd97A4D9feD6EB032794da293c0fB",
+    "sha256": "0x5a4de9341f414b955d7e5f83693e7ce64f76db841662e361a7700ef4fed87e88",
+    "bytes": 291200,
+    "transactionPolicy": "latest nonce, network gas price, create gas 15000000 / patch gas 1000000; no write retry",
+    "startedAt": "2026-10-30T23:27:45.694Z",
+    "transactions": [
+      {
+        "hash": "0xb44c18899586150ad0ee213e9092586ed43ced766e2e7dde4de26423fceb5e87",
+        "block": "8585",
+        "gasUsed": "177142"
+      },
+      {
+        "hash": "0x515d71af4fa71a5cc5d6da5747e83e176647e4109a4ed84bc622de6d460397bf",
+        "block": "8586",
+        "gasUsed": "4904471"
+      },
+      {
+        "hash": "0x7ced616e677bcffca93f2dfee539fe2942df5dbaafa99617f68cb903eb3d4bdc",
+        "block": "8589",
+        "gasUsed": "4904531"
+      },
+      {
+        "hash": "0xeb5a256c99885def57dad54a32457f0d39c1590e6ecc3d44b153d66b058fabdb",
+        "block": "8593",
+        "gasUsed": "4478020"
+      },
+      {
+        "hash": "0x2a4b1c162ea066c8a464e878d050940027b8ddc238486c23e8f560b2ad9cc7d1",
+        "block": "8595",
+        "gasUsed": "49095"
+      }
+    ],
+    "manifestKey": "0x22a7f01e8e8c6debd118fe81737153bed924283910eb9a7830808a0289a9e9f9",
+    "filename": "rabdi-chunking-demo.txt",
+    "totalBytes": 291200,
+    "chunkCount": 3,
+    "expiresAt": "613385",
+    "byteExact": true,
+    "queries": 8,
+    "writes": 5,
+    "finishedAt": "2026-10-30T23:28:13.737Z"
+  },
+  "idempotence": {
+    "package": "1.0.0",
+    "sdk": "1.0.0",
+    "node": "v24.22.1",
+    "network": "Rabdi",
+    "chainId": 7794095,
+    "owner": "0x3f0f89BFE9AFd97A4D9feD6EB032794da293c0fB",
+    "sha256": "0x5a4de9341f414b955d7e5f83693e7ce64f76db841662e361a7700ef4fed87e88",
+    "bytes": 291200,
+    "transactionPolicy": "latest nonce, network gas price, create gas 15000000 / patch gas 1000000; no write retry",
+    "startedAt": "2026-10-30T23:28:30.931Z",
+    "manifestKey": "0x22a7f01e8e8c6debd118fe81737153bed924283910eb9a7830808a0289a9e9f9",
+    "filename": "rabdi-chunking-demo.txt",
+    "totalBytes": 291200,
+    "chunkCount": 3,
+    "expiresAt": "613385",
+    "byteExact": true,
+    "queries": 4,
+    "writes": 0,
+    "finishedAt": "2026-10-30T23:28:33.939Z"
+  },
+  "liveSmoke": {
+    "package": "1.0.0",
+    "node": "v24.22.1",
+    "chainId": 7794095,
+    "account": "0x3f0f89BFE9AFd97A4D9feD6EB032794da293c0fB",
+    "started": "2026-10-30T23:28:45.626Z",
+    "cases": [
+      {
+        "filename": "synthetic-roundtrip.txt",
+        "totalBytes": 270000,
+        "chunkSize": 100000,
+        "chunkCount": 3,
+        "manifestKey": "0x839da8f63b8595f4169c2bced9894ce4250951474da25084fc88b87364bdb2df",
+        "expiresAt": "12215",
+        "sha256": "0x7c407fd31d2366b79f8b3a2895c08566f2bcf64a6dcb972846d535e3f36e82e7",
+        "byteExact": true,
+        "transactions": [
+          {
+            "hash": "0x6b653b9767f300f5a86001f35a44dc54f1a9266142c6c938f38efe295cb2f9de",
+            "blockNumber": "8615",
+            "calldataBytes": 2084,
+            "gasUsed": "144819"
+          },
+          {
+            "hash": "0x6eb879b679f1939bd8ecebf90d85f322935afcceaa14f72e4bc4436e0af156d7",
+            "blockNumber": "8618",
+            "calldataBytes": 101348,
+            "gasUsed": "4044729"
+          },
+          {
+            "hash": "0x804b26c8352412729853ebfabd10bb0a90497c8dcb5ffca5d3400a1915f149de",
+            "blockNumber": "8619",
+            "calldataBytes": 101348,
+            "gasUsed": "4044759"
+          },
+          {
+            "hash": "0x31b6a9db629528b37092a1f84efba24e71b50f562a17b86ba4498f2a4195df13",
+            "blockNumber": "8620",
+            "calldataBytes": 71364,
+            "gasUsed": "2843407"
+          },
+          {
+            "hash": "0xd9a9130d9b6316f2a218fdbc076db4e680586f0c3d7af8d4423d911e8fa807f5",
+            "blockNumber": "8623",
+            "calldataBytes": 516,
+            "gasUsed": "47161"
+          }
+        ]
+      },
+      {
+        "filename": "synthetic-empty.bin",
+        "totalBytes": 0,
+        "chunkSize": 100000,
+        "chunkCount": 1,
+        "manifestKey": "0x51fa91bc42801f3765e7079bdce67bebf93f4906910722a2a82a281fd478b607",
+        "expiresAt": "12227",
+        "sha256": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteExact": true,
+        "transactions": [
+          {
+            "hash": "0x1a433ff1a465b20ff1c60b998de7abee81df0fd6ea83de21e42d3766722fda3e",
+            "blockNumber": "8627",
+            "calldataBytes": 2084,
+            "gasUsed": "144679"
+          },
+          {
+            "hash": "0x4f039312fd014b373125ad0f57a96515160a199031d9fc600083d911af828512",
+            "blockNumber": "8630",
+            "calldataBytes": 1348,
+            "gasUsed": "127753"
+          },
+          {
+            "hash": "0x9cb8782e872174a0be53ee2c1d22c52c003eb52054e41f38ecbc3734d3a7cdee",
+            "blockNumber": "8633",
+            "calldataBytes": 516,
+            "gasUsed": "47141"
+          }
+        ]
+      },
+      {
+        "filename": "synthetic-boundary.bin",
+        "totalBytes": 120001,
+        "chunkSize": 120000,
+        "chunkCount": 2,
+        "manifestKey": "0x7a6d55e5dd8d734e0f08e7774dee0149511bcb995510f22cf95304c88d83c19a",
+        "expiresAt": "12237",
+        "sha256": "0x5498e47c97da9d3f8a1953ad3815159f3935b97765cec00c753cbedca041fe85",
+        "byteExact": true,
+        "transactions": [
+          {
+            "hash": "0x27c2afdea7f48cfbf8ce84b69820c080cf2f15a4c691ec09df05852a5886e61e",
+            "blockNumber": "8637",
+            "calldataBytes": 2084,
+            "gasUsed": "144796"
+          },
+          {
+            "hash": "0x9012e5f0c6882a3fbb7989c7c3e4627b84cc962c22ed3c5a72512571f7beddcc",
+            "blockNumber": "8640",
+            "calldataBytes": 121348,
+            "gasUsed": "4831367"
+          },
+          {
+            "hash": "0xf850a81a69ef01b952ea3be157c24d2f29d6064dd57f116da8290a3b5c9bbfa5",
+            "blockNumber": "8643",
+            "calldataBytes": 1380,
+            "gasUsed": "125936"
+          },
+          {
+            "hash": "0xf1987c7cd3649e15e85232c38e7ffde64e8e13fde4bf1b2964c697ea0a13ff42",
+            "blockNumber": "8646",
+            "calldataBytes": 516,
+            "gasUsed": "47156"
+          }
+        ]
+      }
+    ],
+    "queries": 22,
+    "finished": "2026-10-30T23:29:55.042Z"
+  },
+  "queryCountKeyA": 34,
+  "physicalSampleWalletSigning": "not tested by this lane; caller adapters use the verified explicit nonce/gas/fee mitigation",
+  "browserPreview": "reported separately after preview deployment",
+  "reviewCorrections": {
+    "date": "2026-10-31",
+    "maximumLifetimeProbe": {
+      "verified": true,
+      "attempts": 1,
+      "transactionHash": "0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e",
+      "literalError": "Transaction 0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e reverted. Reason: the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972",
+      "target": "7895089",
+      "maxLifetime": "7884000",
+      "simulationCurrentBlock": "10972",
+      "receiptBlock": "10971",
+      "status": "reverted",
+      "source": "Installed SDK 1.0.0 src/utils/revert.ts:94-97 maps ExpiryBeyondMaxLifetime to this exact literal message.",
+      "initialAssertionFailure": "The original probe expected the ABI error name, but SDK 1.0.0 formats it as a sentence. Original output/exit retained. This assessment checks its exact numeric fields and reverted receipt; no second create was sent.",
+      "funderSigned": false
+    },
+    "admittedLifetimeBlocks": 7883970,
+    "inclusionMarginBlocks": 30,
+    "expirationPolicy": "One absolute deadline shared by manifest and chunks; coordinated Lifetime Extension is outside this API.",
+    "transactionPolicy": "unsigned latest estimate, gas=max(1000000, 2*estimate), explicit gasPrice/latest nonce, receipt status checks; one retry only after a confirmed gas-exhausted revert; per-write txParams override"
+  }
+}
