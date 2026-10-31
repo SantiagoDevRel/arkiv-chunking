@@ -57,7 +57,7 @@ input:not([type=file]),.secondary{color:var(--text)}
 .chunk-card{min-width:0;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;background:var(--surface-muted)}
 .chunk-card h4{font:500 14px/1.5 var(--font-mono);margin:0 0 8px}
 .chunk-key{display:block;font-size:12px;overflow-wrap:anywhere;color:var(--link);margin-bottom:12px}
-.chunk-card .help{font-size:12px}.payload-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:100px;min-height:54px;background:var(--surface);padding:8px;margin:6px 0}
+.chunk-card .help{font-size:12px}.bytes-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:100px;min-height:54px;background:var(--surface);padding:8px;margin:6px 0}
 .chunk-download{display:inline-block;font-size:12px;min-height:36px;padding:8px 0;color:var(--link)}
 .chunk-card details{margin:4px 0 0;padding:8px 0 0}.chunk-card details pre{max-height:200px;background:var(--surface)}
 #reassembly{margin:12px 0 16px;color:var(--text)}
@@ -71,6 +71,8 @@ input:not([type=file]),.secondary{color:var(--text)}
 /* Equal workspace frames stay steady as details open. Stacked layouts scroll with the page. */
 @media(min-width:701px){.workspace>.panel{height:clamp(640px,calc(100dvh - 230px),840px);min-height:0;overflow:auto;scrollbar-gutter:stable}.result-empty{flex-shrink:0}}
 .icon-button{width:44px;padding:9px;display:grid;place-items:center;flex-shrink:0}
+#open-sample{width:100%;margin-bottom:8px}.wallet-config{margin-bottom:8px}
+#recovery-transactions{padding-left:20px;font-size:14px;overflow-wrap:anywhere}
 [data-theme=dark] [data-icon=moon],[data-theme=light] [data-icon=sun]{display:none}
 .manifest-action{display:inline-flex;align-items:center;gap:4px}
 .info-button{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:10px;border:0;border-radius:var(--radius-md);color:var(--muted);background:transparent}

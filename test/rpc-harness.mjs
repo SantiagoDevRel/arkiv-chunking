@@ -1,7 +1,9 @@
 // Controlled in-memory RPC for contract/UI tests. This is NOT an Arkiv node.
-// ABI structs taken from the installed SDK 0.8.0; the SDK itself encodes all writes.
+// ABI structs checked against SDK 1.0.0; the SDK itself encodes all writes.
 import { decodeFunctionData, decodeAbiParameters, encodeAbiParameters, encodeEventTopics, hexToString, parseAbi, parseAbiParameters, toHex } from 'viem';
-import { ENTITY_EVENTS_ABI, OperationType } from '@arkiv-network/sdk/entity';
+import { ENTITY_EVENTS_ABI } from '@arkiv-network/sdk/entity';
+// Protocol tags checked against SDK 1.0 src/entity/params.ts; not a public SDK export.
+const OperationType = {Create: 1, Patch: 2};
 
 const executeAbi = parseAbi(['function execute((uint8 operation, bytes operationData)[] ops) external returns (bytes32[] keys)']);
 const createParams = parseAbiParameters('(uint128 salt, uint64 expiresAt, uint64 minLifetime, uint8 creationFlags, (bytes32 name, uint8 typeId, bytes value)[] attributes)');
@@ -18,18 +20,17 @@ export function rpcHarness() {
   function applyAttributes(entity, attributes) {
     for (const a of attributes) {
       const name = hexToString(a.name, { size: 32 });
-      if (name === '$payload') { entity.payload = a.value; continue; }
-      if (name === '$contentType') { entity.contentType = hexToString(a.value); continue; }
-      const type = tags[a.typeId];
+      const type = tags[a.typeId & 127];
       if (!type) throw Error(`Unhandled attribute type ${a.typeId}`);
       const value = type === 'str' ? hexToString(a.value) : type === 'bool' ? BigInt(a.value) === 1n : type === 'u64' ? toHex(BigInt(a.value)) : a.value;
       const old = entity.attributes.find(x => x.name === name);
-      if (old) Object.assign(old, { type, value }); else entity.attributes.push({ name, type, value });
+      const indexed = Boolean(a.typeId & 128);
+      if (old) Object.assign(old, { type, value, indexed }); else entity.attributes.push({ name, type, value, indexed });
     }
   }
   async function request({ method, params = [] }) {
     requests.push({ method, params });
-    if (method === 'eth_chainId') return toHex(7738577);
+    if (method === 'eth_chainId') return toHex(7794095);
     if (method === 'eth_requestAccounts' || method === 'eth_accounts') return [TEST_ACCOUNT];
     if (method === 'eth_blockNumber') return toHex(block);
     if (method === 'arkiv_getBlockTiming') return { current_block: toHex(block), current_block_time: Math.floor(Date.now() / 1000), duration: 2 };
@@ -65,12 +66,21 @@ export function rpcHarness() {
     }
     if (method === 'arkiv_query') {
       const [query, options] = params;
-      const matches = query.includes('$key') ? entities.filter(e => query.toLowerCase().includes(e.key.toLowerCase())) : entities.filter(e => {
+      let matches = /\$key = key/.test(query) ? entities.filter(e => query.toLowerCase().includes(e.key.toLowerCase())) : entities.filter(e => {
         const reference = e.attributes.find(a => a.name === 'manifest');
         return reference && query.includes(reference.value) && query.toLowerCase().includes(e.owner.toLowerCase()) && query.toLowerCase().includes(e.creator.toLowerCase());
-      }).reverse();
-      const start = Number(options.cursor ?? 0), limit = Number(BigInt(options.limit));
-      return { data: matches.slice(start, start + limit), blockNumber: options.atBlock ?? toHex(block), ...(start + limit < matches.length ? { cursor: String(start + limit) } : {}) };
+      });
+      const after = query.match(/\$key > key\((0x[0-9a-f]+)\)/)?.[1];
+      matches = matches.filter(e => !after || e.key > after).sort((a,b) => a.key.localeCompare(b.key));
+      const start = Number(BigInt(options.offset ?? '0x0')), limit = Number(BigInt(options.limit));
+      const select = options.select;
+      const data = matches.slice(start, start + limit).map(entity => Object.fromEntries(
+        Object.entries(entity).filter(([field]) => select[field]).map(([field, value]) => [
+          field, field === 'attributes' && typeof select.attributes === 'object'
+            ? value.filter(attribute => select.attributes[attribute.name]) : value,
+        ]),
+      ));
+      return { data, blockNumber: toHex(block) };
     }
     throw Error(`Unhandled RPC ${method}`);
   }

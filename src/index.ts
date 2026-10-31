@@ -1,16 +1,31 @@
 import { ExpirationTime, type PublicArkivClient, type WalletArkivClient } from '@arkiv-network/sdk';
-import { bool, bytes32, key, str, u64 } from '@arkiv-network/sdk/attr';
-import { eq } from '@arkiv-network/sdk/query';
-import type { Hex } from 'viem';
+import { bool, bytes, defineSchema, key, str, u64, type Column, type Schema, type TypeTag } from '@arkiv-network/sdk/schema';
+import { and, asc, eq, gt, type Expression } from '@arkiv-network/sdk/query';
+import { hexToBytes, type Hex } from 'viem';
 
-export const VERSION = '0.1.1';
+export const VERSION = '1.0.0';
 export const DEFAULT_CHUNK_BYTES = 100_000;
 /** Package policy, not a claim about every Arkiv node. Leaves room for transaction framing. */
 export const MAX_CHUNK_BYTES = 120_000;
 export const MAX_FILE_BYTES = 32 * 1024 * 1024;
 export const MAX_CHUNKS = 4096;
-const MANIFEST_TYPE = 'arkiv-chunking/manifest/v1';
-const CHUNK_TYPE = 'arkiv-chunking/chunk/v1';
+const MANIFEST_TYPE = 'arkiv-chunking/manifest/v2';
+const CHUNK_TYPE = 'arkiv-chunking/chunk/v2';
+/** SDK 1.0 storage format. Binary columns are stored without an index. */
+type Stored<T extends TypeTag> = Column<T, false, false, false>;
+type Indexed<T extends TypeTag> = Column<T, true, false, false>;
+export const ManifestSchema: Schema<{
+  type: Indexed<'str'>; complete: Indexed<'bool'>; sha256: Indexed<'str'>;
+  totalbytes: Stored<'u64'>; chunkcount: Stored<'u64'>; chunksize: Stored<'u64'>; metadata: Stored<'bytes'>;
+}> = defineSchema(MANIFEST_TYPE, {
+  type: str().indexed(), complete: bool().indexed(), sha256: str().indexed(),
+  totalbytes: u64(), chunkcount: u64(), chunksize: u64(), metadata: bytes(),
+});
+export const ChunkSchema: Schema<{
+  type: Indexed<'str'>; manifest: Indexed<'key'>; seq: Indexed<'u64'>; data: Stored<'bytes'>;
+}> = defineSchema(CHUNK_TYPE, {
+  type: str().indexed(), manifest: key().indexed(), seq: u64().indexed(), data: bytes(),
+});
 const encoder = new TextEncoder();
 
 export type ChunkingErrorCode = 'INVALID_INPUT' | 'NETWORK_MISMATCH' | 'NOT_FOUND' | 'INCOMPLETE_UPLOAD' | 'INVALID_MANIFEST' | 'MISSING_CHUNK' | 'INVALID_CHUNK' | 'HASH_MISMATCH' | 'UPLOAD_FAILED' | 'READ_FAILED';
@@ -113,7 +128,7 @@ async function checkNetwork(client: ChunkingPublicClient): Promise<number> {
 }
 
 async function requireLiveManifest(client: ChunkingPublicClient, manifestKey: Hex, transactionsRemaining: number): Promise<bigint> {
-  const fetchPage = () => client.select({ expiresAt: true }).where(eq('$key', key(manifestKey))).limit(1).fetch();
+  const fetchPage = () => client.select({ $expiresAt: true }).where(eq('$key', key(manifestKey))).limit(1).fetch();
   let page;
   try { page = await fetchPage(); } catch {
     // Retrying a read cannot duplicate a write. A missing/expired entity is not retried.
@@ -123,10 +138,10 @@ async function requireLiveManifest(client: ChunkingPublicClient, manifestKey: He
     }
   }
   const manifest = page.entities[0];
-  if (!manifest || manifest.expiresAt <= page.blockNumber + BigInt(transactionsRemaining)) {
+  if (!manifest || manifest.$expiresAt <= page.blockNumber + BigInt(transactionsRemaining)) {
     fail('INCOMPLETE_UPLOAD', 'The manifest has expired or has too few remaining blocks to finish. No further writes will be started.');
   }
-  return manifest.expiresAt;
+  return manifest.$expiresAt;
 }
 
 /** Writes a manifest, sequential chunks, then marks the manifest complete. N+2 transactions. */
@@ -152,26 +167,27 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
     const sha256 = await hashFile(bytes);
     const expires = ExpirationTime.fromBlocks(expirationBlocks);
     notify(onProgress, { phase: 'manifest', completed: 0, total: chunks.length });
-    const manifest = await walletClient.createEntity({
-      payload: encoder.encode(JSON.stringify({ filename, contentType })), contentType: 'application/json', expires,
-      attributes: { type: str(MANIFEST_TYPE), complete: bool(false), sha256: bytes32(sha256), totalbytes: u64(bytes.length), chunkcount: u64(chunks.length), chunksize: u64(chunkSize) },
-    });
+    const manifest = await walletClient.createEntity(ManifestSchema, {
+      metadata: encoder.encode(JSON.stringify({ filename, contentType })),
+      type: MANIFEST_TYPE, complete: false, sha256,
+      totalbytes: u64(bytes.length), chunkcount: u64(chunks.length), chunksize: u64(chunkSize),
+    }, { expiration: expires });
     manifestKey = manifest.entityKey;
     transactionHashes.push(manifest.txHash);
-    for (const [seq, payload] of chunks.entries()) {
+    for (const [seq, data] of chunks.entries()) {
       await requireLiveManifest(publicClient, manifestKey, chunks.length - seq + 1);
       notify(onProgress, { phase: 'chunks', completed: seq, total: chunks.length, manifestKey });
-      const result = await walletClient.createEntity({
-        payload, contentType: 'application/octet-stream',
+      const result = await walletClient.createEntity(ChunkSchema, {
+        type: CHUNK_TYPE, manifest: key(manifestKey), seq: u64(seq), data,
+      }, {
         // Chunks created later with the same duration outlive the manifest.
-        expires, flags: { readonly: true },
-        attributes: { type: str(CHUNK_TYPE), manifest: key(manifestKey), seq: u64(seq) },
+        expiration: expires, flags: { readonly: true },
       });
       transactionHashes.push(result.txHash);
     }
     const expiresAt = await requireLiveManifest(publicClient, manifestKey, 1);
     notify(onProgress, { phase: 'finalize', completed: chunks.length, total: chunks.length, manifestKey });
-    const finalized = await walletClient.patchEntity({ entityKey: manifestKey, set: { complete: bool(true) } });
+    const finalized = await walletClient.patchEntity(ManifestSchema, manifestKey, { set: { complete: true } });
     transactionHashes.push(finalized.txHash);
     return { manifestKey, sha256, chunkCount: chunks.length, totalBytes: bytes.length, expiresAt, transactionHashes };
   } catch (cause) {
@@ -191,29 +207,38 @@ function integerAttribute(attributes: Record<string, unknown>, name: string, max
   return Number(value);
 }
 
-/** Reads manifest and all pages at the same block, validates all parts, then returns bytes. */
+const manifestSelection = {
+  $owner: true, $creator: true, $expiresAt: true, type: true, complete: true,
+  sha256: true, totalbytes: true, chunkcount: true, chunksize: true, metadata: true,
+} as const;
+function binaryAttribute(a: Record<string, unknown>, name: string, maximum: number, code: ChunkingErrorCode): Uint8Array {
+  const value = attribute(a, name, 'bytes', code);
+  if (typeof value !== 'string' || !/^0x(?:[0-9a-fA-F]{2})*$/.test(value) || (value.length - 2) / 2 > maximum) fail(code, `Invalid ${name} bytes.`);
+  return hexToBytes(value as Hex);
+}
+/** Keyset pages over immutable chunks; recheck the manifest before returning verified bytes. */
 export async function downloadFile({ publicClient, manifestKey, expectedSha256, onProgress }: DownloadOptions): Promise<DownloadResult> {
   if (!isHex32(manifestKey) || (expectedSha256 !== undefined && !isHex32(expectedSha256))) fail('INVALID_INPUT', 'Manifest key and optional expected SHA-256 must be 32-byte hex strings.');
   try {
     await checkNetwork(publicClient);
-    const page = await publicClient.select({ owner: true, creator: true, expiresAt: true, payload: true, attributes: { type: true, complete: true, sha256: true, totalbytes: true, chunkcount: true, chunksize: true } })
+    const page = await publicClient.select(manifestSelection)
       .where(eq('$key', key(manifestKey))).limit(1).fetch();
     const manifest = page.entities[0];
     if (!manifest) fail('NOT_FOUND', 'No live manifest found. Check network and key; the entity may have expired.');
-    const a = manifest.attributes;
-    if (attribute(a, 'type', 'str', 'INVALID_MANIFEST') !== MANIFEST_TYPE) fail('INVALID_MANIFEST', 'Entity is not an arkiv-chunking v1 manifest.');
+    const a = manifest;
+    if (attribute(a, 'type', 'str', 'INVALID_MANIFEST') !== MANIFEST_TYPE) fail('INVALID_MANIFEST', 'Entity is not an arkiv-chunking v2 manifest.');
     const complete = attribute(a, 'complete', 'bool', 'INVALID_MANIFEST');
     if (complete !== true) fail('INCOMPLETE_UPLOAD', 'The upload was not finalized. No partial bytes are returned.');
     const totalBytes = integerAttribute(a, 'totalbytes', MAX_FILE_BYTES, 'INVALID_MANIFEST');
     const count = integerAttribute(a, 'chunkcount', MAX_CHUNKS, 'INVALID_MANIFEST');
     const chunkSize = integerAttribute(a, 'chunksize', MAX_CHUNK_BYTES, 'INVALID_MANIFEST');
     if (chunkSize < 1 || count !== Math.max(1, Math.ceil(totalBytes / chunkSize))) fail('INVALID_MANIFEST', 'Inconsistent file size, chunk size, or count.');
-    const digest = attribute(a, 'sha256', 'bytes32', 'INVALID_MANIFEST');
+    const digest = attribute(a, 'sha256', 'str', 'INVALID_MANIFEST');
     if (!isHex32(digest)) fail('INVALID_MANIFEST', 'Manifest SHA-256 is invalid.');
     if (expectedSha256 && digest.toLowerCase() !== expectedSha256.toLowerCase()) fail('HASH_MISMATCH', 'Manifest digest differs from the independently expected SHA-256.');
-    if (manifest.payload.length > 2048) fail('INVALID_MANIFEST', 'Manifest metadata is too large.');
+    const metadataBytes = binaryAttribute(a, 'metadata', 2048, 'INVALID_MANIFEST');
     let metadata: unknown;
-    try { metadata = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifest.payload)); } catch { fail('INVALID_MANIFEST', 'Manifest metadata is not UTF-8 JSON.'); }
+    try { metadata = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(metadataBytes)); } catch { fail('INVALID_MANIFEST', 'Manifest metadata is not UTF-8 JSON.'); }
     if (!metadata || typeof metadata !== 'object' || !('filename' in metadata) || !('contentType' in metadata)) fail('INVALID_MANIFEST', 'Manifest metadata is missing.');
     requireMetadata(metadata.filename, metadata.contentType, 'INVALID_MANIFEST');
     const filename = metadata.filename;
@@ -221,21 +246,39 @@ export async function downloadFile({ publicClient, manifestKey, expectedSha256, 
     const chunks: Uint8Array[] = new Array(count);
     let received = 0;
     notify(onProgress, { phase: 'chunks', completed: 0, total: count, manifestKey });
-    const query = publicClient.select({ payload: true, attributes: { seq: true } })
-      .where(eq('type', str(CHUNK_TYPE)), eq('manifest', key(manifestKey)))
-      .ownedBy(manifest.owner).createdBy(manifest.creator).atBlock(page.blockNumber).limit(200);
-    for await (const chunk of query) {
-      const seq = integerAttribute(chunk.attributes, 'seq', count - 1, 'INVALID_CHUNK');
-      if (chunks[seq]) fail('INVALID_CHUNK', `Duplicate chunk index ${seq}.`);
-      const expectedLength = seq === count - 1 ? totalBytes - seq * chunkSize : chunkSize;
-      if (chunk.payload.length !== expectedLength) fail('INVALID_CHUNK', `Unexpected byte length for chunk ${seq}.`);
-      chunks[seq] = chunk.payload;
-      received++;
-      notify(onProgress, { phase: 'chunks', completed: received, total: count, manifestKey });
+    if (![manifest.$owner, manifest.$creator].every(value => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value)) ||
+        typeof manifest.$expiresAt !== 'bigint' || manifest.$expiresAt <= page.blockNumber) fail('INVALID_MANIFEST', 'Invalid manifest ownership or expiration.');
+    let lastKey: Hex | undefined;
+    // Keep hex-encoded binary pages below common serverless response budgets.
+    const pageSize = Math.min(100, Math.max(1, Math.floor(1_000_000 / chunkSize)));
+    for (;;) {
+      const filters: Expression[] = [eq('type', str(CHUNK_TYPE)), eq('manifest', key(manifestKey))];
+      if (lastKey) filters.push(gt('$key', key(lastKey)));
+      const parts = await publicClient.select({ $key: true, $creationFlags: true, seq: true, data: true })
+        .where(and(...filters)).ownedBy(manifest.$owner).createdBy(manifest.$creator)
+        .orderBy(asc('$key')).limit(pageSize).fetch();
+      for (const chunk of parts.entities) {
+        if (!isHex32(chunk.$key) || (lastKey && chunk.$key.toLowerCase() <= lastKey.toLowerCase())) fail('INVALID_CHUNK', 'Chunk keys must advance without duplicates.');
+        lastKey = chunk.$key;
+        if (!chunk.$creationFlags?.readonly) fail('INVALID_CHUNK', 'Chunks must be immutable.');
+        const seq = integerAttribute(chunk, 'seq', count - 1, 'INVALID_CHUNK');
+        if (chunks[seq]) fail('INVALID_CHUNK', `Duplicate chunk index ${seq}.`);
+        const data = binaryAttribute(chunk, 'data', chunkSize, 'INVALID_CHUNK');
+        const expectedLength = seq === count - 1 ? totalBytes - seq * chunkSize : chunkSize;
+        if (data.length !== expectedLength) fail('INVALID_CHUNK', `Unexpected byte length for chunk ${seq}.`);
+        chunks[seq] = data;
+        received++;
+        notify(onProgress, { phase: 'chunks', completed: received, total: count, manifestKey });
+      }
+      if (parts.entities.length < pageSize) break;
     }
     if (received !== count) fail('MISSING_CHUNK', `Received ${received} of ${count} chunks; a part may be missing or expired.`);
     const bytes = await reconstructFile(chunks, digest);
-    return { bytes, filename, contentType, sha256: digest.toLowerCase() as Hex, chunkCount: count, expiresAt: manifest.expiresAt };
+    // SDK 1.0 reads the latest block on each request. Do not claim a pinned snapshot.
+    const latest = await publicClient.select(manifestSelection).where(eq('$key', key(manifestKey))).limit(1).fetch();
+    const fingerprint = (value: unknown) => JSON.stringify(value, (_, v) => typeof v === 'bigint' ? String(v) : v);
+    if (!latest.entities[0] || fingerprint(latest.entities[0]) !== fingerprint(manifest)) fail('INVALID_MANIFEST', 'Manifest changed or expired during retrieval. Start a new read.');
+    return { bytes, filename, contentType, sha256: digest.toLowerCase() as Hex, chunkCount: count, expiresAt: manifest.$expiresAt };
   } catch (cause) {
     if (cause instanceof ChunkingError) throw cause;
     throw new ChunkingError('READ_FAILED', 'Retrieval failed. Check the RPC connection, access policy and rate limits. No partial bytes are returned.', { cause, manifestKey });

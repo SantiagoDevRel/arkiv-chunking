@@ -3,7 +3,7 @@ import type { GetBlockTimingReturnType } from '@arkiv-network/sdk';
 const MAX_DATE_MS = 8_640_000_000_000_000;
 const MAX_UINT64 = (1n << 64n) - 1n;
 const MAX_SAFE_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
-// This sample consumes arkiv-chunking 0.1.0, whose admission limits are block based.
+// The package admission limits use whole blocks.
 const MAX_EXPIRATION_BLOCKS = 15_768_000;
 const MAX_CHUNKS = 4096;
 export const MAX_TIMING_AGE_MS = 5 * 60 * 1000;

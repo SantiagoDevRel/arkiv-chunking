@@ -1,0 +1,9 @@
+{
+  "chainId": 7794095,
+  "manifestKey": "0x22a7f01e8e8c6debd118fe81737153bed924283910eb9a7830808a0289a9e9f9",
+  "sha256": "0x5a4de9341f414b955d7e5f83693e7ce64f76db841662e361a7700ef4fed87e88",
+  "filename": "rabdi-chunking-demo.txt",
+  "totalBytes": 291200,
+  "chunkCount": 3,
+  "expiresAt": "613385"
+}

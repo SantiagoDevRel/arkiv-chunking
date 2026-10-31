@@ -12,7 +12,7 @@
 <body>
   <header class="topbar">
     <div class="brand"><img class="arkiv-mark" src="/brand/arkiv-wordmark-white.svg" alt="Arkiv" width="130" height="30" /><span class="brand-divider"></span><h1>Files</h1><span class="version" id="version"></span></div>
-    <div class="wallet-controls"><button id="theme" class="wallet-button icon-button" type="button" aria-label="Switch to light mode" title="Switch to light mode"><svg data-icon="sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg data-icon="moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg></button><span class="network"><span class="network-dot"></span>Tiramisu testnet</span><button id="connect" class="wallet-button" type="button">Connect wallet</button></div>
+    <div class="wallet-controls"><button id="theme" class="wallet-button icon-button" type="button" aria-label="Switch to light mode" title="Switch to light mode"><svg data-icon="sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg data-icon="moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg></button><span class="network"><span class="network-dot"></span>Rabdi testnet</span><button id="connect" class="wallet-button" type="button">Connect wallet</button></div>
   </header>
   <main>
     <div class="page-intro"><h2>Store and retrieve files</h2></div>
@@ -22,7 +22,9 @@
           <button type="button" id="tab-upload" role="tab" aria-controls="upload-form" aria-selected="true">Upload</button>
           <button type="button" id="tab-open" role="tab" aria-controls="open-form" aria-selected="false" tabindex="-1">Open existing</button>
         </div>
-        <form id="upload-form" role="tabpanel" aria-labelledby="tab-upload">
+        <button id="open-sample" class="secondary" type="button">Open public Rabdi sample</button>
+      <form id="upload-form" role="tabpanel" aria-labelledby="tab-upload">
+          <p class="help wallet-config"><label for="wallet-rpc">Your Rabdi wallet RPC URL</label><input id="wallet-rpc" type="password" autocomplete="off" spellcheck="false" placeholder="HTTPS RPC URL from the Hub" /><a href="https://hub.arkiv.network/access-keys" target="_blank" rel="noopener noreferrer">Get an access key ↗</a></p>
           <div class="field-heading"><label for="file">File</label><span class="eyebrow" id="file-kind">SAMPLE FILE</span></div>
           <div class="selected-file">
             <span class="file-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></span>
@@ -34,7 +36,7 @@
           <p class="public-note">Files stored here are public.</p>
           <button id="upload" class="primary" type="submit">Store &amp; verify <span aria-hidden="true">↗</span></button>
           <details class="approvals"><summary id="approval-note"></summary><ol><li>Create the file manifest.</li><li id="chunk-approvals"></li><li>Mark the upload complete.</li></ol><p class="help">Retrieval needs no signatures.</p></details>
-          <div class="support-links"><a href="https://stage.hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds ↗</a><a href="https://stage.hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Wallet setup ↗</a></div>
+          <div class="support-links"><a href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener noreferrer">Get testnet funds ↗</a><a href="https://hub.arkiv.network/networks" target="_blank" rel="noopener noreferrer">Wallet setup ↗</a></div>
         </form>
         <form id="open-form" role="tabpanel" aria-labelledby="tab-open" hidden>
           <div class="open-intro"><p class="help">No wallet or testnet funds needed.</p></div>
@@ -55,19 +57,20 @@
           <p id="result-filename" class="result-filename"></p>
           <dl class="result-stats"><div><dt>Size</dt><dd id="result-size">—</dd></div><div><dt>Chunks</dt><dd id="result-chunks">—</dd></div><div><dt>Approx. expiration</dt><dd id="result-expiration">—</dd></div></dl>
           <div class="result-actions"><a id="save" class="primary" download hidden>Download file ↓</a><button id="retry" class="primary" type="button" hidden>Retry verification</button><button id="copy-key" class="secondary" type="button">Copy file key</button><span class="manifest-action"><a id="explorer" class="secondary" target="_blank" rel="noopener noreferrer">File manifest ↗</a><button class="info-button" type="button" popovertarget="manifest-tip" aria-label="What is a file manifest?"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v2"/></svg></button></span><div id="manifest-tip" popover>An index for this file. It stores the name, size and checksum; the file bytes live in the chunk entities.</div></div>
+          <details id="recovery" hidden><summary>Confirmed upload transactions</summary><p class="help">Only confirmations observed by this upload are listed. Check your wallet for any uncertain transaction before uploading again.</p><ul id="recovery-transactions"></ul></details>
           <section id="chunk-inspection" aria-label="Chunking and retrieval">
             <h3 id="chunk-title">File chunks</h3>
             <p id="inspection-status" class="help" role="status">Verify the file to inspect its chunks.</p>
             <button id="retry-inspection" class="text-button" type="button" hidden>Reload chunk details</button>
             <div id="chunk-list" class="chunk-list"></div>
             <p id="reassembly" class="help" hidden></p>
-            <details id="query-details" hidden><summary>Query these chunks</summary><div class="query-heading"><span class="help">Returns entity keys, attributes and payloads</span><button id="copy-query" class="text-button" type="button">Copy query</button></div><pre><code id="query-code"></code></pre></details>
+            <details id="query-details" hidden><summary>Query these chunks</summary><div class="query-heading"><span class="help">Returns entity keys, attributes and binary columns</span><button id="copy-query" class="text-button" type="button">Copy query</button></div><pre><code id="query-code"></code></pre></details>
           </section>
         </div>
         <p id="workflow-status" class="workflow-status" data-state="idle" role="status" aria-live="polite"></p>
       </section>
     </div>
-    <footer><span>These packages are intended for testnet use.</span><a href="https://github.com/SantiagoDevRel/arkiv-chunking#readme" target="_blank" rel="noopener noreferrer">Package docs ↗</a></footer>
+    <footer><span>These packages are intended for testnet use.</span><a href="https://github.com/SantiagoDevRel/arkiv-chunking/tree/rabdi/sdk-1.0-20261030#readme" target="_blank" rel="noopener noreferrer">Package docs ↗</a></footer>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>
