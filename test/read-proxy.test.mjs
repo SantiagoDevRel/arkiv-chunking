@@ -23,7 +23,7 @@ test('proxy accepts actual SDK read queries including keyset pages, and rejects 
     [`$key = key(${stored.manifestKey})`,{select:{key:true},limit:'0x64'}],
   ]) assert.equal(allowedQuery(params),false);
 });
-function response(){return{statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},status(s){this.statusCode=s;return this;},json(b){this.body=b;return this;}};}
+function response(){return{statusCode:0,headers:{host:'sample.example','content-type':'application/json'},setHeader(k,v){this.headers[k]=v;},status(s){this.statusCode=s;return this;},json(b){this.body=b;return this;}};}
 
 test('proxy accepts omitted params from viem no-argument HTTP requests',async()=>{
   const oldFetch=globalThis.fetch,oldKey=process.env.ARKIV_ACCESS_KEY;
@@ -35,11 +35,11 @@ test('proxy accepts omitted params from viem no-argument HTTP requests',async()=
   };
   try {
     for(const method of ['eth_chainId','arkiv_getBlockTiming']) {
-      const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:0,method}},res);
+      const res=response();await handler({method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:0,method}},res);
       assert.equal(res.statusCode,200);assert.equal(forwarded.at(-1).method,method);
     }
     for(const params of [null,{},['unexpected']]) {
-      const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:0,method:'eth_chainId',params}},res);
+      const res=response();await handler({method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:0,method:'eth_chainId',params}},res);
       assert.equal(res.statusCode,400);
     }
     assert.equal(forwarded.length,2);
@@ -47,10 +47,10 @@ test('proxy accepts omitted params from viem no-argument HTTP requests',async()=
 });
 test('proxy rejects methods and cross-origin reads before accessing provider credentials',async()=>{
   for(const req of [
-    {method:'GET',headers:{}},
+    {method:'GET',headers:{host:'sample.example','content-type':'application/json'}},
     {method:'POST',headers:{origin:'https://foreign.example',host:'sample.example'},body:{}},
-    {method:'POST',headers:{},body:{jsonrpc:'2.0',id:1,method:'eth_sendRawTransaction',params:[]}},
-    {method:'POST',headers:{},body:{jsonrpc:'2.0',id:1,method:'eth_getBlockByNumber',params:['finalized',true]}},
+    {method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:1,method:'eth_sendRawTransaction',params:[]}},
+    {method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:1,method:'eth_getBlockByNumber',params:['finalized',true]}},
   ]){const res=response();await handler(req,res);assert.ok([400,403,405].includes(res.statusCode));}
 });
 test('proxy failures contain no upstream URL or response',async()=>{
@@ -58,7 +58,7 @@ test('proxy failures contain no upstream URL or response',async()=>{
   process.env.ARKIV_ACCESS_KEY='controlled-test';
   globalThis.fetch=async()=>{throw Error('Controlled sensitive upstream details');};
   try{
-    const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:1,method:'eth_chainId',params:[]}},res);
+    const res=response();await handler({method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:1,method:'eth_chainId',params:[]}},res);
     assert.equal(res.statusCode,502);
     assert.doesNotMatch(JSON.stringify(res.body),/controlled-test|sensitive|https:/);
     assert.match(res.headers['Cache-Control'],/no-store/);
@@ -74,7 +74,7 @@ test('proxy forwards only the latest header-only block read needed by the gas-bu
     return {ok:true,json:async()=>({jsonrpc:'2.0',id:1,result:{gasLimit:'0x10000000'}})};
   };
   try {
-    const res=response();await handler({method:'POST',headers:{},body:{jsonrpc:'2.0',id:1,method:'eth_getBlockByNumber',params:['latest',false]}},res);
+    const res=response();await handler({method:'POST',headers:{host:'sample.example','content-type':'application/json'},body:{jsonrpc:'2.0',id:1,method:'eth_getBlockByNumber',params:['latest',false]}},res);
     assert.equal(res.statusCode,200);assert.equal(res.body.result.gasLimit,'0x10000000');
   } finally {globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.ARKIV_ACCESS_KEY;else process.env.ARKIV_ACCESS_KEY=oldKey;}
 });

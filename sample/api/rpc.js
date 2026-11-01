@@ -1,3 +1,14 @@
+// Origin is a serialized origin, never a general URL. Forwarded headers do not select trust.
+function sameDeploymentOrigin(origin, host) {
+  if (typeof origin !== 'string' || typeof host !== 'string' || !host || !(origin.startsWith('https://') || origin.startsWith('http://'))) return false;
+  const parsed = new URL(origin);
+  const hostname = host.split(':', 1)[0].toLowerCase();
+  const scheme = hostname === 'localhost' || hostname === '127.0.0.1' ? 'http://' : 'https://';
+  const deployment = new URL(scheme + host);
+  if (/[/\\?#@\s]/.test(host) || deployment.username || deployment.password || deployment.pathname !== '/' || deployment.search || deployment.hash) return false;
+  return !parsed.username && !parsed.password && parsed.pathname === '/' && !parsed.search && !parsed.hash && parsed.origin === origin && parsed.origin === deployment.origin;
+}
+
 // A bounded read proxy for this sample. No wallet keys, writes, arbitrary methods or arbitrary RPC URLs.
 export const config = { maxDuration: 30 };
 const allowedFields = new Set(['key','owner','creator','expiresAt','creationFlags','attributes','attributeSchema','createdAt','updatedAt']);
@@ -46,12 +57,16 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control','private, no-store, max-age=0');
   res.setHeader('X-Content-Type-Options','nosniff');
   const send = (status, body) => res.status(status).json(body);
-  if (req.method !== 'POST') { res.setHeader('Allow','POST'); return send(405,{error:'Use POST.'}); }
   const origin = req.headers?.origin;
-  if (origin) {
-    try { if (new URL(origin).host !== req.headers.host) return send(403,{error:'Origin not allowed.'}); }
-    catch { return send(403,{error:'Origin not allowed.'}); }
+  if (origin !== undefined) {
+    try {
+      if (!sameDeploymentOrigin(origin, req.headers?.host)) return send(403, { error: 'Origin not allowed.' });
+    } catch { return send(403, { error: 'Origin not allowed.' }); }
   }
+  if (String(req.headers?.['sec-fetch-site'] ?? '').split(',').some(site => site.trim().toLowerCase() === 'cross-site')) return send(403, { error: 'Origin not allowed.' });
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(405, { error: 'Use POST.' }); }
+  const contentType = req.headers?.['content-type'];
+  if (typeof contentType !== 'string' || contentType.split(';', 1)[0].trim().toLowerCase() !== 'application/json') return send(415, { error: 'Use application/json for file reads.' });
   if (Number(req.headers?.['content-length'] ?? 0) > 8192) return send(413,{error:'Request too large.'});
   let body;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch { return send(400,{error:'Invalid JSON.'}); }
