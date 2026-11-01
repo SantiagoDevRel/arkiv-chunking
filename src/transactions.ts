@@ -76,10 +76,9 @@ export async function writeWithPolicy<T extends {txHash: Hex}>(
     const estimate = quantity(await rpc({method: 'eth_estimateGas', params: [transaction, 'latest']}));
     if (estimate <= 0n) throw Error('Unsigned gas estimate must be positive.');
     const minimumGas = [MIN_TRANSACTION_GAS, 2n * estimate, 2n * priorGas].reduce((a, b) => a > b ? a : b);
-    const [nonceHex, priceHex, block] = await Promise.all([
+    const [nonceHex, priceHex] = await Promise.all([
       rpc({method: 'eth_getTransactionCount', params: [wallet.account!.address, 'latest']}),
       rpc({method: 'eth_gasPrice', params: []}),
-      rpc({method: 'eth_getBlockByNumber', params: ['latest', false]}),
     ]);
     const nonce = Number(quantity(nonceHex));
     if (!Number.isSafeInteger(nonce) || nonce < 0) throw Error('Latest nonce exceeds the supported range.');
@@ -87,7 +86,9 @@ export async function writeWithPolicy<T extends {txHash: Hex}>(
     const override = policy ? await policy({...context, attempt, estimate, defaults: Object.freeze({...defaults})}) : {};
     const parameters = {...defaults, ...override};
     if (parameters.nonce !== nonce || typeof parameters.gas !== 'bigint' || parameters.gas < minimumGas || typeof parameters.gasPrice !== 'bigint' || parameters.gasPrice <= 0n) throw Error('Transaction override must retain latest nonce, positive gas price and the minimum gas headroom.');
-    if (!block || typeof block !== 'object' || !('gasLimit' in block) || parameters.gas > quantity(block.gasLimit)) throw Error('Transaction gas budget exceeds the latest block gas limit.');
+    // Recheck after an async policy, immediately before each new signature, including retry.
+    const block = await rpc({method: 'eth_getBlockByNumber', params: ['latest', false]});
+    if (!block || typeof block !== 'object' || !('gasLimit' in block) || parameters.gas > quantity(block.gasLimit) / 2n) throw Error('Transaction gas budget exceeds half the latest block gas limit.');
     let result: T | undefined, failure: unknown;
     try { result = await send(parameters); } catch (error) { failure = error; }
     const hash = result?.txHash ?? transactionHash(failure);

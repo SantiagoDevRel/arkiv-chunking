@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Enforce gas at or below half the fresh latest block gas limit before every signature, including the single allowed retry; preserve bytes, batching and receipt behavior.
+
 ## 1.1.2
 
 - Clarify versioned installation and archive verification; guard source-map metadata and preserve dated evidence.

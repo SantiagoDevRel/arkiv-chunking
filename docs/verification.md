@@ -1,8 +1,8 @@
 # Rabdi release verification
 
-Current procedure: arkiv-chunking 1.1.2, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095. The measured receipts below are historical 1.0.0 observations.
+Current procedure: arkiv-chunking 1.1.3, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095. The measured receipts below are historical 1.0.0 observations.
 
-Install `npm install --save-exact arkiv-chunking@1.1.2 @arkiv-network/sdk@1.0.0 viem@2.56.3`. Run the reproducible checks below against the same source tree.
+Install `npm install --save-exact arkiv-chunking@1.1.3 @arkiv-network/sdk@1.0.0 viem@2.56.3`. Run the reproducible checks below against the same source tree.
 
 ## Review corrections: October 31
 

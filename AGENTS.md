@@ -4,7 +4,7 @@ This is the consumer guide, included in the npm package. It also applies when ma
 
 ## Start here
 
-Read [README.md](README.md) for installation, examples, public API, limits, network setup, and recovery. Explicitly open this file and README; package managers do not automatically load agent instructions from dependencies. The [sample guide](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/AGENTS.md) is in the source checkout, not bundled with the library. Install `npm install --save-exact arkiv-chunking@1.1.2`.
+Read [README.md](README.md) for installation, examples, public API, limits, network setup, and recovery. Explicitly open this file and README; package managers do not automatically load agent instructions from dependencies. The [sample guide](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/AGENTS.md) is in the source checkout, not bundled with the library. Install `npm install --save-exact arkiv-chunking@1.1.3`.
 
 ## Ask the developer
 
