@@ -2,6 +2,8 @@
 
 ## 1.1.3
 
+- After a confirmed gas-exhausted revert, a retry whose doubled gas exceeds half the latest block gas limit is refused before signing.
+
 - Enforce gas at or below half the fresh latest block gas limit before every signature, including the single allowed retry; preserve bytes, batching and receipt behavior.
 
 ## 1.1.2
