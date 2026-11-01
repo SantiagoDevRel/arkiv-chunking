@@ -5,7 +5,7 @@ import { hexToBytes, type Hex } from 'viem';
 import {writeWithPolicy, WriteConfirmationPendingError, type TransactionParameterPolicy} from './transactions.js';
 export {MIN_TRANSACTION_GAS, writeWithPolicy, WriteConfirmationPendingError, type WriteTransactionParameters, type WriteTransactionContext, type TransactionParameterPolicy} from './transactions.js';
 
-export const VERSION = '1.1.2';
+export const VERSION = '1.1.3';
 export const DEFAULT_CHUNK_BYTES = 100_000;
 /** Package policy, not a claim about every Arkiv node. Leaves room for transaction framing. */
 export const MAX_CHUNK_BYTES = 120_000;

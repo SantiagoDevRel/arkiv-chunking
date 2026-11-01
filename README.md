@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**arkiv-chunking 1.1.2 · SDK 1.0.0 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**arkiv-chunking 1.1.3 · SDK 1.0.0 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.2.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.3.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
 ```
 
-For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.2 @arkiv-network/sdk@1.0.0 viem@2.56.3`.
+For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.3 @arkiv-network/sdk@1.0.0 viem@2.56.3`.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -70,7 +70,7 @@ console.log({manifestKey: stored.manifestKey, chunks: stored.chunkCount, bytes: 
 
 Save this as roundtrip.mjs. Run `node --env-file=/absolute/path/to/your-secret.env roundtrip.mjs`, with ARKIV_ACCESS_KEY and ARKIV_PRIVATE_KEY configured outside the checkout. This example writes public synthetic bytes in at least three chunks. All bytes and metadata are publicly readable. Entity Expiration is not historical erasure.
 
-`uploadFile` owns the per-write transaction policy, including in the sample and scripts. It uses a signing-disabled SDK client to capture the unsigned request, estimates it at `latest`, and stops before signing if estimation fails. Gas is `max(1_000_000, 2 * estimate)`, with a fresh `latest` nonce and network `gasPrice` passed explicitly to every SDK write. It rejects a budget above the latest block gas limit and checks every authoritative receipt. A measured 100,000-byte chunk consumed 4,904,531 gas; the floor alone is insufficient for large chunks.
+`uploadFile` owns the per-write transaction policy, including in the sample and scripts. It uses a signing-disabled SDK client to capture the unsigned request, estimates it at `latest`, and stops before signing if estimation fails. Gas is `max(1_000_000, 2 * estimate)`, with a fresh `latest` nonce and network `gasPrice` passed explicitly to every SDK write. Immediately before every new signature, including the single allowed retry, it reads a fresh latest block after the caller policy and rejects gas above floor(block.gasLimit / 2). Exactly half is allowed. It checks every authoritative receipt. A measured 100,000-byte chunk consumed 4,904,531 gas; the floor alone is insufficient for large chunks.
 
 Optional `txParams(context)` runs for each write with `{phase, chunkIndex?, attempt, estimate, defaults}`. Return a partial override, for example `txParams: ({defaults}) => ({gas: defaults.gas + 100_000n})`. Gas must retain the minimum headroom; gasPrice must be positive; nonce must match the fresh latest nonce. Policy reads use the wallet's configured RPC. Serialize uploads from one account and disable transport retries as shown above.
 
@@ -216,7 +216,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.2 independently of this 1.1.2 library. Tarball verification uses an isolated consumer and preserves that sample pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.2 independently of this 1.1.3 library. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test
