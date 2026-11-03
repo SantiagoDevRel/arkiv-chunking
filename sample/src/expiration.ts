@@ -3,9 +3,6 @@ import {MAX_EXPIRATION_BLOCKS,MAX_CHUNKS} from 'arkiv-chunking';
 // MAX_EXPIRATION_BLOCKS is the package's 7,883,970-block file admission limit, retained
 // for compatibility with files already written; not the SDK/chain maximum of 7,884,000
 // blocks or a requirement of Rabdi. A shared absolute deadline needs no subtraction.
-// MAX_EXPIRATION_BLOCKS is the package's 7,883,970-block file admission limit, retained
-// for compatibility with files already written; not the SDK/chain maximum of 7,884,000
-// blocks or a requirement of Rabdi. A shared absolute deadline needs no subtraction.
 
 const MAX_DATE_MS = 8_640_000_000_000_000;
 const MAX_UINT64 = (1n << 64n) - 1n;
