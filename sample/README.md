@@ -1,8 +1,8 @@
 # Arkiv Files sample
 
-Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.3 and SDK `^1.0.0`, verified with 1.0.1.
+Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.4 and SDK `^1.0.0`, verified with 1.0.1.
 
-The sample pins exact registry arkiv-chunking 1.1.3. The root README documents library 1.1.4; the sample's installed 1.1.3 API is documented in the [versioned 1.1.3 README](https://github.com/SantiagoDevRel/arkiv-chunking/blob/v1.1.3/README.md). Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
+The sample pins exact registry arkiv-chunking 1.1.4. The installed API is documented in the [versioned 1.1.4 README](https://github.com/SantiagoDevRel/arkiv-chunking/blob/v1.1.4/README.md). Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
 
 ## Run
 
@@ -30,7 +30,9 @@ Standalone SDK 1.0.1+ entities can use `ExpirationTime.max()` without subtractio
 
 ## Seed and checks
 
-Run node scripts/seed-rabdi.mjs at the repository root using its documented dedicated test environment. It creates only deterministic public bytes, verifies at least three chunks, and writes public/sample.json. A second run must report writes: 0. After a network reset, run it again and redeploy the sample descriptor.
+Run `node scripts/seed-rabdi.mjs --journal <new-private-receipt-file>` at the repository root using its documented dedicated test environment. It creates a deterministic 1,536-byte public file in three 512-byte chunks, verifies the bytes, and writes sample/public/sample.json. A second run must report writes: 0. After a network reset, use this create-only seed again and redeploy the descriptor.
+
+To keep an existing verified file available through 2026-12-31, run `node scripts/refresh-sample-rabdi.mjs --journal <new-private-receipt-file>` at the repository root with the same TEST_CHUNKING wallet. It verifies the bytes and ownership, then uses one batch of `ExpirationTime.max()` extensions only when the shared deadline is insufficient. All parts retain one shared expiry from that landing block; no duplicate file entities are created, and a rerun reports writes: 0. It uses explicit latest-state estimation, gas/price/nonce and successful receipt verification, and stops before signing when twice the estimate exceeds half the head block gas limit. Preserve the journal and reconcile uncertain submissions before another invocation; the script never retries a send. To stage a replacement privately, pass `--descriptor <private-descriptor-file>` to both scripts and publish the descriptor only after maximum-lifetime renewal and byte verification.
 
 Package tests and the archive consumer/sample build run via node scripts/verify.mjs on the DGX. Browser checks must distinguish controlled RPC fixtures from real Rabdi data, verify downloads directly and by hash, exercise missing/corrupt/failed-read states, and inspect 390/768/1440 widths and both themes. Record physical browser-wallet boundaries separately from SDK writes.
 

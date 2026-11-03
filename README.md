@@ -218,7 +218,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.3 independently of this 1.1.4 library. Tarball verification uses an isolated consumer and preserves that sample pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.4, matching this 1.1.4 library. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test
