@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.4
+
+- Verify the SDK `^1.0.0` peer on 1.0.1; pin development, consumers and the sample SDK to 1.0.1.
+- Document SDK pre-send expiry validation, default gas headroom and gas-exhaustion errors while retaining explicit per-write transaction budgets.
+- Add current-guidance and packed-archive guards with historical allowances and mutation checks.
+- Preserve coordinated absolute file deadlines and the existing registry sample dependency.
+
 ## 1.1.3
 
 - After a confirmed gas-exhausted revert, a retry whose doubled gas exceeds half the latest block gas limit is refused before signing.

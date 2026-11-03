@@ -1,0 +1,36 @@
+[
+  {
+    "file": "CHANGELOG.md",
+    "sha256": "404ae213f7ab4d1932ead61e50bf7adbc94b0cc16b3fe5546672704bc73179b8",
+    "reason": "Immutable release history or a clearly marked historical section.",
+    "lines": [
+      "- Breaking: requires SDK 1\u002e0\u002e0 (peer ^1\u002e0\u002e0), Rabdi configuration and an explicit access key."
+    ]
+  },
+  {
+    "file": "docs/verification.md",
+    "sha256": "d70c7cc834ac44cb6e015153c65af63a8057ac679573833f1a7e8b863df211ce",
+    "reason": "Immutable release history or a clearly marked historical section.",
+    "lines": [
+      "The maximum-lifetime probe sent exactly one deliberately invalid create from the dedicated CHUNKING wallet, at head + 7,884,000 + 120 blocks. Transaction `0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e` reverted (gas used 33,380 / limit 1,000,000). SDK 1\u002e0\u002e0 reported: \"the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972\". Its formatter maps this sentence to ExpiryBeyondMaxLifetime. Admission now reserves 30 blocks and uses a coordinated absolute deadline; no longer lifetime or permanent option is claimed."
+    ]
+  },
+  {
+    "file": "docs/rabdi-evidence.json",
+    "sha256": "3ca77cf72843cc200d2844c9ac3544fb19449f87cc806516b1df6014ce285e9c",
+    "reason": "Immutable release history or a clearly marked historical section.",
+    "lines": [
+      "      \"source\": \"Installed SDK 1\u002e0\u002e0 src/utils/revert.ts:94-97 maps ExpiryBeyondMaxLifetime to this exact literal message.\",",
+      "      \"initialAssertionFailure\": \"The original probe expected the ABI error name, but SDK 1\u002e0\u002e0 formats it as a sentence. Original output/exit retained. This assessment checks its exact numeric fields and reverted receipt; no second create was sent.\","
+    ]
+  },
+  {
+    "file": "README.md",
+    "sha256": "f6a476417aae3f0e2eb4a1532a1d759d662f8aa288822318eb3707d4de559deb",
+    "reason": "Explicit SDK-version compatibility scope; never a current installation pin.",
+    "lines": [
+      "An over-maximum SDK request fails before sending with `InvalidExpiryError` on 1.0.1+. On SDK `1\u002e0\u002e0` only, the same request could reach the chain and revert with `ExpiryBeyondMaxLifetime`. The library rejects excessive `expirationBlocks` as `INVALID_INPUT` before either SDK path. Longer-lived files need coordinated Lifetime Extension outside this API; independently extending a subset is unsupported.",
+      "| `InvalidExpiryError` (1.0.1+); `ExpiryBeyondMaxLifetime` (SDK `1\u002e0\u002e0` only) | Use at most MAX_EXPIRATION_BLOCKS and a coordinated file deadline; longer storage requires Lifetime Extension outside this API. |"
+    ]
+  }
+]

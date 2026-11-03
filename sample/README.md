@@ -1,6 +1,6 @@
 # Arkiv Files sample
 
-Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.3 and SDK 1.0.0.
+Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.3 and SDK `^1.0.0`, verified with 1.0.1.
 
 The sample pins exact registry arkiv-chunking 1.1.3. The library API is documented at version 1.1.3 in the root README. Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
 
@@ -26,7 +26,7 @@ Every signature is guarded against account/network changes. A missing Rabdi netw
 
 Writes use uploadFile's public policy: unsigned estimation at latest, gas=max(1,000,000, 2*estimate), explicit gasPrice and latest nonce, block gas-limit admission and authoritative receipt checks. Estimation failure stops before signing. Only a confirmed gas-exhausted revert can receive one retry with increased gas. Physical browser-wallet signing on this sample remains a separate verification boundary.
 
-The date input uses the package's maximum 7,883,970 blocks: Rabdi's 7,884,000-block maximum less a 30-block inclusion margin. All file entities share one absolute deadline. Longer-lived files need coordinated Lifetime Extension, which this sample does not provide.
+Standalone SDK 1.0.1+ entities can use `ExpirationTime.max()` without subtraction. A file needs one shared absolute deadline across its parts. The date input therefore retains the package's maximum 7,883,970 blocks: Rabdi's 7,884,000-block maximum less a 30-block inclusion margin. All file entities share one absolute deadline. Longer-lived files need coordinated Lifetime Extension, which this sample does not provide.
 
 ## Seed and checks
 
