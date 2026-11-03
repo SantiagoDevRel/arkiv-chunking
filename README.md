@@ -94,7 +94,7 @@ Import only from `arkiv-chunking`; types ship with the package.
 | `writeWithPolicy(wallet, context, plan, send, confirmedHashes, policy?, onSdkSuccess?)` | Shared SDK 1.0 write policy, exported from the root since 1.1.0. Captures an unsigned request, estimates at latest, supplies explicit gas/gasPrice/latest nonce, checks receipts and preserves hashes before rechecks. plan uses its supplied unsigned client; send uses the real wallet and supplied parameters. |
 | `WriteConfirmationPendingError` | Root-exported Error class with readonly txHash and a local-only cause. The SDK returned success or threw with a txHash, and receipt confirmation remains unresolved. Preserve txHash; never resend. SDK-success rechecks are bounded; an error-only hash needs an authoritative receipt before entering confirmedHashes. |
 | `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
-| `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
+| `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | SDK/chain maximum 7,884,000; package file admission limit 7,883,970, kept for compatibility with files already written, not a Rabdi requirement; legacy exported difference constant 30 (its name does not describe a required margin); transaction gas floor 1,000,000n. |
 | `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |
 | `UploadOptions`, `UploadResult`, `DownloadOptions`, `DownloadResult`, `Progress`, `ChunkingErrorCode`, `ChunkingPublicClient`, `ChunkingWalletClient` | Public TypeScript types. |
 
@@ -178,7 +178,7 @@ Metadata is UTF-8 JSON with filename and contentType; a filename can be 255 UTF-
 
 Upload creates an incomplete manifest, writes immutable chunks sequentially, then patches complete to true. There are N+2 successful writes; a confirmed gas-exhausted revert can add one attempt per write. Manifest and chunks share one absolute expiration block, computed from the initial chain head and the requested lifetime. Before every chunk and finalization, a read checks that the manifest has enough blocks remaining. One failed liveness read receives one read-only retry.
 
-For a standalone entity on SDK 1.0.1+, `ExpirationTime.max()` uses the longest lifetime from its landing block; no manual subtraction is needed. File uploads instead require one shared absolute deadline across separate transactions. Their existing admission policy remains 7,883,970 blocks (30 blocks below the network maximum), and the date picker uses that exported bound. This is the file-format coordination policy, not a requirement to subtract from `max()`. Independently using `max()` for every part would give parts different deadlines and violate file validation.
+For a standalone entity on SDK 1.0.1+, `ExpirationTime.max()` uses the longest lifetime from its landing block; no manual subtraction is needed. File uploads use one shared absolute deadline across separate transactions. This package's file admission limit is 7,883,970 blocks, kept for compatibility with files already written. It is not the SDK or chain maximum of 7,884,000 blocks and is not a requirement of Rabdi. The date picker uses this package limit. Sharing a deadline does not require a 30-block reduction. Independently using `max()` for every part would give parts different deadlines and violate file validation.
 
 An over-maximum SDK request fails before sending with `InvalidExpiryError` on 1.0.1+. On SDK `1.0.0` only, the same request could reach the chain and revert with `ExpiryBeyondMaxLifetime`. The library rejects excessive `expirationBlocks` as `INVALID_INPUT` before either SDK path. Longer-lived files need coordinated Lifetime Extension outside this API; independently extending a subset is unsupported.
 
@@ -195,7 +195,7 @@ Ownership transfer, independent mutations and extending a subset of the file are
 | Chunks | At most 4,096 |
 | Filename | Basename, 1–255 UTF-8 bytes; no separators/control characters |
 | Content type | MIME type/subtype without parameters, at most 128 bytes |
-| Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (7,884,000 network maximum less 30 inclusion blocks) |
+| Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (package file admission limit retained for compatibility with files already written; not the SDK/chain maximum of 7,884,000 or a Rabdi requirement) |
 | Query page | At most 100 entities; smaller binary pages keep responses around 2 MB |
 
 Blocks are not a reliable clock, and wallet delays consume the selected lifetime. A queried expiresAt is authoritative at that read; the upload returns the pre-finalization check. A lagging receipt recheck after SDK-successful finalization is reported as CONFIRMATION_PENDING with all hashes and keys, rather than a plain upload failure. Verify it through read-only requests; do not resend finalization.

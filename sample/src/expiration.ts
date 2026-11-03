@@ -1,5 +1,11 @@
 import type { GetBlockTimingReturnType } from '@arkiv-network/sdk';
 import {MAX_EXPIRATION_BLOCKS,MAX_CHUNKS} from 'arkiv-chunking';
+// MAX_EXPIRATION_BLOCKS is the package's 7,883,970-block file admission limit, retained
+// for compatibility with files already written; not the SDK/chain maximum of 7,884,000
+// blocks or a requirement of Rabdi. A shared absolute deadline needs no subtraction.
+// MAX_EXPIRATION_BLOCKS is the package's 7,883,970-block file admission limit, retained
+// for compatibility with files already written; not the SDK/chain maximum of 7,884,000
+// blocks or a requirement of Rabdi. A shared absolute deadline needs no subtraction.
 
 const MAX_DATE_MS = 8_640_000_000_000_000;
 const MAX_UINT64 = (1n << 64n) - 1n;
@@ -56,7 +62,7 @@ export function dateToBlocks(
     fail('Choose a later expiration so there is time to approve and store this file.');
   }
   if (!Number.isSafeInteger(blocks) || blocks > MAX_EXPIRATION_BLOCKS || timing.currentBlock + BigInt(blocks) > MAX_UINT64) {
-    fail('Choose an earlier expiration. Longer storage needs coordinated Lifetime Extension, which this sample does not provide.');
+    fail('Choose an earlier expiration. This package limits file admission to 7,883,970 blocks for compatibility with files already written; that is not the SDK or chain maximum of 7,884,000 blocks or a requirement of Rabdi. Longer storage needs coordinated Lifetime Extension, which this sample does not provide.');
   }
   return blocks;
 }
