@@ -1,8 +1,8 @@
 # Arkiv Files sample
 
-Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.3 and SDK 1.0.0.
+Browser-wallet file storage and byte-verified retrieval on Rabdi, chain 7794095, using arkiv-chunking 1.1.3 and SDK `^1.0.0`, verified with 1.0.1.
 
-The sample pins exact registry arkiv-chunking 1.1.3. The library API is documented at version 1.1.3 in the root README. Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
+The sample pins exact registry arkiv-chunking 1.1.3. The root README documents library 1.1.4; the sample's installed 1.1.3 API is documented in the [versioned 1.1.3 README](https://github.com/SantiagoDevRel/arkiv-chunking/blob/v1.1.3/README.md). Reads use the sample server endpoint; the dependency is never replaced by a parent-source alias.
 
 ## Run
 
@@ -26,7 +26,7 @@ Every signature is guarded against account/network changes. A missing Rabdi netw
 
 Writes use uploadFile's public policy: unsigned estimation at latest, gas=max(1,000,000, 2*estimate), explicit gasPrice and latest nonce, block gas-limit admission and authoritative receipt checks. Estimation failure stops before signing. Only a confirmed gas-exhausted revert can receive one retry with increased gas. Physical browser-wallet signing on this sample remains a separate verification boundary.
 
-The date input uses the package's maximum 7,883,970 blocks: Rabdi's 7,884,000-block maximum less a 30-block inclusion margin. All file entities share one absolute deadline. Longer-lived files need coordinated Lifetime Extension, which this sample does not provide.
+Standalone SDK 1.0.1+ entities can use `ExpirationTime.max()` without subtraction. A file uses one shared absolute deadline across its parts. This package's file admission limit is 7,883,970 blocks, kept for compatibility with files already written. It is not the SDK or chain maximum of 7,884,000 blocks and is not a requirement of Rabdi. The date input retains this package limit. Sharing a deadline does not require subtracting 30 blocks. Longer-lived files need coordinated Lifetime Extension, which this sample does not provide.
 
 ## Seed and checks
 

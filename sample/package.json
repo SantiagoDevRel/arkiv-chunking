@@ -12,7 +12,7 @@
     "preview": "vite preview --host 127.0.0.1 --port 3076 --strictPort"
   },
   "dependencies": {
-    "@arkiv-network/sdk": "1.0.0",
+    "@arkiv-network/sdk": "1.0.1",
     "arkiv-chunking": "1.1.3",
     "viem": "2.56.3"
   },

@@ -1,10 +1,10 @@
 # Rabdi release verification
 
-Current procedure: arkiv-chunking 1.1.3, SDK 1.0.0, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095. The measured receipts below are historical 1.0.0 observations.
+Current procedure: arkiv-chunking 1.1.4, SDK `^1.0.0`, verified with 1.0.1, viem 2.56.3, format v2, Rabdi DB-Chain testnet 7794095. The measured receipts below are historical 1.0.0 observations.
 
-Install `npm install --save-exact arkiv-chunking@1.1.3 @arkiv-network/sdk@1.0.0 viem@2.56.3`. Run the reproducible checks below against the same source tree.
+Install `npm install --save-exact arkiv-chunking@1.1.4 @arkiv-network/sdk@1.0.1 viem@2.56.3`. Run the reproducible checks below against the same source tree.
 
-## Review corrections: October 31
+## Historical SDK 1.0 observations — October 31, 2026
 
 The maximum-lifetime probe sent exactly one deliberately invalid create from the dedicated CHUNKING wallet, at head + 7,884,000 + 120 blocks. Transaction `0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e` reverted (gas used 33,380 / limit 1,000,000). SDK 1.0.0 reported: "the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972". Its formatter maps this sentence to ExpiryBeyondMaxLifetime. Admission now reserves 30 blocks and uses a coordinated absolute deadline; no longer lifetime or permanent option is claimed.
 

@@ -1,6 +1,6 @@
 // One deliberately invalid public create. Never retries or uses the funder.
 import assert from 'node:assert/strict';
-import {createPublicClient,createWalletClient,ExpirationTime} from '@arkiv-network/sdk';
+import {createPublicClient,createWalletClient,ExpirationTime,InvalidExpiryError} from '@arkiv-network/sdk';
 import {defineSchema,str} from '@arkiv-network/sdk/schema';
 import {rabdi} from '@arkiv-network/sdk/chains';
 import {http} from 'viem';
@@ -28,7 +28,8 @@ try {
   const [receipt,tx]=await Promise.all([reader.getTransactionReceipt({hash}),reader.getTransaction({hash})]);
   report.transactionHash=hash;report.status=receipt.status;report.blockNumber=String(receipt.blockNumber);report.gasUsed=String(receipt.gasUsed);report.gasLimit=String(tx.gas);
  }
- report.expectedRejection=/ExpiryBeyondMaxLifetime|maximum lifetime of 7884000 blocks/.test(error.message)&&/7884000/.test(error.message)&&report.status==='reverted';
+ report.expectedRejection=error instanceof InvalidExpiryError&&!hash || /ExpiryBeyondMaxLifetime|maximum lifetime of 7884000 blocks/.test(error.message)&&/7884000/.test(error.message)&&report.status==='reverted';
+ report.preSendRejection=error instanceof InvalidExpiryError&&!hash;
  if(!report.expectedRejection)process.exitCode=1;
 }
 console.log(JSON.stringify({...report,finishedAt:new Date().toISOString()},null,2));

@@ -27,7 +27,7 @@ const wallet = serialRabdiWallet(createWalletClient({chain,transport,account}),c
 const bytes = new TextEncoder().encode(('Public Rabdi sample. Arkiv entities store indexed metadata and non-indexed binary columns.\n').repeat(3200));
 const sha256 = '0x'+createHash('sha256').update(bytes).digest('hex');
 const filename = 'rabdi-chunking-demo.txt';
-const report = {package:VERSION,sdk:'1.0.0',node:process.version,network:'Rabdi',chainId:await client.getChainId(),owner:account.address,sha256,bytes:bytes.length,transactionPolicy:'unsigned latest estimate, max(1000000, 2*estimate), latest nonce, network gas price; one retry only after confirmed gas-exhausted revert',startedAt:new Date().toISOString()};
+const report = {package:VERSION,sdk:JSON.parse(fs.readFileSync('node_modules/@arkiv-network/sdk/package.json','utf8')).version,node:process.version,network:'Rabdi',chainId:await client.getChainId(),owner:account.address,sha256,bytes:bytes.length,transactionPolicy:'unsigned latest estimate, max(1000000, 2*estimate), latest nonce, network gas price; one retry only after confirmed gas-exhausted revert',startedAt:new Date().toISOString()};
 assert.equal(report.chainId,7794095);
 try {
   const existing = await client.select({$key:true,complete:true}).from(ManifestSchema,{onMismatch:'throw'})

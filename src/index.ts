@@ -5,14 +5,17 @@ import { hexToBytes, type Hex } from 'viem';
 import {writeWithPolicy, WriteConfirmationPendingError, type TransactionParameterPolicy} from './transactions.js';
 export {MIN_TRANSACTION_GAS, writeWithPolicy, WriteConfirmationPendingError, type WriteTransactionParameters, type WriteTransactionContext, type TransactionParameterPolicy} from './transactions.js';
 
-export const VERSION = '1.1.3';
+export const VERSION = '1.1.4';
 export const DEFAULT_CHUNK_BYTES = 100_000;
 /** Package policy, not a claim about every Arkiv node. Leaves room for transaction framing. */
 export const MAX_CHUNK_BYTES = 120_000;
 export const MAX_FILE_BYTES = 32 * 1024 * 1024;
 export const MAX_CHUNKS = 4096;
 export const RABDI_MAX_LIFETIME_BLOCKS = 7_884_000;
+/** Legacy public name for the difference from the chain maximum; not a required inclusion margin. */
 export const EXPIRATION_INCLUSION_MARGIN_BLOCKS = 30;
+/** Package file admission limit retained for compatibility with files already written.
+ * Not the SDK/chain maximum of 7,884,000 blocks and not a requirement of Rabdi. */
 export const MAX_EXPIRATION_BLOCKS = RABDI_MAX_LIFETIME_BLOCKS - EXPIRATION_INCLUSION_MARGIN_BLOCKS;
 const MANIFEST_TYPE = 'arkiv-chunking/manifest/v2';
 const CHUNK_TYPE = 'arkiv-chunking/chunk/v2';
@@ -63,7 +66,9 @@ export interface UploadOptions {
   bytes: Uint8Array;
   filename: string;
   contentType?: string;
-  /** Explicit block lifetime. At least max(32, chunkCount + 3); not wall-clock time. */
+  /** Explicit block lifetime: max(32, chunkCount + 3)..7,883,970, not wall-clock time.
+   * The upper bound is this package's file admission limit, retained for compatibility with
+   * files already written; not the SDK/chain maximum of 7,884,000 or a Rabdi requirement. */
   expirationBlocks: number;
   chunkSize?: number;
   /** Per-write override, after an unsigned latest-state estimate. Unsafe headroom/nonces are rejected. */
@@ -168,7 +173,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
   const bytes = new Uint8Array(options.bytes);
   const chunks = splitFile(bytes, { chunkSize });
   const minimumBlocks = Math.max(32, chunks.length + 3);
-  if (!Number.isSafeInteger(expirationBlocks) || expirationBlocks < minimumBlocks || expirationBlocks > MAX_EXPIRATION_BLOCKS) fail('INVALID_INPUT', `Expiration must be ${minimumBlocks}..${MAX_EXPIRATION_BLOCKS} whole blocks, including the Rabdi inclusion margin. Longer lifetimes require coordinated Lifetime Extension outside this API.`);
+  if (!Number.isSafeInteger(expirationBlocks) || expirationBlocks < minimumBlocks || expirationBlocks > MAX_EXPIRATION_BLOCKS) fail('INVALID_INPUT', `Expiration must be ${minimumBlocks}..${MAX_EXPIRATION_BLOCKS} whole blocks. The upper bound is this package's file admission limit, kept for compatibility with files already written; it is not the SDK or chain maximum of 7,884,000 blocks or a requirement of Rabdi. Longer storage requires coordinated Lifetime Extension outside this API.`);
   if (!walletClient.account || !walletClient.chain?.testnet || walletClient.chain.id !== publicClient.chain?.id) fail('NETWORK_MISMATCH', 'A wallet account and matching explicit testnet clients are required.');
   const transactionHashes: Hex[] = [];
   const chunkKeys: Hex[] = [];

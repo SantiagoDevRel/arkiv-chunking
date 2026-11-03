@@ -1,5 +1,5 @@
 // Controlled in-memory RPC for contract/UI tests. This is NOT an Arkiv node.
-// ABI structs checked against SDK 1.0.0; the SDK itself encodes all writes.
+// ABI structs checked against SDK 1.0.1; the SDK itself encodes all writes.
 import { decodeFunctionData, decodeAbiParameters, encodeAbiParameters, encodeEventTopics, hexToString, parseAbi, parseAbiParameters, toHex } from 'viem';
 import { ENTITY_EVENTS_ABI } from '@arkiv-network/sdk/entity';
 // Protocol tags checked against SDK 1.0 src/entity/params.ts; not a public SDK export.

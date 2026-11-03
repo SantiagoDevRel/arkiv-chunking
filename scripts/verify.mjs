@@ -11,7 +11,7 @@ function run(command, args, cwd = process.cwd(), environment = {}) {
 }
 run('npm',['ci','--no-audit','--no-fund']);
 const sdk = JSON.parse(fs.readFileSync('node_modules/@arkiv-network/sdk/package.json','utf8'));
-if (sdk.version !== '1.0.0' || !fs.existsSync('node_modules/@arkiv-network/sdk/src/schema/schema.ts')) throw Error('Installed SDK 1.0 source is required.');
+if (sdk.version !== '1.0.1' || !fs.existsSync('node_modules/@arkiv-network/sdk/src/schema/schema.ts')) throw Error('Installed SDK 1.0 source is required.');
 console.log('SDK source available:', sdk.version);
 run('npm',['test']);
 run('npm',['run','typecheck']);

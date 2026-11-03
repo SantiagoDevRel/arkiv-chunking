@@ -2,11 +2,11 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**arkiv-chunking 1.1.3 · SDK 1.0.0 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**arkiv-chunking 1.1.4 · SDK `^1.0.0`, verified with 1.0.1 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
-Use Node.js 22.10+ or a browser secure context, ESM, SDK 1.0.0 and viem 2.56.3. From this checkout:
+Use Node.js 22.10+ or a browser secure context, ESM, SDK `^1.0.0`, verified with 1.0.1 and viem 2.56.3. From this checkout:
 
 ```sh
 npm ci
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.3.tgz @arkiv-network/sdk@1.0.0 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.4.tgz @arkiv-network/sdk@1.0.1 viem@2.56.3
 ```
 
-For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.3 @arkiv-network/sdk@1.0.0 viem@2.56.3`.
+For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.4 @arkiv-network/sdk@1.0.1 viem@2.56.3`.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -74,7 +74,7 @@ Save this as roundtrip.mjs. Run `node --env-file=/absolute/path/to/your-secret.e
 
 Optional `txParams(context)` runs for each write with `{phase, chunkIndex?, attempt, estimate, defaults}`. Return a partial override, for example `txParams: ({defaults}) => ({gas: defaults.gas + 100_000n})`. Gas must retain the minimum headroom; gasPrice must be positive; nonce must match the fresh latest nonce. Policy reads use the wallet's configured RPC. Serialize uploads from one account and disable transport retries as shown above.
 
-A confirmed gas-exhausted revert may be retried once with fresh parameters and at least twice the previous gas. A semantic revert, rejected signature, missing receipt, uncertain submission or successful receipt never authorizes a retry. Confirmed hashes, including reverted attempts, are preserved.
+SDK 1.0.1 adds default estimate headroom and reports out-of-gas through `EntityMutationError`; the explicit recipe above still applies, including for batches and browser wallets. Error class alone never authorizes a retry. A confirmed gas-exhausted revert may be retried once with fresh parameters and at least twice the previous gas. A semantic revert, rejected signature, missing receipt, uncertain submission or successful receipt never authorizes a retry. Confirmed hashes, including reverted attempts, are preserved.
 
 When the SDK returns success, its hash and newly created manifest/chunk keys are saved before any receipt recheck. If that RPC lags, the library polls by hash at the current head up to five times, one second apart; transport timeouts still apply. A delayed receipt permits normal completion. If the recheck remains unavailable, uploadFile throws a typed `ChunkingError` with code `CONFIRMATION_PENDING`, preserving all SDK-success hashes, manifestKey and chunkKeys. It sends no further writes and never resends the successful operation. A hash found only in an SDK error still requires an authoritative receipt before it is treated as confirmed. If that lookup throws or is unavailable, writeWithPolicy throws WriteConfirmationPendingError with the exact txHash; uploadFile exposes it as ChunkingError.txHash with code CONFIRMATION_PENDING. Unverified hashes never enter confirmed transactionHashes, and unavailable entity keys are not invented. Use read-only inspection; never resend automatically.
 
@@ -94,7 +94,7 @@ Import only from `arkiv-chunking`; types ship with the package.
 | `writeWithPolicy(wallet, context, plan, send, confirmedHashes, policy?, onSdkSuccess?)` | Shared SDK 1.0 write policy, exported from the root since 1.1.0. Captures an unsigned request, estimates at latest, supplies explicit gas/gasPrice/latest nonce, checks receipts and preserves hashes before rechecks. plan uses its supplied unsigned client; send uses the real wallet and supplied parameters. |
 | `WriteConfirmationPendingError` | Root-exported Error class with readonly txHash and a local-only cause. The SDK returned success or threw with a txHash, and receipt confirmation remains unresolved. Preserve txHash; never resend. SDK-success rechecks are bounded; an error-only hash needs an authoritative receipt before entering confirmedHashes. |
 | `VERSION`, `DEFAULT_CHUNK_BYTES`, `MAX_CHUNK_BYTES`, `MAX_FILE_BYTES`, `MAX_CHUNKS` | Package version and enforced limits. |
-| `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | Network maximum 7,884,000; inclusion margin 30; admitted maximum 7,883,970; transaction gas floor 1,000,000n. |
+| `RABDI_MAX_LIFETIME_BLOCKS`, `EXPIRATION_INCLUSION_MARGIN_BLOCKS`, `MAX_EXPIRATION_BLOCKS`, `MIN_TRANSACTION_GAS` | SDK/chain maximum 7,884,000; package file admission limit 7,883,970, kept for compatibility with files already written, not a Rabdi requirement; legacy exported difference constant 30 (its name does not describe a required margin); transaction gas floor 1,000,000n. |
 | `WriteTransactionParameters`, `WriteTransactionContext`, `TransactionParameterPolicy` | Public per-write override contracts. |
 | `UploadOptions`, `UploadResult`, `DownloadOptions`, `DownloadResult`, `Progress`, `ChunkingErrorCode`, `ChunkingPublicClient`, `ChunkingWalletClient` | Public TypeScript types. |
 
@@ -178,7 +178,9 @@ Metadata is UTF-8 JSON with filename and contentType; a filename can be 255 UTF-
 
 Upload creates an incomplete manifest, writes immutable chunks sequentially, then patches complete to true. There are N+2 successful writes; a confirmed gas-exhausted revert can add one attempt per write. Manifest and chunks share one absolute expiration block, computed from the initial chain head and the requested lifetime. Before every chunk and finalization, a read checks that the manifest has enough blocks remaining. One failed liveness read receives one read-only retry.
 
-Rabdi rejects a target more than 7,884,000 blocks after the current block with `ExpiryBeyondMaxLifetime`. The package admits at most 7,883,970 blocks, reserving 30 blocks of inclusion margin; the date picker uses the same exported bound. There is no permanent/no-expiration option. Longer-lived files need coordinated Lifetime Extension; this package does not implement it, and extending only a subset of the file is unsupported.
+For a standalone entity on SDK 1.0.1+, `ExpirationTime.max()` uses the longest lifetime from its landing block; no manual subtraction is needed. File uploads use one shared absolute deadline across separate transactions. This package's file admission limit is 7,883,970 blocks, kept for compatibility with files already written. It is not the SDK or chain maximum of 7,884,000 blocks and is not a requirement of Rabdi. The date picker uses this package limit. Sharing a deadline does not require a 30-block reduction. Independently using `max()` for every part would give parts different deadlines and violate file validation.
+
+An over-maximum SDK request fails before sending with `InvalidExpiryError` on 1.0.1+. On SDK `1.0.0` only, the same request could reach the chain and revert with `ExpiryBeyondMaxLifetime`. The library rejects excessive `expirationBlocks` as `INVALID_INPUT` before either SDK path. Longer-lived files need coordinated Lifetime Extension outside this API; independently extending a subset is unsupported.
 
 The reader scopes chunks by manifest, type, owner and creator. It uses ascending immutable keys and a strict greater-than key predicate for later pages, then orders by seq. SDK 1.0 reads the latest block per request; this is not a pinned snapshot. After checking the complete count, exact lengths and SHA-256, the reader queries the manifest again and rejects a changed or expired manifest. It rejects mutable chunks, duplicate keys/indexes and missing parts. No partial bytes are returned.
 
@@ -193,7 +195,7 @@ Ownership transfer, independent mutations and extending a subset of the file are
 | Chunks | At most 4,096 |
 | Filename | Basename, 1–255 UTF-8 bytes; no separators/control characters |
 | Content type | MIME type/subtype without parameters, at most 128 bytes |
-| Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (7,884,000 network maximum less 30 inclusion blocks) |
+| Entity Expiration | Whole blocks, min max(32, chunkCount+3), max 7,883,970 (package file admission limit retained for compatibility with files already written; not the SDK/chain maximum of 7,884,000 or a Rabdi requirement) |
 | Query page | At most 100 entities; smaller binary pages keep responses around 2 MB |
 
 Blocks are not a reliable clock, and wallet delays consume the selected lifetime. A queried expiresAt is authoritative at that read; the upload returns the pre-finalization check. A lagging receipt recheck after SDK-successful finalization is reported as CONFIRMATION_PENDING with all hashes and keys, rather than a plain upload failure. Verify it through read-only requests; do not resend finalization.
@@ -206,7 +208,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 | MissingAccessKeyError, HTTP 401/403/429 | Configure an access key from the Hub; check its provider quota. |
 | -32603, "arkiv serves state at the chain head only" | Use `latest` for state reads and unsigned gas estimation. `safe`, `finalized` and old block hashes are unsupported for these calls. Stop before signing when estimation fails. |
 | Reverted receipt with gasUsed == gasLimit | The gas budget was exhausted. Use an unsigned `latest` estimate and explicit gas=max(1,000,000, 2*estimate), gasPrice and latest nonce. The library permits one confirmed gas-exhaustion retry with increased gas; never retry a successful or uncertain write. |
-| ExpiryBeyondMaxLifetime | Use at most MAX_EXPIRATION_BLOCKS and a coordinated file deadline; longer storage requires Lifetime Extension outside this API. |
+| `InvalidExpiryError` (1.0.1+); `ExpiryBeyondMaxLifetime` (SDK `1.0.0` only) | Use at most MAX_EXPIRATION_BLOCKS and a coordinated file deadline; longer storage requires Lifetime Extension outside this API. |
 | UPLOAD_FAILED | Preserve manifest and confirmed hashes; inspect receipts before another upload. |
 | CONFIRMATION_PENDING | The SDK reported success, but a bounded receipt recheck is pending. Preserve manifestKey, chunkKeys and transactionHashes. Inspect receipts and the manifest with reads only; never resend automatically. |
 | NOT_FOUND | Check manifest key, network and Entity Expiration. |
@@ -216,7 +218,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.3 independently of this 1.1.3 library. Tarball verification uses an isolated consumer and preserves that sample pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.3 independently of this 1.1.4 library. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test

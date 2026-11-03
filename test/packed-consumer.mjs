@@ -18,7 +18,7 @@ test('packed root API is additive, type-safe, and preserves SDK-success recovery
     assert.equal(result.status,0,result.stdout+'\n'+result.stderr);
     return result.stdout;
   };
-  run('npm',['install','--no-audit','--no-fund',archive,'previous-chunking@npm:arkiv-chunking@1.0.0','@arkiv-network/sdk@1.0.0','viem@2.56.3']);
+  run('npm',['install','--no-audit','--no-fund',archive,'previous-chunking@npm:arkiv-chunking@1.0.0','@arkiv-network/sdk@1.0.1','viem@2.56.3']);
   // The patch intentionally changes policy error propagation. Check its public behavior below.
   fs.copyFileSync(new URL('./rpc-harness.mjs',import.meta.url),path.join(consumer,'rpc-harness.mjs'));
   fs.writeFileSync(path.join(consumer,'check.mjs'), `import assert from 'node:assert/strict';

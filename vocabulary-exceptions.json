@@ -14,7 +14,7 @@
   },
   {
     "literal": "eration tag ${String(t[0])} is not one the engine knows`;case`NonCanonicalOperationData`:return`the pay\u006coad for operation tag ${String(t[0])} is not its canonical encoding, so the engine refused it rather th",
-    "origin": "@arkiv-network/sdk@1.0.0",
+    "origin": "@arkiv-network/sdk@1.0.1",
     "reason": "Upstream ABI diagnostic wording; report to SDK team, preserve upstream runtime.",
     "paths": [
       "sample/dist/assets/**"

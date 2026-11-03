@@ -30,9 +30,9 @@ test('public upload sends explicit per-write estimate headroom, gas price and fr
  assert.equal(new Set(rpc.entities.map(e=>e.expiresAt)).size,1);assert.equal(result.expiresAt,3642n);
 });
 
-test('maximum lifetime admission includes margin; larger values stop before RPC',async()=>{
+test('package file admission limit is retained; larger values stop before RPC',async()=>{
  const rpc=rpcHarness(),clients=setup(rpc);
- await assert.rejects(uploadFile({...clients,...input,expirationBlocks:MAX_EXPIRATION_BLOCKS+1}),e=>e.code==='INVALID_INPUT');
+ await assert.rejects(uploadFile({...clients,...input,expirationBlocks:MAX_EXPIRATION_BLOCKS+1}),e=>e.code==='INVALID_INPUT'&&/file admission limit.*compatibility with files already written.*not the SDK or chain maximum.*requirement of Rabdi/.test(e.message));
  assert.equal(rpc.requests.length,0);
  const stored=await uploadFile({...clients,...input,bytes:new Uint8Array(),expirationBlocks:MAX_EXPIRATION_BLOCKS});
  assert.equal(stored.expiresAt,42n+BigInt(MAX_EXPIRATION_BLOCKS));
