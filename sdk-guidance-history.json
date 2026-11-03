@@ -26,7 +26,7 @@
   },
   {
     "file": "README.md",
-    "sha256": "d0bd18df179e179c1799a264614ad095e8f4f1834da43603d50af757c1689d0e",
+    "sha256": "82be8119adbbed2ea79c78349848af8e61afcc3ee65838f5c80e850468a461a1",
     "reason": "Explicit SDK-version compatibility scope; never a current installation pin.",
     "lines": [
       "An over-maximum SDK request fails before sending with `InvalidExpiryError` on 1.0.1+. On SDK `1\u002e0\u002e0` only, the same request could reach the chain and revert with `ExpiryBeyondMaxLifetime`. The library rejects excessive `expirationBlocks` as `INVALID_INPUT` before either SDK path. Longer-lived files need coordinated Lifetime Extension outside this API; independently extending a subset is unsupported.",
