@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.6
+
+- Library code is unchanged apart from the `VERSION` string.
+- The release tag carries the sample fix for MetaMask Mobile: when the wallet wraps the unknown-chain error 4902 as -32603 (`data.originalError.code`, `originalError.code` or an "Unrecognized chain ID" message), the sample now adds Rabdi with only the keyless public RPC and switches, instead of failing. Any other -32603 is still reported as an error.
+
 ## 1.1.5
 
 - Documentation only; library code is unchanged apart from the `VERSION` string.
