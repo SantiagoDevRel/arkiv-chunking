@@ -9,17 +9,17 @@ Integrates the public `arkiv-chunking` API with a browser wallet, automatic retr
 - Is the built-in synthetic file sufficient, or which approved public file should replace it?
 - Does retrieval require a trusted digest from outside the manifest? Internal integrity is not proof of author identity.
 
-Reads use the server endpoint with a server-only access key. Wallet writes use the user-configured Rabdi RPC. Obtain access keys and test GLM through the Hub links in README.
+Reads use the server endpoint with a server-only access key. Wallet writes go through the wallet's own Rabdi network, which uses the keyless public RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`. Never ask for, accept or offer a keyed RPC URL (access key in the path) to a wallet, the bundle, a URL or a QR. Obtain the server access key and test GLM through the Hub links in README.
 
 ## Invariants
 
 - Release imports use the exact published npm dependency. The sample pins published arkiv-chunking 1.1.4. Archive verification uses an isolated consumer and preserves the sample registry dependency. Never copy the implementation or use a parent-source alias.
 - Storage follows an explicit Store & verify action and wallet approvals. No consent checkbox is required by this sample. No write occurs on page load, file selection or connection alone.
-- Network switching is a wallet request triggered by a user action, targeting Rabdi only. Check account and network before every signature and stop if they change during upload.
+- Network switching is a wallet request triggered by a user action, targeting Rabdi only. `wallet_addEthereumChain` lives only in `src/wallet-network.ts` and offers only the keyless public RPC. Check account and network before every signature and stop if they change during upload.
 - Dates are approximate. Use `expiration.ts` with fresh SDK network timing, preserve admission limits and reject invalid/stale inputs. Never pretend a selected date is a guaranteed deadline.
 - Separate confirmed storage from failed readback. Retry verification must call only the read path, never re-upload. Retain an uncertain upload's manifest and observed confirmed transaction links for inspection.
 - Clear old results on new attempts and expose downloads only after full verification. Metadata is untrusted text; neutral attachments never render uploaded content.
-- Keep the server read access key internal. Never persist the user-configured wallet RPC. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
+- Keep the server read access key internal. Never expose raw provider errors, credentials, or signing keys in the UI or logs.
 - Explorer URLs use the verified Rabdi indexer origin and validated keys/hashes. Blocks use `/block?block=NUMBER`; entities use `/entity/KEY`.
 - Query examples must work with the documented package/SDK versions. Do not replace the complete file verifier with a bare manifest query.
 - Chunk inspection is a read-only view of actual entities. Scope its keyset pages by ownership, verify its returned binary columns with the published package, and keep inspection failures separate from a verified download. Never show synthetic binary columns as retrieved data.

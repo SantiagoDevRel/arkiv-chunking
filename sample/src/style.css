@@ -71,7 +71,7 @@ input:not([type=file]),.secondary{color:var(--text)}
 /* Equal workspace frames stay steady as details open. Stacked layouts scroll with the page. */
 @media(min-width:701px){.workspace>.panel{height:clamp(640px,calc(100dvh - 230px),840px);min-height:0;overflow:auto;scrollbar-gutter:stable}.result-empty{flex-shrink:0}}
 .icon-button{width:44px;padding:9px;display:grid;place-items:center;flex-shrink:0}
-#open-sample{width:100%;margin-bottom:8px}.wallet-config{margin-bottom:8px}
+#open-sample{width:100%;margin-bottom:8px}
 #recovery-transactions{padding-left:20px;font-size:14px;overflow-wrap:anywhere}
 [data-theme=dark] [data-icon=moon],[data-theme=light] [data-icon=sun]{display:none}
 .manifest-action{display:inline-flex;align-items:center;gap:4px}

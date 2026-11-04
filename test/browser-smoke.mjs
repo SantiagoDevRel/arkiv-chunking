@@ -75,7 +75,7 @@ try {
   });
   async function idle() { await page.locator('#workspace[aria-busy="false"]').waitFor({ timeout: 30000 }); }
   async function state(value) { await page.locator(`#workflow-status[data-state="${value}"]`).waitFor({ timeout: 30000 }); await idle(); }
-  async function reset() { await page.goto(process.env.SAMPLE_URL ?? 'http://127.0.0.1:3076'); await page.locator('#selected-meta').filter({ hasText: '120,001 bytes' }).waitFor(); await page.locator('#wallet-rpc').fill('https://rpc.rabdi.db-chain.testnet.arkiv.network/controlled-test'); }
+  async function reset() { await page.goto(process.env.SAMPLE_URL ?? 'http://127.0.0.1:3076'); await page.locator('#selected-meta').filter({ hasText: '120,001 bytes' }).waitFor(); }
   async function capture(stateName) {
     await page.evaluate(() => document.fonts.ready);
     for (const theme of ['dark', 'light']) {
@@ -221,8 +221,9 @@ try {
   assert.equal(await page.locator('#rpc').count(), 0);
   assert.equal(await page.locator('#consent').count(), 0);
   assert.equal(await page.locator('#selected-name').innerText(), 'arkiv-demo.txt');
+  assert.equal(await page.locator('#wallet-rpc').count(), 0);
   await capture('baseline');
-  checks.push('default sample selected; user RPC configured only for wallet writes; 1440x900 primary action visible without scrolling');
+  checks.push('default sample selected; no RPC URL field (the wallet keeps its keyless Rabdi network); 1440x900 primary action visible without scrolling');
 
   heldSend = new Promise(resolve => { releaseSend = resolve; });
   await page.locator('#upload').click();

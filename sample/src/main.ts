@@ -5,6 +5,7 @@ import { uploadFile, downloadFile, ChunkingError, VERSION, DEFAULT_CHUNK_BYTES, 
 import { dateToBlocks, estimateExpirationDate, toLocalDateTimeInput } from './expiration';
 import { inspectChunks } from './inspection';
 import { initTheme } from './theme';
+import { RABDI_PUBLIC_RPC, switchToRabdi } from './wallet-network';
 import './style.css';
 
 function el<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -113,32 +114,20 @@ function updateWallet() {
   el('connect').textContent = account ? `${account.slice(0,6)}…${account.slice(-4)}` : 'Connect wallet';
   el('connect').title = account ?? 'Connect your testnet wallet';
 }
-async function connectWallet(): Promise<{ walletProvider: EIP1193Provider; address: Hex; rpcUrl: string }> {
+async function connectWallet(): Promise<{ walletProvider: EIP1193Provider; address: Hex }> {
   const walletProvider = provider();
   const addresses = await walletProvider.request({ method: 'eth_requestAccounts' });
   const address = addresses[0];
   if (!address) throw new UserError('Select an account in your wallet to continue.');
   const walletChainId = Number(await walletProvider.request({ method: 'eth_chainId' }));
-  const rpcUrl = el<HTMLInputElement>('wallet-rpc').value.trim();
-  if (!rpcUrl) throw new UserError('Enter your Rabdi RPC URL from the Hub before connecting your wallet.');
-  let rpc: URL;
-  try { rpc = new URL(rpcUrl); } catch { throw new UserError('Enter a valid HTTPS Rabdi RPC URL.'); }
-  if (rpc.protocol !== 'https:' || rpc.hostname !== 'rpc.rabdi.db-chain.testnet.arkiv.network' || rpc.username || rpc.password || rpc.search || rpc.hash || rpc.pathname.length < 2) throw new UserError('Use your HTTPS Rabdi RPC URL from the Hub.');
-  if (walletChainId !== chain.id) {
-    // An explicit user action asks the wallet to switch; nothing changes on page load.
-    try {
-      await walletProvider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${chain.id.toString(16)}` }] });
-    } catch (error) {
-      if ((error as {code?:number}).code !== 4902) throw error;
-      await walletProvider.request({method: 'wallet_addEthereumChain', params: [{ chainId: `0x${chain.id.toString(16)}`, chainName: 'Rabdi', nativeCurrency: {name: 'Golem',symbol: 'tGLM',decimals:18}, rpcUrls: [rpc.href], blockExplorerUrls: [explorer] }]});
-      await walletProvider.request({method: 'wallet_switchEthereumChain',params:[{chainId:`0x${chain.id.toString(16)}`}]});
-    }
-  }
+  // An explicit user action asks the wallet to switch; nothing changes on page load.
+  // A wallet without Rabdi is offered only the keyless public RPC; access keys never reach the wallet.
+  if (walletChainId !== chain.id) await switchToRabdi(walletProvider, chain.id, explorer);
   if (Number(await walletProvider.request({ method: 'eth_chainId' })) !== chain.id || await client.getChainId() !== chain.id) throw new UserError('Choose Rabdi testnet in your wallet to continue.');
   const current = await walletProvider.request({ method: 'eth_accounts' });
   if (current[0]?.toLowerCase() !== address.toLowerCase()) throw new UserError('The wallet account changed. Connect the intended test account again.');
   account = address; updateWallet();
-  return { walletProvider, address, rpcUrl: rpc.href };
+  return { walletProvider, address };
 }
 
 async function verifyFile(key: Hex) {
@@ -258,7 +247,7 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
     if (await client.getChainId() !== chain.id) throw new UserError('Rabdi could not be confirmed. Try again when the network is available.');
     try { dateToBlocks(chosenDate, await client.getBlockTiming(), chunks); } catch(error) { throw new UserError(error instanceof Error ? error.message : 'Choose a future expiration date.'); }
     status('Connect your wallet to start.', 'loading');
-    const {walletProvider,address,rpcUrl} = await connectWallet();
+    const {walletProvider,address} = await connectWallet();
     let changed = false; const markChanged = () => { changed = true; account = undefined; updateWallet(); };
     walletProvider.on?.('accountsChanged',markChanged); walletProvider.on?.('chainChanged',markChanged);
     releaseGuard = () => {walletProvider.removeListener?.('accountsChanged',markChanged);walletProvider.removeListener?.('chainChanged',markChanged);};
@@ -269,7 +258,8 @@ el<HTMLFormElement>('upload-form').addEventListener('submit', async event => {
       }
       return (walletProvider.request.bind(walletProvider) as (args:{method:string;params?:unknown})=>Promise<unknown>)(args);
     }} as EIP1193Provider;
-    const walletChain = { ...chain, rpcUrls: { default: { http: [rpcUrl] } } };
+    // Chain metadata only: every wallet request goes through the guarded injected provider.
+    const walletChain = { ...chain, rpcUrls: { default: { http: [RABDI_PUBLIC_RPC] } } };
     const signer = createWalletClient({ account: address, chain: walletChain, transport: custom(guarded,{retryCount:0}) });
     // uploadFile owns unsigned estimation, explicit transaction parameters and receipt checks.
     const wallet: ChunkingWalletClient = signer;
