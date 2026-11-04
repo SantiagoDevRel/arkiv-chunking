@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5
+
+- Documentation only; library code is unchanged apart from the `VERSION` string.
+- README and AGENTS: browser wallets use the keyless public Rabdi RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`; access keys stay server-side and never go into a wallet, a bundle, a URL or a QR.
+- The release tag carries the sample fix that offers wallets only the keyless RPC (PR #14).
+
 ## 1.1.4
 
 - Verify the SDK `^1.0.0` peer on 1.0.1; pin development, consumers and the sample SDK to 1.0.1.

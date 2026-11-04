@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**arkiv-chunking 1.1.4 · SDK `^1.0.0`, verified with 1.0.1 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**arkiv-chunking 1.1.5 · SDK `^1.0.0`, verified with 1.0.1 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.4.tgz @arkiv-network/sdk@1.0.1 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.5.tgz @arkiv-network/sdk@1.0.1 viem@2.56.3
 ```
 
-For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.4 @arkiv-network/sdk@1.0.1 viem@2.56.3`.
+For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.5 @arkiv-network/sdk@1.0.1 viem@2.56.3`.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -36,7 +36,7 @@ Splitting, hashing and local reconstruction need no network, signing wallet or a
 
 ## Store and retrieve on Rabdi
 
-Get a free [access key](https://hub.arkiv.network/access-keys) and fund a dedicated test wallet with test GLM at the [Hub faucet](https://hub.arkiv.network/faucet). Use matching explicit Rabdi configurations for the RPC and wallet. The [explorer](https://rabdi.explorer.arkiv.network) shows entities and transactions. No mainnet support is claimed.
+Get a free [access key](https://hub.arkiv.network/access-keys) and fund a dedicated test wallet with test GLM at the [Hub faucet](https://hub.arkiv.network/faucet). Use Rabdi (chain 7794095) for every client and wallet. A browser wallet uses the keyless public RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`; add Rabdi to the wallet with that URL. Access keys stay server-side (a server read proxy, a local Node script): never put an access key or a keyed RPC URL in a wallet, a bundle, a URL or a QR. The [explorer](https://rabdi.explorer.arkiv.network) shows entities and transactions. No mainnet support is claimed.
 
 Configure `ARKIV_ACCESS_KEY` and `ARKIV_PRIVATE_KEY` locally, outside source control. Never paste a signing key into chat, a browser app or a bundle. An access key is required for practical network use; it does not sign transactions. The SDK throws `MissingAccessKeyError` if the accessKey option is missing. Obtain a key from the Hub and pass it explicitly rather than bypassing the check.
 
@@ -218,7 +218,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.4, matching this 1.1.4 library. Tarball verification uses an isolated consumer and preserves that sample pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.4; 1.1.5 changes only documentation and the exported `VERSION` string, so the library code the sample runs is the same. The sample adds Rabdi to a wallet with the keyless public RPC only and reads through its server proxy, which keeps the access key server-side. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test
