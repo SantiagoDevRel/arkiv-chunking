@@ -39,6 +39,63 @@ test('a wallet that already has Rabdi is only switched, never re-added', async (
   assert.deepEqual(wallet.calls.map(call => call.method), ['wallet_switchEthereumChain']);
 });
 
+// MetaMask Mobile wraps EIP-3326 4902 in -32603 (data.originalError.code, originalError.code or only the message).
+const wrapped4902 = [
+  ['data.originalError.code 4902', () => Object.assign(new Error('Internal JSON-RPC error.'), { code: -32603, data: { originalError: { code: 4902 } } })],
+  ['originalError.code 4902', () => Object.assign(new Error('Internal JSON-RPC error.'), { code: -32603, originalError: { code: 4902 } })],
+  ['"Unrecognized chain ID" message', () => Object.assign(new Error('Unrecognized chain ID "0x76edaf". Try adding the chain using wallet_addEthereumChain first.'), { code: -32603 })],
+];
+function wrappingWallet(makeError) {
+  const calls = [];
+  return { calls, request: async ({ method, params }) => {
+    calls.push({ method, params });
+    if (method === 'wallet_switchEthereumChain' && !calls.some(call => call.method === 'wallet_addEthereumChain')) throw makeError();
+    return null;
+  } };
+}
+
+for (const [name, makeError] of wrapped4902) {
+  test(`a wallet that wraps 4902 as -32603 (${name}) gets the keyless add and a switch`, async () => {
+    const { switchToRabdi } = await loadWalletNetwork();
+    const wallet = wrappingWallet(makeError);
+    await switchToRabdi(wallet, 7794095, 'https://rabdi.explorer.arkiv.network');
+    assert.deepEqual(wallet.calls.map(call => call.method), ['wallet_switchEthereumChain', 'wallet_addEthereumChain', 'wallet_switchEthereumChain']);
+    const [params] = wallet.calls[1].params;
+    assert.equal(params.chainId, '0x76edaf');
+    assert.deepEqual(params.rpcUrls, [KEYLESS]);
+  });
+}
+
+for (const [name, error] of [
+  ['bare -32603', Object.assign(new Error('Internal JSON-RPC error.'), { code: -32603 })],
+  ['-32603 wrapping 4001', Object.assign(new Error('Internal JSON-RPC error.'), { code: -32603, data: { originalError: { code: 4001 } } })],
+  ['4001 user rejection', Object.assign(new Error('User rejected the request.'), { code: 4001 })],
+  ['-32002 pending request', Object.assign(new Error('Request already pending'), { code: -32002 })],
+]) {
+  test(`an unrelated switch error (${name}) is rethrown and never adds a network`, async () => {
+    const { switchToRabdi } = await loadWalletNetwork();
+    const wallet = wrappingWallet(() => error);
+    await assert.rejects(switchToRabdi(wallet, 7794095, 'https://rabdi.explorer.arkiv.network'), thrown => thrown === error);
+    assert.deepEqual(wallet.calls.map(call => call.method), ['wallet_switchEthereumChain']);
+  });
+}
+
+test('only 4902 and MetaMask Mobile wrapped 4902 count as an unknown chain', async () => {
+  const { isUnknownChainError } = await loadWalletNetwork();
+  const internal = 'Internal JSON-RPC error.';
+  for (const error of [
+    { code: 4902 },
+    { code: -32603, message: internal, data: { originalError: { code: 4902 } } },
+    { code: -32603, message: internal, originalError: { code: 4902 } },
+    { code: -32603, message: 'Unrecognized chain ID "0x76edaf". Try adding the chain using wallet_addEthereumChain first.' },
+  ]) assert.equal(isUnknownChainError(error), true, JSON.stringify(error));
+  for (const error of [
+    undefined, null, 'Unrecognized chain ID', { code: -32603, message: internal }, { code: -32603 },
+    { code: -32603, message: internal, data: { originalError: { code: 4001 } } }, { code: -32603, message: internal, data: null },
+    { code: 4001, message: 'Unrecognized chain ID' }, { code: -32002 }, { code: '4902' },
+  ]) assert.equal(isUnknownChainError(error), false, JSON.stringify(error));
+});
+
 test('the sample never asks for a keyed RPC URL or puts one in the wallet', async () => {
   const [html, main, readme, agents] = await Promise.all(['../sample/index.html', '../sample/src/main.ts', '../sample/README.md', '../sample/AGENTS.md'].map(read));
   assert.doesNotMatch(html, /wallet-rpc|wallet RPC URL/i, 'no RPC URL field on the page');

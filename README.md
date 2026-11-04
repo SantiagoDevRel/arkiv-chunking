@@ -2,7 +2,7 @@
 
 Split a file into queryable Arkiv entities on the Web3 database, then recover exactly its original bytes. Indexed manifest references and sequence columns connect each file to its binary chunks. Every download checks chunk indexes, byte lengths and SHA-256 before returning anything.
 
-**arkiv-chunking 1.1.5 · SDK `^1.0.0`, verified with 1.0.1 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
+**arkiv-chunking 1.1.6 · SDK `^1.0.0`, verified with 1.0.1 · Rabdi DB-Chain testnet (7794095).** See [verification](docs/verification.md) and [changes](CHANGELOG.md).
 
 ## Local use without credentials
 
@@ -19,10 +19,10 @@ Install the resulting tarball into a clean consumer:
 ```sh
 npm init -y
 npm pkg set type=module
-npm install /absolute/path/to/arkiv-chunking-1.1.5.tgz @arkiv-network/sdk@1.0.1 viem@2.56.3
+npm install /absolute/path/to/arkiv-chunking-1.1.6.tgz @arkiv-network/sdk@1.0.1 viem@2.56.3
 ```
 
-For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.5 @arkiv-network/sdk@1.0.1 viem@2.56.3`.
+For a registry consumer, install `npm install --save-exact arkiv-chunking@1.1.6 @arkiv-network/sdk@1.0.1 viem@2.56.3`.
 
 ```js
 import {splitFile, hashFile, reconstructFile} from 'arkiv-chunking';
@@ -218,7 +218,7 @@ If upload fails, retain error.manifestKey and error.transactionHashes. Inspect t
 
 ## Sample and verification
 
-The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.4; 1.1.5 changes only documentation and the exported `VERSION` string, so the library code the sample runs is the same. The sample adds Rabdi to a wallet with the keyless public RPC only and reads through its server proxy, which keeps the access key server-side. Tarball verification uses an isolated consumer and preserves that sample pin.
+The [sample guide](sample/README.md) covers browser-wallet storage, read-only public samples and the bounded server read proxy. The sample pins exact registry 1.1.4; 1.1.5 and 1.1.6 change only documentation and the exported `VERSION` string, so the library code the sample runs is the same. The sample adds Rabdi to a wallet with the keyless public RPC only, also when MetaMask Mobile wraps the unknown-chain error 4902 as -32603, and reads through its server proxy, which keeps the access key server-side. Tarball verification uses an isolated consumer and preserves that sample pin.
 
 ```sh
 npm test

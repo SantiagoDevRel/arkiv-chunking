@@ -1,7 +1,7 @@
 [
   {
     "file": "CHANGELOG.md",
-    "sha256": "94bcab7db50b250feaa7ede98ea5a2d8e8279bf7369215297c2c6db59e3688e8",
+    "sha256": "a158dcb5efec27d37d98ad4ce05315876eb8fb17bf66c368757cabe6b698278b",
     "reason": "Immutable release history or a clearly marked historical section.",
     "lines": [
       "- Breaking: requires SDK 1\u002e0\u002e0 (peer ^1\u002e0\u002e0), Rabdi configuration and an explicit access key."
@@ -9,7 +9,7 @@
   },
   {
     "file": "docs/verification.md",
-    "sha256": "46e5b46e295cf0a00b1eea70d38776f41d7ffbff2f131c0d4e2287e021db5e1b",
+    "sha256": "b394fe829db8399ff908545c022c30432bb828af6be239ed8c4daaa58a78d474",
     "reason": "Immutable release history or a clearly marked historical section.",
     "lines": [
       "The maximum-lifetime probe sent exactly one deliberately invalid create from the dedicated CHUNKING wallet, at head + 7,884,000 + 120 blocks. Transaction `0xdd798d87612736340a0421c82390d39619ab605c214afcd027bb20d7bc1f2b0e` reverted (gas used 33,380 / limit 1,000,000). SDK 1\u002e0\u002e0 reported: \"the expiry resolves to block 7895089, more than the chain's maximum lifetime of 7884000 blocks after the current block 10972\". Its formatter maps this sentence to ExpiryBeyondMaxLifetime. Admission now reserves 30 blocks and uses a coordinated absolute deadline; no longer lifetime or permanent option is claimed."
@@ -26,7 +26,7 @@
   },
   {
     "file": "README.md",
-    "sha256": "3e9620cb18c3f407b4f973370445cce35ce8af685c53e9517fa6f80839145c76",
+    "sha256": "a97e956703d84020f9766be03ac32d726af2285fc3a2e3af97b26e6577065fb6",
     "reason": "Explicit SDK-version compatibility scope; never a current installation pin.",
     "lines": [
       "An over-maximum SDK request fails before sending with `InvalidExpiryError` on 1.0.1+. On SDK `1\u002e0\u002e0` only, the same request could reach the chain and revert with `ExpiryBeyondMaxLifetime`. The library rejects excessive `expirationBlocks` as `INVALID_INPUT` before either SDK path. Longer-lived files need coordinated Lifetime Extension outside this API; independently extending a subset is unsupported.",
