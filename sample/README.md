@@ -17,12 +17,12 @@ The endpoint allows only chain/timing reads, the latest header-only block read f
 ## Use
 
 1. Open public Rabdi sample to retrieve the seeded file without a wallet, or open a manifest key. A URL can use ?manifest=0x... for a reloadable read.
-2. For an upload, enter your own HTTPS Rabdi RPC URL from [Access Keys](https://hub.arkiv.network/access-keys). The password input is never persisted or included in screenshots. Configure the same RPC in your wallet. Fund it through the [faucet](https://hub.arkiv.network/faucet).
+2. For an upload, connect your wallet. If it does not have Rabdi yet, the sample asks it to add Rabdi with the keyless public RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`; to add it by hand, use that same URL. Never put an access key or a keyed RPC URL in a wallet: access keys stay server-side. Fund the wallet through the [faucet](https://hub.arkiv.network/faucet).
 3. Choose public bytes and an approximate Entity Expiration. Click Store & verify and approve each transaction. No write occurs on load, selection or connection.
 4. Download appears only after complete verification. Retry verification performs reads only. An uncertain upload retains the manifest key and links to its observed confirmed transactions; inspect these and your wallet for uncertain receipts before writing again.
 5. Inspect actual chunk keys, byte previews, attributes and the query. Content is neutral downloadable bytes, never executed HTML. Inspection failures preserve the verified download.
 
-Every signature is guarded against account/network changes. A missing Rabdi network triggers an explicit wallet add/switch request from a user action. The app never receives a private key.
+Every signature is guarded against account/network changes. A missing Rabdi network triggers an explicit wallet add/switch request from a user action; the add request offers only the keyless public RPC (`sample/src/wallet-network.ts`). The app never receives a private key and never asks for an RPC URL.
 
 Writes use uploadFile's public policy: unsigned estimation at latest, gas=max(1,000,000, 2*estimate), explicit gasPrice and latest nonce, block gas-limit admission and authoritative receipt checks. Estimation failure stops before signing. Only a confirmed gas-exhausted revert can receive one retry with increased gas. Physical browser-wallet signing on this sample remains a separate verification boundary.
 
