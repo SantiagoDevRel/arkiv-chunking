@@ -4,14 +4,14 @@ This is the consumer guide, included in the npm package. It also applies when ma
 
 ## Start here
 
-Read [README.md](README.md) for installation, examples, public API, limits, network setup, and recovery. Explicitly open this file and README; package managers do not automatically load agent instructions from dependencies. The [sample guide](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/AGENTS.md) is in the source checkout, not bundled with the library. Install `npm install --save-exact arkiv-chunking@1.1.4`.
+Read [README.md](README.md) for installation, examples, public API, limits, network setup, and recovery. Explicitly open this file and README; package managers do not automatically load agent instructions from dependencies. The [sample guide](https://github.com/SantiagoDevRel/arkiv-chunking/blob/feat/file-chunking/sample/AGENTS.md) is in the source checkout, not bundled with the library. Install `npm install --save-exact arkiv-chunking@1.1.5`.
 
 ## Ask the developer
 
 - Is the goal local splitting/reassembly, reading an existing manifest, or publishing file bytes to a testnet? Only the last needs a signing wallet and test GLM.
 - Which testnet, RPC connection, file, filename, content type and Entity Expiration are intended? README names the actually tested combination. Do not infer mainnet support.
 - Are these bytes and the filename safe to make public? The tool offers no encryption or read authorization. Expiry is not erasure.
-- For a read: request the manifest key and, if required, a trusted expected SHA-256. For a write: use the developer's browser wallet, or ask them to configure a dedicated Node signing key locally. Never request private keys in chat. Provider access keys, if required, come from the README's Hub link.
+- For a read: request the manifest key and, if required, a trusted expected SHA-256. For a write: use the developer's browser wallet, or ask them to configure a dedicated Node signing key locally. Never request private keys in chat. A browser wallet uses the keyless public RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`. Provider access keys, if required, come from the README's Hub link and stay server-side; never put one, or a keyed RPC URL, in a wallet, a bundle, a URL or a QR.
 
 Local splitting needs none of those credentials. Integrate that path immediately while legitimate network/product questions remain open.
 
